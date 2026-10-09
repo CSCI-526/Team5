@@ -10,6 +10,7 @@ namespace ReverseTD.Offense
     {
         private const float Size = 0.4f;
         private const float AttackInterval = 1f;
+        private const float ShotSpeed = 8f;
 
         private static readonly Color fullHealthColor = new Color(0.95f, 0.35f, 0.3f);
         private static readonly Color lowHealthColor = new Color(0.35f, 0.08f, 0.08f);
@@ -22,7 +23,7 @@ namespace ReverseTD.Offense
 
         private readonly List<IDamageable> candidates = new List<IDamageable>();
         private StagePath path;
-        private SpriteRenderer body;
+        private SoldierVisual visual;
         private OffenseData offenseData;
         private float distanceTraveled;
         private float attackCooldown;
@@ -48,14 +49,8 @@ namespace ReverseTD.Offense
 
             transform.position = path.Start;
 
-            // Create visual circle sprite
-            var bodyObject = new GameObject("Body");
-            bodyObject.transform.SetParent(transform, false);
-            bodyObject.transform.localScale = new Vector3(Size, Size, 1f);
-            body = bodyObject.AddComponent<SpriteRenderer>();
-            body.sprite = ShapeSprites.Circle;
-            body.color = fullHealthColor;
-            body.sortingOrder = SortingOrders.Soldier;
+            // Create the soldier's visual (body, gun, HP bar)
+            visual = SoldierVisual.Create(transform, Size, fullHealthColor, lowHealthColor);
         }
 
         private void OnEnable()
@@ -90,9 +85,9 @@ namespace ReverseTD.Offense
             if (!isAlive) return;
 
             hp -= amount;
-            if (body != null)
+            if (visual != null)
             {
-                body.color = Color.Lerp(lowHealthColor, fullHealthColor, hp / maxHp);
+                visual.ShowHealth(hp / maxHp);
             }
 
             if (hp <= 0f)
@@ -113,10 +108,14 @@ namespace ReverseTD.Offense
                 return;
             }
 
-            target.TakeDamage(damage);
+            Projectile shot = Projectile.Launch(transform.position, target, damage, ShotSpeed, GrantGold);
             attackCooldown += AttackInterval;
+            shot.AppearFrom(visual.Fire(target.Position));
+        }
 
-            // Incremental reward: grant gold whenever this unit deals damage to a tower
+        // Incremental reward: grant gold whenever this unit deals damage to a tower
+        private void GrantGold()
+        {
             if (offenseData != null)
             {
                 offenseData.gold += damage;

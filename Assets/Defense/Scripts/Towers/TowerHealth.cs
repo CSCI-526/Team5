@@ -11,17 +11,19 @@ namespace ReverseTD.Defense
         private Tower tower;
         private TowerDefinition definition;
         private HealthBar healthBar;
+        private TowerVisual visual;
         private bool isAlive = true;
 
         public Team Team => Team.Defender;
         public bool IsAlive => isAlive;
         public Vector3 Position => transform.position;
 
-        public void Initialize(Tower owner, TowerDefinition towerDefinition, HealthBar bar)
+        public void Initialize(Tower owner, TowerDefinition towerDefinition, HealthBar bar, TowerVisual towerVisual)
         {
             tower = owner;
             definition = towerDefinition;
             healthBar = bar;
+            visual = towerVisual;
             hp = definition.MaxHp;
         }
 
@@ -48,7 +50,10 @@ namespace ReverseTD.Defense
             {
                 isAlive = false;
                 tower.Die();
+                return;
             }
+
+            visual.FlashHit();
         }
     }
 }

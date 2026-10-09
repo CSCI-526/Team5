@@ -8,6 +8,7 @@ namespace ReverseTD.Defense.Testing
     {
         private const float Size = 0.4f;
         private const float AttackInterval = 1f;
+        private const float ShotSpeed = 8f;
 
         private static readonly Color fullHealthColor = new Color(0.95f, 0.35f, 0.3f);
         private static readonly Color lowHealthColor = new Color(0.35f, 0.08f, 0.08f);
@@ -29,7 +30,7 @@ namespace ReverseTD.Defense.Testing
 
         private readonly List<IDamageable> candidates = new List<IDamageable>();
         private StagePath path;
-        private SpriteRenderer body;
+        private SoldierVisual visual;
         private float distanceTraveled;
         private float attackCooldown;
         private bool isAlive = true;
@@ -49,13 +50,7 @@ namespace ReverseTD.Defense.Testing
             attackRange = towerAttackRange;
             transform.position = path.Start;
 
-            var bodyObject = new GameObject("Body");
-            bodyObject.transform.SetParent(transform, false);
-            bodyObject.transform.localScale = new Vector3(Size, Size, 1f);
-            body = bodyObject.AddComponent<SpriteRenderer>();
-            body.sprite = ShapeSprites.Circle;
-            body.color = fullHealthColor;
-            body.sortingOrder = SortingOrders.Soldier;
+            visual = SoldierVisual.Create(transform, Size, fullHealthColor, lowHealthColor);
         }
 
         private void OnEnable()
@@ -95,7 +90,7 @@ namespace ReverseTD.Defense.Testing
             }
 
             hp -= amount;
-            body.color = Color.Lerp(lowHealthColor, fullHealthColor, hp / maxHp);
+            visual.ShowHealth(hp / maxHp);
             if (hp <= 0f)
             {
                 Despawn();
@@ -117,8 +112,9 @@ namespace ReverseTD.Defense.Testing
                 return;
             }
 
-            target.TakeDamage(damage);
+            Projectile shot = Projectile.Launch(transform.position, target, damage, ShotSpeed);
             attackCooldown += AttackInterval;
+            shot.AppearFrom(visual.Fire(target.Position));
         }
 
         private IDamageable FindNearestTower()

@@ -4,7 +4,7 @@ namespace ReverseTD.Defense
 {
     public class Tower : MonoBehaviour
     {
-        private const float HealthBarGap = 0.2f;
+        private const float HealthBarGap = 0.22f;
         private const float HealthBarExtraWidth = 0.2f;
 
         [SerializeField, Tooltip("Stats and look. Set by BoardView when the tower spawns.")]
@@ -27,18 +27,23 @@ namespace ReverseTD.Defense
             definition = towerDefinition;
             board = owner;
 
-            CreateBody();
+            var visual = CreateChild("Body").AddComponent<TowerVisual>();
+            visual.Initialize(definition);
+            if (board != null)
+            {
+                visual.Face(board.Path.Start);
+            }
             CreateChild("Range").AddComponent<RangeIndicator>().Initialize(definition);
 
             GameObject barObject = CreateChild("HP Bar");
             barObject.transform.localPosition = new Vector3(0f, definition.Size * 0.5f + HealthBarGap, 0f);
             var healthBar = barObject.AddComponent<HealthBar>();
             healthBar.Initialize(definition.Size + HealthBarExtraWidth);
-            gameObject.AddComponent<TowerHealth>().Initialize(this, definition, healthBar);
+            gameObject.AddComponent<TowerHealth>().Initialize(this, definition, healthBar, visual);
 
             var targeting = gameObject.AddComponent<TowerTargeting>();
             targeting.Initialize(definition);
-            gameObject.AddComponent<TowerWeapon>().Initialize(definition, targeting);
+            gameObject.AddComponent<TowerWeapon>().Initialize(definition, targeting, visual);
         }
 
         internal void Die()
@@ -54,18 +59,8 @@ namespace ReverseTD.Defense
                 {
                     board.HandleTowerDestroyed(this);
                 }
+                CombatEffects.SpawnWreck(transform.parent, transform.position, definition.Color, definition.Size / TowerVisual.DesignSize);
             }
-        }
-
-        private void CreateBody()
-        {
-            GameObject body = CreateChild("Body");
-            body.transform.localScale = new Vector3(definition.Size, definition.Size, 1f);
-
-            var bodyRenderer = body.AddComponent<SpriteRenderer>();
-            bodyRenderer.sprite = ShapeSprites.Square;
-            bodyRenderer.color = definition.Color;
-            bodyRenderer.sortingOrder = SortingOrders.Tower;
         }
 
         private GameObject CreateChild(string childName)

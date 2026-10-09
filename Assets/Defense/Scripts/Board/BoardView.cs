@@ -7,6 +7,16 @@ namespace ReverseTD.Defense
     public class BoardView : MonoBehaviour
     {
         private const int RangeCircleSegments = 48;
+        private const int GroundMargin = 16;
+        private const float EdgeWidth = 0.1f;
+        private const float EdgeShade = 0.7f;
+        private const float DashSpacing = 0.6f;
+        private const float DashLength = 0.26f;
+        private const float DashWidth = 0.045f;
+        private const float DashTint = 0.4f;
+        private const float DashAlpha = 0.55f;
+
+        private static readonly Color groundDotColor = new Color(0.17f, 0.2f, 0.24f);
 
         [SerializeField, Tooltip("The stage to build: the single source of truth for the path and the towers.")]
         private StageLayout layout;
@@ -58,13 +68,37 @@ namespace ReverseTD.Defense
                 return;
             }
 
+            BuildGround();
             BuildPath();
             BuildTowers();
+        }
+
+        private void BuildGround()
+        {
+            Bounds bounds = layout.CalculateBounds();
+            int width = 2 * (Mathf.CeilToInt(bounds.extents.x) + GroundMargin);
+            int height = 2 * (Mathf.CeilToInt(bounds.extents.y) + GroundMargin);
+            var center = new Vector3(Mathf.Round(bounds.center.x) + 0.5f, Mathf.Round(bounds.center.y) + 0.5f, 0f);
+
+            Transform ground = CreateChild("Ground");
+            ground.SetPositionAndRotation(center, Quaternion.identity);
+
+            var groundRenderer = ground.gameObject.AddComponent<SpriteRenderer>();
+            groundRenderer.sprite = ShapeSprites.DotTile;
+            groundRenderer.drawMode = SpriteDrawMode.Tiled;
+            groundRenderer.tileMode = SpriteTileMode.Continuous;
+            groundRenderer.size = new Vector2(width, height);
+            groundRenderer.color = groundDotColor;
+            groundRenderer.sortingOrder = SortingOrders.Ground;
         }
 
         private void BuildPath()
         {
             Transform root = CreateChild("Path");
+            Color edgeColor = Palette.Shade(layout.PathColor, EdgeShade);
+            Color dashColor = Palette.WithAlpha(Palette.Tint(layout.PathColor, DashTint), DashAlpha);
+            float width = layout.PathWidth;
+
             IReadOnlyList<Vector2> points = layout.Waypoints;
             for (int i = 1; i < points.Count; i++)
             {
@@ -77,18 +111,32 @@ namespace ReverseTD.Defense
                     continue;
                 }
 
-                var segment = new GameObject($"Segment {i - 1}");
-                segment.transform.SetParent(root, false);
-                segment.transform.SetPositionAndRotation(
-                    (from + to) * 0.5f,
-                    Quaternion.Euler(0f, 0f, Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg));
-                segment.transform.localScale = new Vector3(length + layout.PathWidth, layout.PathWidth, 1f);
+                Vector2 middle = (from + to) * 0.5f;
+                Quaternion rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg);
 
-                var segmentRenderer = segment.AddComponent<SpriteRenderer>();
-                segmentRenderer.sprite = ShapeSprites.Square;
-                segmentRenderer.color = layout.PathColor;
-                segmentRenderer.sortingOrder = SortingOrders.Path;
+                AddPathPart(root, "Edge", middle, rotation, new Vector2(length + width + EdgeWidth, width + EdgeWidth), edgeColor, SortingOrders.PathEdge);
+                AddPathPart(root, $"Segment {i - 1}", middle, rotation, new Vector2(length + width, width), layout.PathColor, SortingOrders.Path);
+
+                int steps = Mathf.FloorToInt(length / DashSpacing);
+                for (int step = 1; step < steps; step++)
+                {
+                    Vector2 point = from + delta * (step * DashSpacing / length);
+                    AddPathPart(root, "Dash", point, rotation, new Vector2(DashLength, DashWidth), dashColor, SortingOrders.PathMark);
+                }
             }
+        }
+
+        private static void AddPathPart(Transform root, string partName, Vector2 position, Quaternion rotation, Vector2 size, Color color, int sortingOrder)
+        {
+            var part = new GameObject(partName);
+            part.transform.SetParent(root, false);
+            part.transform.SetPositionAndRotation(position, rotation);
+            part.transform.localScale = new Vector3(size.x, size.y, 1f);
+
+            var partRenderer = part.AddComponent<SpriteRenderer>();
+            partRenderer.sprite = ShapeSprites.Square;
+            partRenderer.color = color;
+            partRenderer.sortingOrder = sortingOrder;
         }
 
         private void BuildTowers()
