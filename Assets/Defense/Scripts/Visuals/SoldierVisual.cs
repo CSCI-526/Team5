@@ -88,6 +88,9 @@ namespace ReverseTD.Defense
             healthBar.SetFraction(fraction);
         }
 
+        /** 
+         * 
+         * Can use this only after midterm, replaced with just square
         private void Build(float size, Color bodyColor, Color outlineColor)
         {
             float scale = size / DesignSize;
@@ -115,6 +118,44 @@ namespace ReverseTD.Defense
             flashGlow = ShapeSprites.AddPart(upper, "Flash Glow", ShapeSprites.Circle, flashPosition, new Vector2(0.252f, 0.252f), Palette.WithAlpha(Palette.ShotColor(Team.Defender), FlashGlowAlpha), SortingOrders.MuzzleFlash);
             flashCore = ShapeSprites.AddPart(upper, "Flash Core", ShapeSprites.Circle, flashPosition, new Vector2(0.14f, 0.14f), Palette.FlashCore, SortingOrders.MuzzleFlash + 1);
 
+            healthBarObject = new GameObject("HP Bar");
+            healthBarObject.transform.SetParent(transform, false);
+            healthBarObject.transform.localPosition = new Vector3(0f, BarOffset, 0f);
+            healthBar = healthBarObject.AddComponent<HealthBar>();
+            healthBar.Initialize(BarWidth, BarHeight, BarInset);
+            healthBarObject.SetActive(false);
+
+            Apply();
+        }
+        **/
+
+        private void Build(float size, Color bodyColor, Color outlineColor)
+        {
+            float scale = size / DesignSize;
+            transform.localScale = new Vector3(scale, scale, 1f);
+            lastPosition = transform.position;
+
+            int order = SortingOrders.Soldier;
+            var squareSize = new Vector2(0.4f, 0.4f);
+            var innerSize = new Vector2(0.34f, 0.34f);
+
+            // Drop shadow
+            shadow = ShapeSprites.AddPart(transform, "Shadow", ShapeSprites.Square, new Vector2(0.03f, -0.05f), squareSize, new Color(0f, 0f, 0f, ShadowAlpha), order).transform;
+
+            // Body (Outline + Fill)
+            lower = AddGroup("Lower");
+            ShapeSprites.AddPart(lower, "Outline", ShapeSprites.Square, Vector2.zero, squareSize, outlineColor, order + 1);
+            ShapeSprites.AddPart(lower, "Body", ShapeSprites.Square, Vector2.zero, innerSize, bodyColor, order + 2);
+            hitFlash = ShapeSprites.AddPart(lower, "Hit Flash", ShapeSprites.Square, Vector2.zero, squareSize, Color.white, order + 3);
+
+            // Upper layer (remains empty so aim/muzzle calculations still resolve)
+            upper = AddGroup("Upper");
+
+            // Optional dummy flash renderers to prevent NullReferenceException in Apply()
+            flashGlow = ShapeSprites.AddPart(upper, "Flash Glow", ShapeSprites.Square, Vector2.zero, Vector2.zero, Color.clear, order);
+            flashCore = ShapeSprites.AddPart(upper, "Flash Core", ShapeSprites.Square, Vector2.zero, Vector2.zero, Color.clear, order);
+
+            // HP Bar
             healthBarObject = new GameObject("HP Bar");
             healthBarObject.transform.SetParent(transform, false);
             healthBarObject.transform.localPosition = new Vector3(0f, BarOffset, 0f);

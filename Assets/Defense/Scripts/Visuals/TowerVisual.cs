@@ -29,6 +29,9 @@ namespace ReverseTD.Defense
         private float flashTimer;
         private float hitTimer;
 
+        /**
+         * 
+         * Changed to no sprites for now
         public void Initialize(TowerDefinition towerDefinition)
         {
             float scale = towerDefinition.Size / DesignSize;
@@ -66,6 +69,37 @@ namespace ReverseTD.Defense
             AddCircle(transform, "Turret", Vector2.zero, 0.36f, light, order + 7);
             AddCircle(transform, "Cap", Vector2.zero, 0.13f, dark, order + 8);
             hitFlash = AddSquare(transform, "Hit Flash", Vector2.zero, new Vector2(0.8f, 0.8f), Color.white, order + 9);
+
+            Apply();
+        }
+        **/
+
+        public void Initialize(TowerDefinition towerDefinition)
+        {
+            float scale = towerDefinition.Size / DesignSize;
+            transform.localScale = new Vector3(scale, scale, 1f);
+
+            Color color = towerDefinition.Color;
+            Color dark = Palette.Dark(color);
+            int order = SortingOrders.Tower;
+
+            var fullSize = new Vector2(0.8f, 0.8f);
+            var innerSize = new Vector2(0.68f, 0.68f);
+
+            // Shadow & Square Body (Outline + Fill)
+            AddSquare(transform, "Shadow", new Vector2(0.07f, -0.09f), fullSize, new Color(0f, 0f, 0f, ShadowAlpha), order);
+            AddSquare(transform, "Outline", Vector2.zero, fullSize, dark, order + 1);
+            AddSquare(transform, "Base", Vector2.zero, innerSize, color, order + 2);
+            hitFlash = AddSquare(transform, "Hit Flash", Vector2.zero, fullSize, Color.white, order + 3);
+
+            // Empty barrel/slide groups to maintain aim rotation and recoil mechanics
+            barrel = AddGroup(transform, "Barrel");
+            slide = AddGroup(barrel, "Slide");
+
+            // Invisible flash markers so Fire() returns the correct muzzle position
+            var muzzle = new Vector2(MuzzleDistance, 0f);
+            flashGlow = AddSquare(barrel, "Flash Glow", muzzle, Vector2.zero, Color.clear, SortingOrders.MuzzleFlash);
+            flashCore = AddSquare(barrel, "Flash Core", muzzle, Vector2.zero, Color.clear, SortingOrders.MuzzleFlash + 1);
 
             Apply();
         }
