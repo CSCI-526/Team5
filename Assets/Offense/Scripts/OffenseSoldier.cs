@@ -80,20 +80,15 @@ namespace ReverseTD.Offense
             Attack();
         }
 
-        public void TakeDamage(float amount)
+        public float TakeDamage(float amount)
         {
-            if (!isAlive) return;
+            if (!isAlive) return 0f;
 
-            hp -= amount;
-            if (visual != null)
-            {
-                visual.ShowHealth(hp / maxHp);
-            }
-
-            if (hp <= 0f)
-            {
-                Despawn();
-            }
+            float applied = Mathf.Min(amount, hp);
+            hp -= applied;
+            if (visual != null) visual.ShowHealth(hp / maxHp);
+            if (hp <= 0f) Despawn();
+            return applied;
         }
 
         private void Attack()
@@ -114,11 +109,11 @@ namespace ReverseTD.Offense
         }
 
         // Incremental reward: grant gold whenever this unit deals damage to a tower
-        private void GrantGold()
+        private void GrantGold(float damageDealt)
         {
             if (offenseData != null)
             {
-                offenseData.gold += damage;
+                offenseData.gold += damageDealt;
             }
         }
 

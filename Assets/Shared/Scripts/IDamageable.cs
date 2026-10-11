@@ -10,6 +10,6 @@ namespace ReverseTD.Shared
 
         Vector3 Position { get; }
 
-        void TakeDamage(float amount);
+        float TakeDamage(float amount);
     }
 }

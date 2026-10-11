@@ -14,9 +14,9 @@ namespace ReverseTD.Defense
         private const float TowerImpactSize = 0.62f;
         private const float SoldierImpactSize = 0.42f;
         private const float MinDistance = 0.0001f;
+        private System.Action<float> onHit;
 
         private IDamageable target;
-        private System.Action onHit;
         private Transform visual;
         private Color color;
         private Vector3 aimPoint;
@@ -27,7 +27,7 @@ namespace ReverseTD.Defense
         private float speed;
         private float age;
 
-        public static Projectile Launch(Vector3 origin, IDamageable target, float damage, float speed, System.Action onHit = null)
+        public static Projectile Launch(Vector3 origin, IDamageable target, float damage, float speed, System.Action<float> onHit = null)
         {
             bool atTower = target.Team == Team.Defender;
             Color shotColor = Palette.ShotColor(target.Team);
@@ -80,8 +80,8 @@ namespace ReverseTD.Defense
                 Destroy(gameObject);
                 if (targetAlive)
                 {
-                    target.TakeDamage(damage);
-                    onHit?.Invoke();
+                    float applied = target.TakeDamage(damage);
+                    onHit?.Invoke(applied);
                     CombatEffects.SpawnImpact(aimPoint, color, impactSize);
                 }
                 return;

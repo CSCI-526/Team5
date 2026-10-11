@@ -37,23 +37,25 @@ namespace ReverseTD.Defense
             CombatRegistry.Unregister(this);
         }
 
-        public void TakeDamage(float amount)
+        public float TakeDamage(float amount)
         {
             if (!isAlive)
             {
-                return;
+                return 0f;
             }
 
-            hp = Mathf.Max(0f, hp - amount);
+            float applied = Mathf.Min(amount, hp); // can't deal more than remaining HP
+            hp -= applied;
             healthBar.SetFraction(hp / definition.MaxHp);
             if (hp <= 0f)
             {
                 isAlive = false;
                 tower.Die();
-                return;
+                return applied;
             }
 
             visual.FlashHit();
+            return applied;
         }
     }
 }
