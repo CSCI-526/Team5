@@ -23,6 +23,11 @@ namespace ReverseTD.Offense
 
         private readonly List<IDamageable> candidates = new List<IDamageable>();
         private StagePath path;
+        private StagePath lowerPath;
+        private ForkCommandSlot forkCommandSlot;
+
+        private float forkDistance;
+        private bool forkDecisionMade = false;
         private SoldierVisual visual;
         private OffenseData offenseData;
         private float distanceTraveled;
@@ -35,10 +40,20 @@ namespace ReverseTD.Offense
         public Vector3 Position => transform.position;
         public float DistanceTraveled => distanceTraveled;
 
-        public void Initialize(StagePath stagePath, OffenseData data, float towerAttackRange = 1.5f)
+        public void Initialize(StagePath stagePath,OffenseData data,float towerAttackRange = 1.5f,StagePath alternatePath = null,ForkCommandSlot commandSlot = null)
         {
             path = stagePath;
             offenseData = data;
+
+            lowerPath = alternatePath;
+            forkCommandSlot = commandSlot;
+
+            forkDistance = Vector2.Distance(
+                stagePath.Waypoints[0],
+                stagePath.Waypoints[1]
+            );
+
+            forkDecisionMade = false;
 
             // Pull values dynamically from persistent upgrade data
             maxHp = data != null ? data.MaxHealth : 5f;
@@ -66,14 +81,44 @@ namespace ReverseTD.Offense
         private void Update()
         {
             if (!isAlive || path == null) return;
+            float nextDistance = distanceTraveled + speed * Time.deltaTime;
 
-            distanceTraveled += speed * Time.deltaTime;
+            // Check the route when the soldier reaches the fork
+            if (!forkDecisionMade &&
+                lowerPath != null &&
+                forkCommandSlot != null &&
+                distanceTraveled <= forkDistance &&
+                nextDistance >= forkDistance)
+            {
+                forkDecisionMade = true;
+
+                if (forkCommandSlot.ShouldUseLowerPath())
+                {
+                    path = lowerPath;
+                    Debug.Log(gameObject.name + " chose LOWER path");
+                }
+                else
+                {
+                    Debug.Log(gameObject.name + " chose UPPER path");
+                }
+            }
+
+            distanceTraveled = nextDistance;
             transform.position = path.GetPointAtDistance(distanceTraveled);
 
             // Reached the end of the track
             if (distanceTraveled >= path.TotalLength)
             {
-                SceneManager.LoadScene("EndGame");
+                if (OffenseWaveManager.Instance != null)
+                {
+                    enabled = false;
+                    OffenseWaveManager.Instance.ReportGoalReached();
+                }
+                else
+                {
+                    Debug.LogError("OffenseWaveManager is missing.");
+                }
+
                 return;
             }
 

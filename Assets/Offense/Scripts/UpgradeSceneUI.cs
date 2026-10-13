@@ -10,6 +10,7 @@ public class UpgradeSceneUI : MonoBehaviour
 
     [Header("Scene Loading")]
     [SerializeField] private string gameplaySceneName = "DefenseSandbox";
+    [SerializeField] private string level2SceneName = "DefenseLevel2";
 
     [Header("Gold Display")]
     [SerializeField] private TMP_Text goldText;
@@ -85,7 +86,20 @@ public class UpgradeSceneUI : MonoBehaviour
 
     private void OnStartGameClicked()
     {
-        SceneManager.LoadScene(gameplaySceneName);
+        if (offenseData == null)
+        {
+            Debug.LogError("OffenseData is missing.");
+            return;
+        }
+
+        if (offenseData.currentLevel == 1)
+        {
+            SceneManager.LoadScene(gameplaySceneName);
+        }
+        else if (offenseData.currentLevel == 2)
+        {
+            SceneManager.LoadScene(level2SceneName);
+        }
     }
 
     private void OnDestroy()

@@ -14,6 +14,9 @@ namespace ReverseTD.Offense
         [SerializeField, Tooltip("The board whose path the soldiers walk.")]
         private BoardView board;
 
+        [SerializeField]
+        private ForkCommandSlot forkCommandSlot;
+
         [SerializeField, Tooltip("Persistent upgrade and currency data.")]
         private OffenseData offenseData;
 
@@ -35,6 +38,7 @@ namespace ReverseTD.Offense
         private int livingUnits = 0;
         private bool spawningComplete = false;
         private int spawnedCount = 0;
+        private bool transitionQueued = false;
 
         private void Awake()
         {
@@ -120,7 +124,7 @@ namespace ReverseTD.Offense
 
             if (livingUnits <= 0)
             {
-                StartCoroutine(TransitionToUpgradeScene());
+                QueueUpgradeTransition();
             }
         }
 
@@ -132,7 +136,7 @@ namespace ReverseTD.Offense
             soldierObject.transform.SetParent(transform, false);
 
             var soldier = soldierObject.AddComponent<OffenseSoldier>();
-            soldier.Initialize(board.Path, offenseData, soldierAttackRange);
+            soldier.Initialize(board.Path,offenseData,soldierAttackRange,board.LowerPath,forkCommandSlot);
 
             soldierObject.SetActive(true);
             livingUnits++;
@@ -140,11 +144,66 @@ namespace ReverseTD.Offense
 
         public void ReportSoldierDeath()
         {
+            if (transitionQueued)
+            {
+                return;
+            }
+
             livingUnits--;
 
             if (spawningComplete && livingUnits <= 0)
             {
-                StartCoroutine(TransitionToUpgradeScene());
+                QueueUpgradeTransition();
+            }
+        }
+
+        private void QueueUpgradeTransition()
+        {
+            if (transitionQueued)
+            {
+                return;
+            }
+
+            transitionQueued = true;
+            StartCoroutine(TransitionToUpgradeScene());
+        }
+
+        public void ReportGoalReached()
+        {
+            if (transitionQueued)
+            {
+                return;
+            }
+
+            if (offenseData == null)
+            {
+                Debug.LogError("OffenseData is missing.");
+                return;
+            }
+
+            string currentScene = SceneManager.GetActiveScene().name;
+
+            Debug.Log("Current Scene: " + currentScene);
+            Debug.Log("Current Level: " + offenseData.currentLevel);
+
+            if (currentScene == "DefenseSandbox")
+            {
+                Debug.Log("LEVEL 1 BRANCH EXECUTED");
+
+                transitionQueued = true;
+
+                offenseData.ResetLevelStats();
+                offenseData.currentLevel = 2;
+
+                SceneManager.LoadScene("Level2Intro");
+            }
+            else if (currentScene == "DefenseLevel2")
+            {
+                Debug.Log("LEVEL 2 BRANCH EXECUTED");
+
+                // Level 2 completed
+                transitionQueued = true;
+                SceneManager.LoadScene("EndGame");
             }
         }
 

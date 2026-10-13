@@ -17,6 +17,12 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/StartGame.unity
     guid: a3b08dee3c47e2a4dabfd2d1e4bca1e0
+  - enabled: 1
+    path: Assets/Defense/Scenes/DefenseLevel2.unity
+    guid: 892b43458c45ee34f895f0f630eb60a2
+  - enabled: 1
+    path: Assets/Scenes/Level2Intro.unity
+    guid: c0c87ec152131d0449c2d417e9612bd3
   m_configObjects:
     com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}

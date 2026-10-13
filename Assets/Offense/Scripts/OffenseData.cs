@@ -7,6 +7,8 @@ public class OffenseData : ScriptableObject
     public double gold = 20;
     public float gameSpeed = 1f;
 
+    public int currentLevel = 1;
+
     // Base costs
     public double baseCostHealth = 10;
     public double baseCostDamage = 15;
@@ -62,12 +64,18 @@ public class OffenseData : ScriptableObject
         return false;
     }
 
-    public void ResetGame()
+    public void ResetLevelStats()
     {
         gold = 20;
         healthLevel = 0;
         damageLevel = 0;
         spawnCountLevel = 0;
         gameSpeed = 1f;
+    }
+
+    public void ResetGame()
+    {
+        ResetLevelStats();
+        currentLevel = 1;
     }
 }

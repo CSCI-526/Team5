@@ -23,6 +23,7 @@ namespace ReverseTD.Defense
 
         private readonly List<Tower> towers = new List<Tower>();
         private StagePath path;
+        private StagePath lowerPath;
 
         public static event Action<BoardView> AllTowersDestroyed;
 
@@ -41,6 +42,25 @@ namespace ReverseTD.Defense
                     path = new StagePath(layout.Waypoints);
                 }
                 return path;
+            }
+        }
+        public StagePath LowerPath
+        {
+            get
+            {
+                if (layout == null ||
+                    layout.LowerWaypoints == null ||
+                    layout.LowerWaypoints.Count < 2)
+                {
+                    return null;
+                }
+
+                if (lowerPath == null)
+                {
+                    lowerPath = new StagePath(layout.LowerWaypoints);
+                }
+
+                return lowerPath;
             }
         }
 
@@ -99,29 +119,73 @@ namespace ReverseTD.Defense
             Color dashColor = Palette.WithAlpha(Palette.Tint(layout.PathColor, DashTint), DashAlpha);
             float width = layout.PathWidth;
 
-            IReadOnlyList<Vector2> points = layout.Waypoints;
+            // Upper Path (Default)
+            DrawPathSegments(
+                root,
+                layout.Waypoints,
+                edgeColor,
+                dashColor,
+                width
+            );
+
+            // Lower Path (Optional)
+            if (layout.LowerWaypoints != null &&
+                layout.LowerWaypoints.Count >= 2)
+            {
+                DrawPathSegments(
+                    root,
+                    layout.LowerWaypoints,
+                    edgeColor,
+                    dashColor,
+                    width
+                );
+            }
+        }
+
+        private void DrawPathSegments(
+            Transform root,
+            IReadOnlyList<Vector2> points,
+            Color edgeColor,
+            Color dashColor,
+            float width)
+        {
             for (int i = 1; i < points.Count; i++)
             {
                 Vector2 from = points[i - 1];
                 Vector2 to = points[i];
                 Vector2 delta = to - from;
                 float length = delta.magnitude;
+
                 if (length <= 0f)
                 {
                     continue;
                 }
 
                 Vector2 middle = (from + to) * 0.5f;
-                Quaternion rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg);
+                Quaternion rotation = Quaternion.Euler(
+                    0f, 0f,
+                    Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg
+                );
 
-                AddPathPart(root, "Edge", middle, rotation, new Vector2(length + width + EdgeWidth, width + EdgeWidth), edgeColor, SortingOrders.PathEdge);
-                AddPathPart(root, $"Segment {i - 1}", middle, rotation, new Vector2(length + width, width), layout.PathColor, SortingOrders.Path);
+                AddPathPart(root, "Edge", middle, rotation,
+                    new Vector2(length + width + EdgeWidth,
+                                width + EdgeWidth),
+                    edgeColor, SortingOrders.PathEdge);
+
+                AddPathPart(root, $"Segment {i - 1}", middle, rotation,
+                    new Vector2(length + width, width),
+                    layout.PathColor, SortingOrders.Path);
 
                 int steps = Mathf.FloorToInt(length / DashSpacing);
+
                 for (int step = 1; step < steps; step++)
                 {
-                    Vector2 point = from + delta * (step * DashSpacing / length);
-                    AddPathPart(root, "Dash", point, rotation, new Vector2(DashLength, DashWidth), dashColor, SortingOrders.PathMark);
+                    Vector2 point = from + delta *
+                        (step * DashSpacing / length);
+
+                    AddPathPart(root, "Dash", point, rotation,
+                        new Vector2(DashLength, DashWidth),
+                        dashColor, SortingOrders.PathMark);
                 }
             }
         }
@@ -192,6 +256,18 @@ namespace ReverseTD.Defense
                 Gizmos.color = Color.red;
                 Gizmos.DrawSphere(points[points.Count - 1], 0.2f);
             }
+            // Draw Lower Path Gizmos
+            IReadOnlyList<Vector2> lowerPoints = layout.LowerWaypoints;
+            if (lowerPoints != null && lowerPoints.Count >= 2)
+            {
+                Gizmos.color = layout.PathColor;
+
+                for (int i = 1; i < lowerPoints.Count; i++)
+                {
+                    Gizmos.DrawLine(lowerPoints[i - 1], lowerPoints[i]);
+                }
+            }
+
 
             IReadOnlyList<TowerSlot> slots = layout.TowerSlots;
             for (int i = 0; i < slots.Count; i++)
