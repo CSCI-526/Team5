@@ -73,6 +73,8 @@ namespace ReverseTD.Offense
             // Reached the end of the track
             if (distanceTraveled >= path.TotalLength)
             {
+                // Record success at the existing win condition, before the original transition.
+                if (offenseData != null) offenseData.RunStats.Complete(true);
                 SceneManager.LoadScene("EndGame");
                 return;
             }
@@ -113,7 +115,11 @@ namespace ReverseTD.Offense
         {
             if (offenseData != null)
             {
+                // TakeDamage returns actual damage, capped by remaining tower HP.
+                offenseData.RunStats.RecordDamage(damageDealt);
+                double previousBalance = offenseData.gold;
                 offenseData.gold += damageDealt;
+                offenseData.RunStats.RecordGold(offenseData.gold - previousBalance);
             }
         }
 

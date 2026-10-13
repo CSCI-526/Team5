@@ -32,6 +32,8 @@ namespace ReverseTD.Offense
 
         [SerializeField] private Slider speedSlider;
 
+        private bool waveStarted;
+        private bool transitionStarted;
         private int livingUnits = 0;
         private bool spawningComplete = false;
         private int spawnedCount = 0;
@@ -102,6 +104,10 @@ namespace ReverseTD.Offense
                 return;
             }
 
+            // Begin statistics once; repeated requests must not clear an active run.
+            if (waveStarted) return;
+            waveStarted = true;
+            if (offenseData != null) offenseData.RunStats.Begin();
             StartCoroutine(SpawnSoldiersRoutine());
         }
 
@@ -150,7 +156,12 @@ namespace ReverseTD.Offense
 
         private IEnumerator TransitionToUpgradeScene()
         {
+            // Multiple death notifications must not freeze or transition the same run twice.
+            if (transitionStarted) yield break;
+            transitionStarted = true;
             yield return new WaitForSeconds(1.2f);
+            // Preserve any success already recorded at the path endpoint.
+            if (offenseData != null && !offenseData.RunStats.Complete(false)) yield break;
             SceneManager.LoadScene(upgradeSceneName);
         }
     }

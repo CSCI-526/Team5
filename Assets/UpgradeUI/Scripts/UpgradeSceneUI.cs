@@ -35,6 +35,7 @@ public class UpgradeSceneUI : MonoBehaviour
         if (startGameButton != null)
             startGameButton.onClick.AddListener(OnStartGameClicked);
 
+        PreviousRunSummary.Create(offenseData, goldText);
         BuildDefaultTreeIfEmpty();
 
         // Load tree and rebuild unlocked branches

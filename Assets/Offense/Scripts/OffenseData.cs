@@ -3,6 +3,17 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "OffenseData", menuName = "Scriptable Objects/OffenseData")]
 public class OffenseData : ScriptableObject
 {
+    [System.NonSerialized] private RunStatistics runStatistics;
+    public RunStatistics RunStats => runStatistics ?? (runStatistics = new RunStatistics());
+
+    // Also clear session-only summaries when the Editor skips domain reload on Play.
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetSessionStatistics()
+    {
+        foreach (var data in Resources.FindObjectsOfTypeAll<OffenseData>())
+            data.runStatistics = null;
+    }
+
     // Currency & Flow
     public double gold = 20;
     public float gameSpeed = 1f;
@@ -39,6 +50,7 @@ public class OffenseData : ScriptableObject
 
     public void ResetGame()
     {
+        runStatistics = new RunStatistics();
         gold = 0;
         bonusHealth = 0f;
         bonusDamage = 0f;
