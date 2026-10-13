@@ -527,6 +527,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2471c57c12d9b8941967124d31cbb328, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MenuManager
+  offenseData: {fileID: 11400000, guid: db8156bb844e129458b0ae04b4ec64b2, type: 2}
 --- !u!4 &1218132777
 Transform:
   m_ObjectHideFlags: 0

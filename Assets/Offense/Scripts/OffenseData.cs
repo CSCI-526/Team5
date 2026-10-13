@@ -7,6 +7,13 @@ public class OffenseData : ScriptableObject
     public double gold = 20;
     public float gameSpeed = 1f;
 
+    public int currentLevel = 1;
+
+    // Base costs
+    public double baseCostHealth = 10;
+    public double baseCostDamage = 15;
+    public double baseCostSpawnCount = 50;
+    public double costMultiplier = 1.15;
     [Header("Base Stats")]
     public float baseHealth = 5f;
     public float baseDamage = 1f;
@@ -37,7 +44,7 @@ public class OffenseData : ScriptableObject
         bonusSpawnCount += amount;
     }
 
-    public void ResetGame()
+    public void ResetLevelStats()
     {
         gold = 0;
         bonusHealth = 0f;
@@ -45,5 +52,11 @@ public class OffenseData : ScriptableObject
         bonusSpawnCount = 0;
         gameSpeed = 1f;
         PlayerPrefs.DeleteAll();
+    }
+
+    public void ResetGame()
+    {
+        ResetLevelStats();
+        currentLevel = 1;
     }
 }
