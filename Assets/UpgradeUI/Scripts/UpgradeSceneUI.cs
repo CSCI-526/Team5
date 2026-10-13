@@ -11,6 +11,7 @@ public class UpgradeSceneUI : MonoBehaviour
 
     [Header("Scene Loading")]
     [SerializeField] private string gameplaySceneName = "DefenseSandbox";
+    [SerializeField] private string level2SceneName = "DefenseLevel2";
     [SerializeField] private Button startGameButton;
 
     [Header("Gold Display")]
@@ -170,10 +171,29 @@ public class UpgradeSceneUI : MonoBehaviour
         }
     }
 
+
     private void OnStartGameClicked()
     {
-        SceneManager.LoadScene(gameplaySceneName);
+        if (offenseData == null)
+        {
+            Debug.LogError("OffenseData is missing.");
+            return;
+        }
+
+        if (offenseData.currentLevel == 1)
+        {
+            SceneManager.LoadScene(gameplaySceneName);
+        }
+        else if (offenseData.currentLevel == 2)
+        {
+            SceneManager.LoadScene(level2SceneName);
+        }
+        else
+        {
+            Debug.LogError("Invalid level: " + offenseData.currentLevel);
+        }
     }
+
 
     private void BuildDefaultTreeIfEmpty()
     {
