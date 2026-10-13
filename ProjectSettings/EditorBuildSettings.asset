@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Scenes/StartGame.unity
+    guid: a3b08dee3c47e2a4dabfd2d1e4bca1e0
+  - enabled: 1
     path: Assets/Scenes/UpgradeScene.unity
     guid: 8c9cfa26abfee488c85f1582747f6a02
   - enabled: 1
@@ -14,9 +17,6 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/EndGame.unity
     guid: 513191e8c7a87ed4fad08e1990e249d4
-  - enabled: 1
-    path: Assets/Scenes/StartGame.unity
-    guid: a3b08dee3c47e2a4dabfd2d1e4bca1e0
   - enabled: 1
     path: Assets/Defense/Scenes/DefenseLevel2.unity
     guid: 892b43458c45ee34f895f0f630eb60a2

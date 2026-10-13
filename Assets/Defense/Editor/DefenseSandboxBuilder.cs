@@ -1,5 +1,4 @@
 using System;
-using ReverseTD.Defense.Testing;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -169,10 +168,6 @@ namespace ReverseTD.Defense.EditorTools
             cameraObject.AddComponent<AudioListener>();
             var boardCamera = cameraObject.AddComponent<BoardCamera>();
             SetReference(boardCamera, "board", boardView);
-
-            var spawner = new GameObject("Dummy Wave Spawner").AddComponent<DummyWaveSpawner>();
-            SetReference(spawner, "board", boardView);
-            new GameObject("Defense Event Logger").AddComponent<DefenseEventLogger>();
 
             if (!EditorSceneManager.SaveScene(scene, ScenePath))
             {

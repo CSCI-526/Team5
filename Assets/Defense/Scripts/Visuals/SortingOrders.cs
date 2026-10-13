@@ -10,6 +10,7 @@ namespace ReverseTD.Defense
         public const int Rubble = 15;
         public const int Tower = 20;
         public const int Soldier = 30;
+        public const int TargetMarker = 38;
         public const int Projectile = 40;
         public const int Effect = 45;
         public const int MuzzleFlash = 47;

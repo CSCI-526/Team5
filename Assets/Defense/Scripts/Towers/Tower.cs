@@ -34,6 +34,8 @@ namespace ReverseTD.Defense
                 visual.Face(board.Path.Start);
             }
             CreateChild("Range").AddComponent<RangeIndicator>().Initialize(definition);
+            var marker = CreateChild("Target Marker").AddComponent<TargetMarker>();
+            marker.Initialize();
 
             GameObject barObject = CreateChild("HP Bar");
             barObject.transform.localPosition = new Vector3(0f, definition.Size * 0.5f + HealthBarGap, 0f);
@@ -43,7 +45,7 @@ namespace ReverseTD.Defense
 
             var targeting = gameObject.AddComponent<TowerTargeting>();
             targeting.Initialize(definition);
-            gameObject.AddComponent<TowerWeapon>().Initialize(definition, targeting, visual);
+            gameObject.AddComponent<TowerWeapon>().Initialize(definition, targeting, visual, marker);
         }
 
         internal void Die()
