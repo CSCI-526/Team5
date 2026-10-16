@@ -10,7 +10,7 @@ public class UpgradeTreeNodeUI : MonoBehaviour
     [SerializeField] private TMP_Text buttonText;
 
     [Header("Colors")]
-    [SerializeField] private Color affordableColor = new Color(0.2f, 0.6f, 0.2f);
+    [SerializeField] private Color affordableColor = new Color(0.18f, 0.65f, 0.22f);
     [SerializeField] private Color unaffordableColor = new Color(0.25f, 0.25f, 0.25f);
     [SerializeField] private Color maxedColor = new Color(0.15f, 0.35f, 0.7f);
 
@@ -24,6 +24,23 @@ public class UpgradeTreeNodeUI : MonoBehaviour
         Data = data;
         onNodeClicked = onClick;
 
+        // Make node card slightly larger so bigger text fits comfortably
+        if (RectTransform.sizeDelta.x < 190f || RectTransform.sizeDelta.y < 90f)
+        {
+            RectTransform.sizeDelta = new Vector2(
+                Mathf.Max(RectTransform.sizeDelta.x, 195f),
+                Mathf.Max(RectTransform.sizeDelta.y, 92f)
+            );
+        }
+
+        if (buttonText != null)
+        {
+            buttonText.richText = true;
+            buttonText.enableAutoSizing = true;
+            buttonText.fontSizeMin = 14f;
+            buttonText.fontSizeMax = 24f;
+        }
+
         button.onClick.AddListener(() => onNodeClicked?.Invoke(this));
     }
 
@@ -33,10 +50,12 @@ public class UpgradeTreeNodeUI : MonoBehaviour
             ? $"Lv {Data.currentLevel}/{Data.maxLevel}"
             : $"Lv {Data.currentLevel}";
 
+        string specificTitle = GetSpecificDescription(Data);
+
         if (Data.IsMaxLevel)
         {
             if (buttonText != null)
-                buttonText.text = $"{Data.title} ({levelStr})\n(MAX)";
+                buttonText.text = $"<b><size=115%>{specificTitle}</size></b>\n<size=85%>{levelStr} — MAXED</size>";
 
             if (background != null)
                 background.color = maxedColor;
@@ -48,13 +67,28 @@ public class UpgradeTreeNodeUI : MonoBehaviour
             double nextCost = Data.GetCurrentCost();
 
             if (buttonText != null)
-                buttonText.text = $"{Data.title} ({levelStr})\nCost: ${nextCost:N0}";
+                buttonText.text = $"<b><size=115%>{specificTitle}</size></b>\n<size=90%>{levelStr} | <color=#FFD93D>Cost: ${nextCost:N0}</color></size>";
 
             bool canAfford = currentGold >= nextCost;
             if (background != null)
                 background.color = canAfford ? affordableColor : unaffordableColor;
 
             button.interactable = canAfford;
+        }
+    }
+
+    private static string GetSpecificDescription(UpgradeNodeData data)
+    {
+        switch (data.upgradeType)
+        {
+            case UpgradeType.Attack:
+                return $"+{data.amount:0.#} Soldier DMG";
+            case UpgradeType.Health:
+                return $"+{data.amount:0.#} Soldier HP";
+            case UpgradeType.Units:
+                return $"+{data.amount:0} Soldier / Wave";
+            default:
+                return data.title;
         }
     }
 }

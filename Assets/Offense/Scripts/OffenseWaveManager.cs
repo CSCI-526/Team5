@@ -8,7 +8,10 @@ namespace ReverseTD.Offense
 {
     public class OffenseWaveManager : MonoBehaviour
     {
+
         public static OffenseWaveManager Instance { get; private set; }
+
+        public static bool IsTutorialPaused { get; set; } = false;
 
         [Header("References")]
         [SerializeField, Tooltip("The board whose path the soldiers walk.")]
@@ -68,7 +71,7 @@ namespace ReverseTD.Offense
 
         private void Update()
         {
-            Time.timeScale = timeScale;
+            Time.timeScale = IsTutorialPaused ? 0f : timeScale;
         }
 
         public void SetSpeedFromSlider(float value)
@@ -88,6 +91,7 @@ namespace ReverseTD.Offense
 
         private void OnDisable()
         {
+            IsTutorialPaused = false;
             Time.timeScale = 1f;
         }
 

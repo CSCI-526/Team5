@@ -4,6 +4,7 @@ using UnityEngine.SceneManagement;
 public class MenuManager : MonoBehaviour
 {
     [SerializeField] private OffenseData offenseData;
+
     public void StartGame()
     {
         if (offenseData == null)
@@ -13,6 +14,6 @@ public class MenuManager : MonoBehaviour
         }
 
         offenseData.ResetGame();
-        SceneManager.LoadScene("UpgradeScene");
+        SceneManager.LoadScene("DefenseSandbox");
     }
 }
