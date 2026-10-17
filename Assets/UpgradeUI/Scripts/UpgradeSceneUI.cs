@@ -3,6 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using ReverseTD.UpgradeUI;
 
 public class UpgradeSceneUI : MonoBehaviour
 {
@@ -36,11 +37,15 @@ public class UpgradeSceneUI : MonoBehaviour
         if (startGameButton != null)
             startGameButton.onClick.AddListener(OnStartGameClicked);
 
+        /*
         BuildDefaultTreeIfEmpty();
 
         // Load tree and rebuild unlocked branches
         SpawnRootNode();
         RestoreTreeProgress(rootUpgrade, spawnedNodes[rootUpgrade]);
+        */
+
+        SquadScreen.Create(offenseData, RefreshUI);
 
         RefreshUI();
     }
