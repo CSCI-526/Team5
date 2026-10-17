@@ -8,28 +8,31 @@ namespace ReverseTD.Offense
 {
     public class OffenseSoldier : MonoBehaviour, IDamageable, IPathProgress
     {
-        private const float Size = 0.4f;
         private const float AttackInterval = 1f;
         private const float ShotSpeed = 8f;
-
-        private static readonly Color fullHealthColor = new Color(0.95f, 0.35f, 0.3f);
-        private static readonly Color lowHealthColor = new Color(0.35f, 0.08f, 0.08f);
+        private const float DeathThreshold = 0.001f;
+        private const int CenterColumn = 1;
+        private const int RightColumn = 2;
 
         [SerializeField] private float maxHp;
         [SerializeField] private float hp;
         [SerializeField] private float speed;
         [SerializeField] private float damage;
+        [SerializeField] private float defense;
         [SerializeField] private float attackRange;
 
         private readonly List<IDamageable> candidates = new List<IDamageable>();
-        private StagePath path;
-        private StagePath lowerPath;
+        private LanePath lane;
+        private LanePath lowerLane;
         private ForkCommandSlot forkCommandSlot;
 
         private float forkDistance;
         private bool forkDecisionMade = false;
         private SoldierVisual visual;
         private OffenseData offenseData;
+        private UnitType type;
+        private int column;
+        private float sideOffset;
         private float distanceTraveled;
         private float attackCooldown;
         private bool isAlive = true;
@@ -39,33 +42,36 @@ namespace ReverseTD.Offense
         public bool IsAlive => isAlive;
         public Vector3 Position => transform.position;
         public float DistanceTraveled => distanceTraveled;
+        public UnitType Type => type;
 
-        public void Initialize(StagePath stagePath,OffenseData data,float towerAttackRange = 1.5f,StagePath alternatePath = null,ForkCommandSlot commandSlot = null)
+        public void Initialize(OffenseData data, UnitType unitType, int unitColumn, float startDistance, float laneOffset, float towerAttackRange, LanePath upperLane, LanePath alternateLane, float forkAt, ForkCommandSlot commandSlot)
         {
-            path = stagePath;
             offenseData = data;
+            type = unitType;
+            column = unitColumn;
+            distanceTraveled = startDistance;
+            sideOffset = laneOffset;
 
-            lowerPath = alternatePath;
+            lane = upperLane;
+            lowerLane = alternateLane;
             forkCommandSlot = commandSlot;
-
-            forkDistance = Vector2.Distance(
-                stagePath.Waypoints[0],
-                stagePath.Waypoints[1]
-            );
+            forkDistance = forkAt;
 
             forkDecisionMade = false;
 
             // Pull values dynamically from persistent upgrade data
-            maxHp = data != null ? data.MaxHealth : 5f;
+            int[] levels = data != null ? data.upgradeLevels : null;
+            maxHp = SquadRules.MaxHealth(type, levels);
             hp = maxHp;
-            speed = 1.0f;
-            damage = data != null ? data.AttackDamage : 1f;
+            speed = SquadRules.Speed;
+            damage = SquadRules.AttackDamage(levels);
+            defense = SquadRules.Defense(type, levels);
             attackRange = towerAttackRange;
 
-            transform.position = path.Start;
+            transform.position = lane.Sample(distanceTraveled, sideOffset);
 
             // Create the soldier's visual (body, gun, HP bar)
-            visual = SoldierVisual.Create(transform, Size, fullHealthColor, lowHealthColor);
+            visual = SoldierVisual.Create(transform, SquadRules.UnitSize, UnitLooks.For(type));
         }
 
         private void OnEnable()
@@ -80,21 +86,19 @@ namespace ReverseTD.Offense
 
         private void Update()
         {
-            if (!isAlive || path == null) return;
+            if (!isAlive || lane == null) return;
             float nextDistance = distanceTraveled + speed * Time.deltaTime;
 
             // Check the route when the soldier reaches the fork
             if (!forkDecisionMade &&
-                lowerPath != null &&
-                forkCommandSlot != null &&
-                distanceTraveled <= forkDistance &&
+                lowerLane != null &&
                 nextDistance >= forkDistance)
             {
                 forkDecisionMade = true;
 
-                if (forkCommandSlot.ShouldUseLowerPath())
+                if (ShouldUseLowerPath())
                 {
-                    path = lowerPath;
+                    lane = lowerLane;
                     Debug.Log(gameObject.name + " chose LOWER path");
                 }
                 else
@@ -104,10 +108,10 @@ namespace ReverseTD.Offense
             }
 
             distanceTraveled = nextDistance;
-            transform.position = path.GetPointAtDistance(distanceTraveled);
+            transform.position = lane.Sample(distanceTraveled, sideOffset);
 
             // Reached the end of the track
-            if (distanceTraveled >= path.TotalLength)
+            if (distanceTraveled >= lane.TotalLength)
             {
                 if (OffenseWaveManager.Instance != null)
                 {
@@ -122,18 +126,40 @@ namespace ReverseTD.Offense
                 return;
             }
 
-            Attack();
+            if (type == UnitType.Attack)
+            {
+                Attack();
+            }
         }
 
         public float TakeDamage(float amount)
         {
             if (!isAlive) return 0f;
 
-            float applied = Mathf.Min(amount, hp);
+            float applied = Mathf.Min(amount * (1f - defense), hp);
             hp -= applied;
             if (visual != null) visual.ShowHealth(hp / maxHp);
-            if (hp <= 0f) Despawn();
+            if (hp <= DeathThreshold) Despawn();
             return applied;
+        }
+
+        public void Heal(float amount)
+        {
+            if (!isAlive || amount <= 0f || hp >= maxHp) return;
+
+            hp = Mathf.Min(maxHp, hp + amount);
+            if (visual != null) visual.ShowHeal(hp / maxHp);
+        }
+
+        private bool ShouldUseLowerPath()
+        {
+            if (forkCommandSlot == null) return false;
+
+            if (forkCommandSlot.CurrentCommand == RouteCommand.Split && column != CenterColumn)
+            {
+                return column == RightColumn;
+            }
+            return forkCommandSlot.ShouldUseLowerPath();
         }
 
         private void Attack()
@@ -158,7 +184,7 @@ namespace ReverseTD.Offense
         {
             if (offenseData != null)
             {
-                offenseData.gold += damageDealt;
+                offenseData.AddEarnedGold(damageDealt);
             }
         }
 
