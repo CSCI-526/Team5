@@ -41,5 +41,5 @@ MonoBehaviour:
     definition: {fileID: 11400000, guid: c16499c1ee0014574be21e377b1fa9db, type: 2}
   - position: {x: 4.5, y: -4}
     definition: {fileID: 11400000, guid: c16499c1ee0014574be21e377b1fa9db, type: 2}
-  pathWidth: 0.7
+  pathWidth: 1.1
   pathColor: {r: 0.78, g: 0.72, b: 0.55, a: 1}

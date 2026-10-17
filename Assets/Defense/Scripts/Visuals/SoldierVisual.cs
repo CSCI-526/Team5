@@ -12,6 +12,10 @@ namespace ReverseTD.Defense
         private const float FlashTime = 0.1f;
         private const float HitFlashTime = 0.12f;
         private const float HitFlashAlpha = 0.4f;
+        private const float HealFlashTime = 0.3f;
+        private const float HealFlashAlpha = 0.45f;
+        private const float DefaultOuterSize = 0.4f;
+        private const float DefaultInnerSize = 0.34f;
         private const float ShadowAlpha = 0.5f;
         private const float FlashGlowAlpha = 0.25f;
         private const float HandShade = 0.8f;
@@ -26,6 +30,7 @@ namespace ReverseTD.Defense
         private static readonly Vector2 muzzle = new Vector2(0.42f, -0.14f);
         private static readonly Color gunColor = new Color(0.125f, 0.14f, 0.165f);
         private static readonly Color gunTipColor = new Color(0.29f, 0.32f, 0.365f);
+        private static readonly Color healColor = new Color(0.35f, 0.85f, 0.45f);
 
         private Transform shadow;
         private Transform lower;
@@ -33,6 +38,7 @@ namespace ReverseTD.Defense
         private SpriteRenderer flashGlow;
         private SpriteRenderer flashCore;
         private SpriteRenderer hitFlash;
+        private SpriteRenderer healFlash;
         private HealthBar healthBar;
         private GameObject healthBarObject;
         private Vector3 lastPosition;
@@ -43,16 +49,22 @@ namespace ReverseTD.Defense
         private float aimTimer;
         private float flashTimer;
         private float hitTimer;
+        private float healTimer;
         private float shownHealth = 1f;
         private bool hasFaced;
 
         public static SoldierVisual Create(Transform soldier, float size, Color bodyColor, Color outlineColor)
         {
+            return Create(soldier, size, new SoldierLook(bodyColor, outlineColor, DefaultOuterSize, DefaultInnerSize, SoldierMark.None, Color.white));
+        }
+
+        public static SoldierVisual Create(Transform soldier, float size, SoldierLook look)
+        {
             var visualObject = new GameObject("Visual");
             visualObject.transform.SetParent(soldier, false);
 
             var visual = visualObject.AddComponent<SoldierVisual>();
-            visual.Build(size, bodyColor, outlineColor);
+            visual.Build(size, look);
             return visual;
         }
 
@@ -86,6 +98,18 @@ namespace ReverseTD.Defense
                 healthBarObject.SetActive(true);
             }
             healthBar.SetFraction(fraction);
+        }
+
+        public void ShowHeal(float fraction)
+        {
+            fraction = Mathf.Clamp01(fraction);
+            shownHealth = fraction;
+            healTimer = HealFlashTime;
+            healthBar.SetFraction(fraction);
+            if (fraction >= 1f && healthBarObject.activeSelf)
+            {
+                healthBarObject.SetActive(false);
+            }
         }
 
         /** 
@@ -129,24 +153,26 @@ namespace ReverseTD.Defense
         }
         **/
 
-        private void Build(float size, Color bodyColor, Color outlineColor)
+        private void Build(float size, SoldierLook look)
         {
             float scale = size / DesignSize;
             transform.localScale = new Vector3(scale, scale, 1f);
             lastPosition = transform.position;
 
             int order = SortingOrders.Soldier;
-            var squareSize = new Vector2(0.4f, 0.4f);
-            var innerSize = new Vector2(0.34f, 0.34f);
+            var squareSize = new Vector2(look.OuterSize, look.OuterSize);
+            var innerSize = new Vector2(look.InnerSize, look.InnerSize);
 
             // Drop shadow
             shadow = ShapeSprites.AddPart(transform, "Shadow", ShapeSprites.Square, new Vector2(0.03f, -0.05f), squareSize, new Color(0f, 0f, 0f, ShadowAlpha), order).transform;
 
             // Body (Outline + Fill)
             lower = AddGroup("Lower");
-            ShapeSprites.AddPart(lower, "Outline", ShapeSprites.Square, Vector2.zero, squareSize, outlineColor, order + 1);
-            ShapeSprites.AddPart(lower, "Body", ShapeSprites.Square, Vector2.zero, innerSize, bodyColor, order + 2);
-            hitFlash = ShapeSprites.AddPart(lower, "Hit Flash", ShapeSprites.Square, Vector2.zero, squareSize, Color.white, order + 3);
+            ShapeSprites.AddPart(lower, "Outline", ShapeSprites.Square, Vector2.zero, squareSize, look.Outline, order + 1);
+            ShapeSprites.AddPart(lower, "Body", ShapeSprites.Square, Vector2.zero, innerSize, look.Body, order + 2);
+            AddMark(look, order + 3);
+            hitFlash = ShapeSprites.AddPart(lower, "Hit Flash", ShapeSprites.Square, Vector2.zero, squareSize, Color.white, order + 4);
+            healFlash = ShapeSprites.AddPart(lower, "Heal Flash", ShapeSprites.Square, Vector2.zero, squareSize, healColor, order + 4);
 
             // Upper layer (remains empty so aim/muzzle calculations still resolve)
             upper = AddGroup("Upper");
@@ -204,6 +230,7 @@ namespace ReverseTD.Defense
             aimTimer = Mathf.Max(0f, aimTimer - delta);
             flashTimer = Mathf.Max(0f, flashTimer - delta);
             hitTimer = Mathf.Max(0f, hitTimer - delta);
+            healTimer = Mathf.Max(0f, healTimer - delta);
         }
 
         private void Apply()
@@ -222,6 +249,31 @@ namespace ReverseTD.Defense
             if (hit)
             {
                 hitFlash.color = new Color(1f, 1f, 1f, HitFlashAlpha * hitTimer / HitFlashTime);
+            }
+
+            bool healing = healTimer > 0f;
+            healFlash.enabled = healing;
+            if (healing)
+            {
+                healFlash.color = new Color(healColor.r, healColor.g, healColor.b, HealFlashAlpha * healTimer / HealFlashTime);
+            }
+        }
+
+        private void AddMark(SoldierLook look, int order)
+        {
+            switch (look.Mark)
+            {
+                case SoldierMark.Diamond:
+                    ShapeSprites.AddPart(lower, "Mark", ShapeSprites.Square, Vector2.zero, new Vector2(SoldierLook.DiamondSize, SoldierLook.DiamondSize), look.MarkColor, order)
+                        .transform.localRotation = Quaternion.Euler(0f, 0f, 45f);
+                    break;
+                case SoldierMark.Plate:
+                    ShapeSprites.AddPart(lower, "Mark", ShapeSprites.Square, Vector2.zero, new Vector2(SoldierLook.PlateSize, SoldierLook.PlateSize), look.MarkColor, order);
+                    break;
+                case SoldierMark.Cross:
+                    ShapeSprites.AddPart(lower, "Mark Across", ShapeSprites.Square, Vector2.zero, new Vector2(SoldierLook.CrossLength, SoldierLook.CrossWidth), look.MarkColor, order);
+                    ShapeSprites.AddPart(lower, "Mark Upright", ShapeSprites.Square, Vector2.zero, new Vector2(SoldierLook.CrossWidth, SoldierLook.CrossLength), look.MarkColor, order);
+                    break;
             }
         }
 

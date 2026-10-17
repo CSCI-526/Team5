@@ -8,11 +8,13 @@ namespace ReverseTD.Defense
         private const float TickStart = 0.2f;
         private const float TickEnd = 0.4f;
         private const float TickWidth = 0.06f;
+        private const float Scale = 0.75f;
 
         private static readonly Color markColor = new Color(0.93f, 0.11f, 0.14f);
 
         public void Initialize()
         {
+            transform.localScale = new Vector3(Scale, Scale, 1f);
             int order = SortingOrders.TargetMarker;
             float tickLength = TickEnd - TickStart;
             float tickCenter = (TickStart + TickEnd) * 0.5f;

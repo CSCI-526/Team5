@@ -27,9 +27,6 @@ namespace ReverseTD.Offense
         private float soldierAttackRange = 2f;
 
         [Header("Wave Settings")]
-        [SerializeField, Min(0f), Tooltip("Seconds between soldier spawns.")]
-        private float interval = 0.6f;
-
         [SerializeField, Tooltip("Name of the upgrade scene to load once all units die.")]
         private string upgradeSceneName = "UpgradeScene";
 
@@ -38,10 +35,19 @@ namespace ReverseTD.Offense
 
         [SerializeField] private Slider speedSlider;
 
+        private readonly OffenseSoldier[] soldiers = new OffenseSoldier[SquadRules.CellCount];
         private int livingUnits = 0;
         private bool spawningComplete = false;
         private int spawnedCount = 0;
         private bool transitionQueued = false;
+        private float healTimer;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics()
+        {
+            Instance = null;
+            IsTutorialPaused = false;
+        }
 
         private void Awake()
         {
@@ -64,6 +70,11 @@ namespace ReverseTD.Offense
                     else
                         speedSlider.SetValueWithoutNotify(2);
                 }
+
+                if (forkCommandSlot != null && offenseData.lastRouteCommand != RouteCommand.None)
+                {
+                    forkCommandSlot.SetCommand(offenseData.lastRouteCommand);
+                }
             }
 
             SpawnWave();
@@ -72,6 +83,45 @@ namespace ReverseTD.Offense
         private void Update()
         {
             Time.timeScale = IsTutorialPaused ? 0f : timeScale;
+
+            if (forkCommandSlot != null && offenseData != null)
+            {
+                offenseData.lastRouteCommand = forkCommandSlot.CurrentCommand;
+            }
+
+            TickHealing();
+        }
+
+        private void TickHealing()
+        {
+            healTimer += Time.deltaTime;
+            if (healTimer < SquadRules.HealInterval) return;
+            healTimer -= SquadRules.HealInterval;
+
+            float amount = SquadRules.HealRate(offenseData != null ? offenseData.upgradeLevels : null) * SquadRules.HealInterval;
+            float reachSqr = SquadRules.HealReach * SquadRules.HealReach;
+
+            for (int cell = 0; cell < soldiers.Length; cell++)
+            {
+                OffenseSoldier healer = soldiers[cell];
+                if (healer == null || !healer.IsAlive || healer.Type != UnitType.Heal) continue;
+
+                int row = cell / SquadRules.Columns;
+                int column = cell % SquadRules.Columns;
+                for (int r = row - 1; r <= row + 1; r++)
+                {
+                    for (int c = column - 1; c <= column + 1; c++)
+                    {
+                        if (r < 0 || r >= SquadRules.Rows || c < 0 || c >= SquadRules.Columns || (r == row && c == column)) continue;
+
+                        OffenseSoldier neighbor = soldiers[r * SquadRules.Columns + c];
+                        if (neighbor == null || !neighbor.IsAlive) continue;
+                        if ((neighbor.Position - healer.Position).sqrMagnitude > reachSqr) continue;
+
+                        neighbor.Heal(amount);
+                    }
+                }
+            }
         }
 
         public void SetSpeedFromSlider(float value)
@@ -110,18 +160,33 @@ namespace ReverseTD.Offense
                 return;
             }
 
-            StartCoroutine(SpawnSoldiersRoutine());
+            SpawnSquad();
         }
 
-        private IEnumerator SpawnSoldiersRoutine()
+        private void SpawnSquad()
         {
-            int count = offenseData != null ? offenseData.TotalSpawnCount : 1;
+            if (offenseData != null)
+            {
+                offenseData.EnsureSquad();
+            }
+
+            var upperLane = new LanePath(board.Path.Waypoints, SquadRules.CornerRadius);
+            StagePath lowerPath = board.LowerPath;
+            LanePath lowerLane = lowerPath != null ? new LanePath(lowerPath.Waypoints, SquadRules.CornerRadius) : null;
+            float forkDistance = lowerLane != null ? upperLane.DivergeDistance(lowerLane) : float.MaxValue;
             spawningComplete = false;
 
-            for (int i = 0; i < count; i++)
+            for (int cell = 0; cell < SquadRules.CellCount; cell++)
             {
-                SpawnSoldier();
-                yield return new WaitForSeconds(interval);
+                UnitType type = offenseData != null ? offenseData.squad[cell]
+                    : (cell == SquadRules.CenterCell ? UnitType.Attack : UnitType.None);
+                if (type == UnitType.None) continue;
+
+                int row = cell / SquadRules.Columns;
+                int column = cell % SquadRules.Columns;
+                float startDistance = (SquadRules.Rows - 1 - row) * SquadRules.Spacing;
+                float laneOffset = (1 - column) * SquadRules.Spacing;
+                soldiers[cell] = SpawnSoldier(type, column, startDistance, laneOffset, upperLane, lowerLane, forkDistance);
             }
 
             spawningComplete = true;
@@ -132,7 +197,7 @@ namespace ReverseTD.Offense
             }
         }
 
-        private void SpawnSoldier()
+        private OffenseSoldier SpawnSoldier(UnitType type, int column, float startDistance, float laneOffset, LanePath upperLane, LanePath lowerLane, float forkDistance)
         {
             // Spawn inactive so combat registration occurs cleanly upon SetActive
             var soldierObject = new GameObject($"OffenseSoldier {spawnedCount++}");
@@ -140,10 +205,11 @@ namespace ReverseTD.Offense
             soldierObject.transform.SetParent(transform, false);
 
             var soldier = soldierObject.AddComponent<OffenseSoldier>();
-            soldier.Initialize(board.Path,offenseData,soldierAttackRange,board.LowerPath,forkCommandSlot);
+            soldier.Initialize(offenseData, type, column, startDistance, laneOffset, soldierAttackRange, upperLane, lowerLane, forkDistance, forkCommandSlot);
 
             soldierObject.SetActive(true);
             livingUnits++;
+            return soldier;
         }
 
         public void ReportSoldierDeath()

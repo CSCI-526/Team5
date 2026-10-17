@@ -42,7 +42,7 @@ namespace ReverseTD.Shared
         private const string RulesText =
             "• <b>YOU ARE THE ATTACKER: </b> March past towers trying to stop you.\n" +
             "• <b>EARN GOLD ($):</b> Every 1 damage your soldiers deal to towers = <b>+$1 Gold</b> (Top Right).\n" +
-            "• <b>UPGRADE:</b> When your wave dies, spend Gold on <color=#4CC24C>Green</color> upgrades.\n" +
+            "• <b>UPGRADE:</b> When your squad dies, spend Gold on <color=#4CC24C>Green</color> upgrades and pick new units from cards.\n" +
             "• <b>WIN:</b> Get <b>1 soldier</b> to the end of the path!";
 
         private static HowToPlay current;
@@ -317,7 +317,7 @@ namespace ReverseTD.Shared
 
             ShowBanner(
                 "4/4 — REACH THE GOAL TO WIN!",
-                "Keep upgrading HP, Attack, and Units between waves until <b>just 1 soldier</b> survives to reach this end point!",
+                "Keep upgrading and adding units from cards between waves until <b>just 1 soldier</b> reaches this end point!",
                 "Click to zoom out & play!"
             );
 

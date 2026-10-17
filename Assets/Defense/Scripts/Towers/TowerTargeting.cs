@@ -6,6 +6,8 @@ namespace ReverseTD.Defense
 {
     public class TowerTargeting : MonoBehaviour
     {
+        private const float SameProgress = 0.001f;
+
         private readonly List<IDamageable> candidates = new List<IDamageable>();
         private TowerDefinition definition;
 
@@ -24,6 +26,7 @@ namespace ReverseTD.Defense
             float nearestSqr = float.MaxValue;
             IDamageable first = null;
             float firstProgress = float.MinValue;
+            float firstSqr = float.MaxValue;
 
             for (int i = 0; i < candidates.Count; i++)
             {
@@ -40,10 +43,17 @@ namespace ReverseTD.Defense
                     nearestSqr = distanceSqr;
                 }
 
-                if (candidate is IPathProgress progress && progress.DistanceTraveled > firstProgress)
+                if (candidate is IPathProgress progress)
                 {
-                    first = candidate;
-                    firstProgress = progress.DistanceTraveled;
+                    float traveled = progress.DistanceTraveled;
+                    bool ahead = traveled > firstProgress + SameProgress;
+                    bool level = traveled >= firstProgress - SameProgress;
+                    if (ahead || (level && distanceSqr < firstSqr))
+                    {
+                        first = candidate;
+                        firstProgress = traveled;
+                        firstSqr = distanceSqr;
+                    }
                 }
             }
 
