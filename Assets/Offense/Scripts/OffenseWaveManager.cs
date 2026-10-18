@@ -4,6 +4,7 @@ using UnityEngine.SceneManagement;
 using ReverseTD.Defense;
 using UnityEngine.UI;
 using ReverseTD.UpgradeUI;
+using TMPro;
 
 namespace ReverseTD.Offense
 {
@@ -60,6 +61,9 @@ namespace ReverseTD.Offense
 
         private void Start()
         {
+            DisableForkMechanicUI();
+            EnsureEditFormationButton();
+
             if (offenseData != null)
             {
                 timeScale = offenseData.gameSpeed;
@@ -73,24 +77,101 @@ namespace ReverseTD.Offense
                     else
                         speedSlider.SetValueWithoutNotify(2);
                 }
-
-                if (forkCommandSlot != null && offenseData.lastRouteCommand != RouteCommand.None)
-                {
-                    forkCommandSlot.SetCommand(offenseData.lastRouteCommand);
-                }
             }
 
             SpawnWave();
         }
 
+        private void DisableForkMechanicUI()
+        {
+            if (forkCommandSlot != null)
+            {
+                forkCommandSlot.gameObject.SetActive(false);
+                forkCommandSlot = null;
+            }
+
+            ForkCommandSlot[] slots = FindObjectsByType<ForkCommandSlot>(FindObjectsSortMode.None);
+            for (int i = 0; i < slots.Length; i++)
+            {
+                if (slots[i] != null) slots[i].gameObject.SetActive(false);
+            }
+
+            DraggableCommand[] commands = FindObjectsByType<DraggableCommand>(FindObjectsSortMode.None);
+            for (int i = 0; i < commands.Length; i++)
+            {
+                if (commands[i] == null) continue;
+                Transform parent = commands[i].transform.parent;
+                if (parent != null && parent.name == "CommandBar")
+                {
+                    parent.gameObject.SetActive(false);
+                }
+                commands[i].gameObject.SetActive(false);
+            }
+        }
+
+        private void EnsureEditFormationButton()
+        {
+            Button[] buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+            for (int i = 0; i < buttons.Length; i++)
+            {
+                Button btn = buttons[i];
+                if (btn == null || !btn.gameObject.activeInHierarchy) continue;
+                for (int j = 0; j < btn.onClick.GetPersistentEventCount(); j++)
+                {
+                    if (btn.onClick.GetPersistentTarget(j) == this &&
+                        btn.onClick.GetPersistentMethodName(j) == nameof(OpenSquadEditor))
+                    {
+                        return;
+                    }
+                }
+            }
+
+            Canvas targetCanvas = speedSlider != null ? speedSlider.GetComponentInParent<Canvas>() : FindAnyObjectByType<Canvas>();
+            if (targetCanvas == null) return;
+
+            var btnObj = new GameObject("Button", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+            btnObj.layer = targetCanvas.gameObject.layer;
+            var rect = (RectTransform)btnObj.transform;
+            rect.SetParent(targetCanvas.transform, false);
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = new Vector2(192.6f, 20f);
+            rect.sizeDelta = new Vector2(80f, 25f);
+
+            var image = btnObj.GetComponent<Image>();
+            image.color = Color.white;
+
+            var button = btnObj.GetComponent<Button>();
+            button.targetGraphic = image;
+            button.onClick.AddListener(OpenSquadEditor);
+
+            var textObj = new GameObject("Text (TMP)", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+            textObj.layer = targetCanvas.gameObject.layer;
+            var textRect = (RectTransform)textObj.transform;
+            textRect.SetParent(rect, false);
+            textRect.anchorMin = Vector2.zero;
+            textRect.anchorMax = Vector2.one;
+            textRect.pivot = new Vector2(0.5f, 0.5f);
+            textRect.anchoredPosition = Vector2.zero;
+            textRect.sizeDelta = Vector2.zero;
+
+            var label = textObj.GetComponent<TextMeshProUGUI>();
+            if (TMP_Settings.defaultFontAsset != null)
+            {
+                label.font = TMP_Settings.defaultFontAsset;
+            }
+            label.text = "Edit Formation";
+            label.fontSize = 10f;
+            label.fontStyle = FontStyles.Bold;
+            label.color = new Color(0.19607843f, 0.19607843f, 0.19607843f, 1f);
+            label.alignment = TextAlignmentOptions.Center;
+            label.raycastTarget = false;
+        }
+
         private void Update()
         {
             Time.timeScale = IsTutorialPaused || IsSquadEditing ? 0f : timeScale;
-
-            if (forkCommandSlot != null && offenseData != null)
-            {
-                offenseData.lastRouteCommand = forkCommandSlot.CurrentCommand;
-            }
 
             if (!IsTutorialPaused && !IsSquadEditing)
             {
@@ -336,7 +417,6 @@ namespace ReverseTD.Offense
 
                 transitionQueued = true;
 
-                offenseData.ResetLevelStats();
                 offenseData.currentLevel = 2;
 
                 SceneManager.LoadScene("Level2Intro");

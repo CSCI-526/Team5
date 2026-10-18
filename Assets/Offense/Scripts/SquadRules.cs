@@ -30,7 +30,7 @@ namespace ReverseTD.Offense
         private static readonly double[] baseCosts = { 8, 6, 8, 6, 8, 6 };
         private static readonly double[] costMultipliers = { 1.8, 1.6, 1.6, 1.6, 1.6, 1.6 };
         private static readonly int[] maxLevels = { 5, 5, 4, 5, 5, 5 };
-        private static readonly double[] quotas = { 8, 20, 40, 65, 95, 130, 170, 215, 265 };
+        private static readonly double[] quotas = { 10, 100, 500 };
         private static readonly AugmentCard[] unitCards = { AugmentCard.AddAttack, AugmentCard.AddTank, AugmentCard.AddHeal };
 
         public static int QuotaCount => quotas.Length;
@@ -45,7 +45,8 @@ namespace ReverseTD.Offense
 
         public static double Quota(int index)
         {
-            return quotas[index];
+            if (index < 0 || quotas.Length == 0) return CardCost;
+            return index < quotas.Length ? quotas[index] : quotas[quotas.Length - 1];
         }
 
         public static float Step(UnitStat stat)
