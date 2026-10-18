@@ -13,20 +13,20 @@ MonoBehaviour:
   m_Name: DefaultStage
   m_EditorClassIdentifier: Assembly-CSharp::ReverseTD.Defense.StageLayout
   waypoints:
-  - {x: -8, y: 3}
-  - {x: 5, y: 3}
-  - {x: 5, y: 0}
-  - {x: -5, y: 0}
-  - {x: -5, y: -3}
-  - {x: 8, y: -3}
+  - {x: -6, y: 3}
+  - {x: 0, y: 3}
+  - {x: 0, y: 0}
+  - {x: 0, y: -3}
+  - {x: 6, y: -3}
+  lowerWaypoints: []
   towerSlots:
-  - position: {x: -1.5, y: 1.5}
+  - position: {x: 1, y: 3}
     definition: {fileID: 11400000, guid: c16499c1ee0014574be21e377b1fa9db, type: 2}
-  - position: {x: 3, y: 1.5}
+    attackDirection: 1
+    attackRange: 3
+  - position: {x: 0, y: -4}
     definition: {fileID: 11400000, guid: c16499c1ee0014574be21e377b1fa9db, type: 2}
-  - position: {x: -3, y: -1.5}
-    definition: {fileID: 11400000, guid: c16499c1ee0014574be21e377b1fa9db, type: 2}
-  - position: {x: 1.5, y: -1.5}
-    definition: {fileID: 11400000, guid: c16499c1ee0014574be21e377b1fa9db, type: 2}
+    attackDirection: 2
+    attackRange: 5
   pathWidth: 1.1
   pathColor: {r: 0.78, g: 0.72, b: 0.55, a: 1}

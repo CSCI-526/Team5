@@ -17,7 +17,7 @@ namespace ReverseTD.UpgradeUI
         private const float DropTint = 0.15f;
         private const float HoverTint = 0.35f;
         private const float TitleGap = 52f;
-        private const float FrontGap = 22f;
+        private const float TopGap = 22f;
         private const float HintGap = 26f;
         private const float TrayLabelInset = 14f;
         private const float TrayIconDrop = 8f;
@@ -35,6 +35,8 @@ namespace ReverseTD.UpgradeUI
         private TextMeshProUGUI hintLabel;
         private GameObject tray;
         private Action changed;
+        private Action<int, int> cellsSwapped;
+        private Func<int, bool> isInactive;
         private Action<int> placed;
         private UnitIconUI ghost;
         private UnitType pending = UnitType.None;
@@ -47,7 +49,7 @@ namespace ReverseTD.UpgradeUI
         public RectTransform Rect => rect;
 
         public static SquadGridUI Create(Transform parent, RectTransform dragLayer, OffenseData data, Vector2 position, float cell, float gap,
-            string title, string hint, bool allowSwap, Action changed)
+            string title, string hint, bool allowSwap, Action changed, Action<int, int> cellsSwapped = null, Func<int, bool> isInactive = null)
         {
             float size = cell * SquadRules.Columns + gap * (SquadRules.Columns - 1);
             RectTransform rect = UiKit.CreateRect(parent, "Squad Grid", position, new Vector2(size, size));
@@ -58,6 +60,8 @@ namespace ReverseTD.UpgradeUI
             grid.cellSize = cell;
             grid.allowSwap = allowSwap;
             grid.changed = changed;
+            grid.cellsSwapped = cellsSwapped;
+            grid.isInactive = isInactive;
             grid.Build(size, gap, title, hint);
             return grid;
         }
@@ -70,6 +74,12 @@ namespace ReverseTD.UpgradeUI
                 UnitType type = data.squad[i];
                 icons[i].SetType(type);
                 icons[i].gameObject.SetActive(dragFrom != i);
+                if (isInactive != null)
+                {
+                    CanvasGroup group = icons[i].GetComponent<CanvasGroup>();
+                    if (group == null) group = icons[i].gameObject.AddComponent<CanvasGroup>();
+                    group.alpha = isInactive(i) ? 0.3f : 1f;
+                }
 
                 bool dropTarget = pending != UnitType.None && type == UnitType.None;
                 bool strong = (dropTarget && hoverCell == i) || markedCell == i;
@@ -191,6 +201,7 @@ namespace ReverseTD.UpgradeUI
             else if (target >= 0 && target != from)
             {
                 data.SwapCells(from, target);
+                cellsSwapped?.Invoke(from, target);
                 if (changed != null)
                 {
                     changed();
@@ -204,15 +215,13 @@ namespace ReverseTD.UpgradeUI
             float half = size * 0.5f;
             for (int i = 0; i < SquadRules.CellCount; i++)
             {
-                int row = i / SquadRules.Columns;
-                int column = i % SquadRules.Columns;
-                var position = new Vector2(-half + column * (cellSize + gap) + cellSize * 0.5f, half - row * (cellSize + gap) - cellSize * 0.5f);
+                Vector2 position = SquadRules.CellOffset(i, cellSize + gap);
                 Image cell = UiKit.CreateImage(rect, "Cell " + i, position, new Vector2(cellSize, cellSize), UiKit.CellColor, CellRadius);
                 SetUpCell(cell, i);
                 icons[i] = UnitIconUI.Create(cell.transform, Vector2.zero, cellSize * IconScale);
             }
 
-            UiKit.CreateText(rect, "Front", "FRONT", new Vector2(0f, half + FrontGap), new Vector2(size, 18f), 12f, UiKit.MutedColor, FontStyles.Bold, 6f);
+            UiKit.CreateText(rect, "Top", "TOP", new Vector2(0f, half + TopGap), new Vector2(size, 18f), 12f, UiKit.MutedColor, FontStyles.Bold, 6f);
             if (!string.IsNullOrEmpty(title))
             {
                 titleLabel = UiKit.CreateText(rect, "Title", title, new Vector2(0f, half + TitleGap), new Vector2(size + 120f, 26f), 18f,

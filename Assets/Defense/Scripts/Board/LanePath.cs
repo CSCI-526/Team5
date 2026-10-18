@@ -99,6 +99,8 @@ namespace ReverseTD.Defense
 
         public float TotalLength { get; }
 
+        public IReadOnlyList<Vector2> Waypoints => waypoints;
+
         public float MinCornerRadius { get; }
 
         public Vector2 Sample(float distance, float sideOffset)

@@ -22,18 +22,16 @@ namespace ReverseTD.Defense
             Destroyed = null;
         }
 
-        public void Initialize(TowerDefinition towerDefinition, BoardView owner)
+        public void Initialize(TowerDefinition towerDefinition, BoardView owner, TowerAttackDirection attackDirection, float attackRange)
         {
             definition = towerDefinition;
             board = owner;
 
             var visual = CreateChild("Body").AddComponent<TowerVisual>();
             visual.Initialize(definition);
-            if (board != null)
-            {
-                visual.Face(board.Path.Start);
-            }
-            CreateChild("Range").AddComponent<RangeIndicator>().Initialize(definition);
+            Vector2 direction = TowerAttackGeometry.Direction(attackDirection);
+            visual.Face(transform.position + (Vector3)direction);
+            CreateChild("Range").AddComponent<RangeIndicator>().Initialize(definition, direction, attackRange);
             var marker = CreateChild("Target Marker").AddComponent<TargetMarker>();
             marker.Initialize();
 
@@ -44,8 +42,8 @@ namespace ReverseTD.Defense
             gameObject.AddComponent<TowerHealth>().Initialize(this, definition, healthBar, visual);
 
             var targeting = gameObject.AddComponent<TowerTargeting>();
-            targeting.Initialize(definition);
-            gameObject.AddComponent<TowerWeapon>().Initialize(definition, targeting, visual, marker);
+            targeting.Initialize(definition, direction, attackRange);
+            gameObject.AddComponent<TowerWeapon>().Initialize(definition, targeting, visual, marker, direction, attackRange);
         }
 
         internal void Die()

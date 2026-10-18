@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace ReverseTD.Offense
 {
@@ -11,9 +12,9 @@ namespace ReverseTD.Offense
         public const int StatCount = 6;
         public const float Spacing = 0.36f;
         public const float UnitSize = 0.3f;
-        public const float CornerRadius = 0.5f;
+        public const float CornerRadius = 0f;
         public const float Speed = 1f;
-        public const float HealInterval = 1f;
+        public const float HealInterval = 2f;
         public const float HealReach = 1f;
         public const double CardCost = 10;
         public const double GoldBonusPerCard = 0.5;
@@ -23,9 +24,9 @@ namespace ReverseTD.Offense
         public const float TankBaseHealth = 10f;
         public const float TankBaseDefense = 0.3f;
         public const float HealBaseHealth = 3f;
-        public const float HealBaseRate = 0.5f;
+        public const float HealBaseRate = 0.20f;
 
-        private static readonly float[] steps = { 1f, 2f, 0.1f, 4f, 0.25f, 2f };
+        private static readonly float[] steps = { 1f, 2f, 0.1f, 4f, 0.1f, 2f };
         private static readonly double[] baseCosts = { 8, 6, 8, 6, 8, 6 };
         private static readonly double[] costMultipliers = { 1.8, 1.6, 1.6, 1.6, 1.6, 1.6 };
         private static readonly int[] maxLevels = { 5, 5, 4, 5, 5, 5 };
@@ -33,6 +34,14 @@ namespace ReverseTD.Offense
         private static readonly AugmentCard[] unitCards = { AugmentCard.AddAttack, AugmentCard.AddTank, AugmentCard.AddHeal };
 
         public static int QuotaCount => quotas.Length;
+
+        // Row-major cells use screen/world axes: left is -X and top is +Y.
+        public static Vector2 CellOffset(int cell, float spacing)
+        {
+            int row = cell / Columns;
+            int column = cell % Columns;
+            return new Vector2(column - (Columns - 1) * 0.5f, (Rows - 1) * 0.5f - row) * spacing;
+        }
 
         public static double Quota(int index)
         {

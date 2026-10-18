@@ -16,5 +16,6 @@ namespace ReverseTD.Defense
         public const int MuzzleFlash = 47;
         public const int HealthBar = 50;
         public const int HealthBarFill = 51;
+        public const int GoalZone = 60;
     }
 }

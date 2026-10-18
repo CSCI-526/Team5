@@ -6,7 +6,6 @@ namespace ReverseTD.Defense
 {
     public class BoardView : MonoBehaviour
     {
-        private const int RangeCircleSegments = 48;
         private const int GroundMargin = 16;
         private const float EdgeWidth = 0.1f;
         private const float EdgeShade = 0.7f;
@@ -20,6 +19,9 @@ namespace ReverseTD.Defense
 
         [SerializeField, Tooltip("The stage to build: the single source of truth for the path and the towers.")]
         private StageLayout layout;
+
+        [SerializeField, Tooltip("Draw a visual goal zone at the path's final waypoint.")]
+        private bool showGoalZone;
 
         private readonly List<Tower> towers = new List<Tower>();
         private StagePath path;
@@ -91,6 +93,35 @@ namespace ReverseTD.Defense
             BuildGround();
             BuildPath();
             BuildTowers();
+            if (showGoalZone)
+            {
+                BuildGoalZone();
+            }
+        }
+
+        private void BuildGoalZone()
+        {
+            const float borderWidth = 0.06f;
+            Vector2 size = new Vector2(layout.PathWidth * 1.2f, layout.PathWidth * 1.4f);
+            IReadOnlyList<Vector2> points = Path.Waypoints;
+            Vector2 direction = points[points.Count - 1] - points[points.Count - 2];
+            Quaternion rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);
+
+            Transform root = CreateChild("Goal Zone");
+            Vector2 offset = new Vector2(0f, 0f);
+            root.SetPositionAndRotation(Path.End + offset, rotation);
+            ShapeSprites.AddPart(root, "Fill", ShapeSprites.Square, Vector2.zero, size,
+                new Color(0.35f, 0.75f, 1f, 0.3f), SortingOrders.GoalZone);
+
+            Color borderColor = new Color(0.05f, 0.4f, 1f, 1f);
+            Vector2 horizontal = new Vector2(size.x, borderWidth);
+            Vector2 vertical = new Vector2(borderWidth, size.y);
+            float halfX = (size.x - borderWidth) * 0.5f;
+            float halfY = (size.y - borderWidth) * 0.5f;
+            ShapeSprites.AddPart(root, "Top Border", ShapeSprites.Square, new Vector2(0f, halfY), horizontal, borderColor, SortingOrders.GoalZone + 1);
+            ShapeSprites.AddPart(root, "Bottom Border", ShapeSprites.Square, new Vector2(0f, -halfY), horizontal, borderColor, SortingOrders.GoalZone + 1);
+            ShapeSprites.AddPart(root, "Left Border", ShapeSprites.Square, new Vector2(-halfX, 0f), vertical, borderColor, SortingOrders.GoalZone + 1);
+            ShapeSprites.AddPart(root, "Right Border", ShapeSprites.Square, new Vector2(halfX, 0f), vertical, borderColor, SortingOrders.GoalZone + 1);
         }
 
         private void BuildGround()
@@ -222,7 +253,7 @@ namespace ReverseTD.Defense
                 towerObject.transform.position = slot.Position;
 
                 var tower = towerObject.AddComponent<Tower>();
-                tower.Initialize(slot.Definition, this);
+                tower.Initialize(slot.Definition, this, slot.AttackDirection, slot.AttackRange);
                 towerObject.SetActive(true);
                 towers.Add(tower);
             }
@@ -284,20 +315,21 @@ namespace ReverseTD.Defense
                 Gizmos.color = color;
                 Gizmos.DrawWireCube(slots[i].Position, new Vector3(definition.Size, definition.Size, 0f));
                 Gizmos.color = new Color(color.r, color.g, color.b, 0.5f);
-                DrawCircle(slots[i].Position, definition.Range);
+                DrawAttackLane(slots[i], definition);
             }
         }
 
-        private static void DrawCircle(Vector2 center, float radius)
+        private static void DrawAttackLane(TowerSlot slot, TowerDefinition definition)
         {
-            Vector2 previous = center + new Vector2(radius, 0f);
-            for (int i = 1; i <= RangeCircleSegments; i++)
-            {
-                float angle = i * 2f * Mathf.PI / RangeCircleSegments;
-                Vector2 next = center + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius;
-                Gizmos.DrawLine(previous, next);
-                previous = next;
-            }
+            Vector2 direction = TowerAttackGeometry.Direction(slot.AttackDirection);
+            Vector2 side = new Vector2(-direction.y, direction.x) * (definition.AttackWidth * 0.5f);
+            Vector2 start = slot.Position;
+            Vector2 end = start + direction * slot.AttackRange;
+            Gizmos.DrawLine(start - side, end - side);
+            Gizmos.DrawLine(start + side, end + side);
+            Gizmos.DrawLine(start - side, start + side);
+            Gizmos.DrawLine(end - side, end + side);
+            Gizmos.DrawLine(start, end);
         }
     }
 }

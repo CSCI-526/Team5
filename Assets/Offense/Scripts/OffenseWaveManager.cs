@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using ReverseTD.Defense;
 using UnityEngine.UI;
+using ReverseTD.UpgradeUI;
 
 namespace ReverseTD.Offense
 {
@@ -41,6 +42,8 @@ namespace ReverseTD.Offense
         private int spawnedCount = 0;
         private bool transitionQueued = false;
         private float healTimer;
+        public bool IsSquadEditing { get; private set; }
+        public bool AllowTutorialSquadEditing { get; set; }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
@@ -82,14 +85,85 @@ namespace ReverseTD.Offense
 
         private void Update()
         {
-            Time.timeScale = IsTutorialPaused ? 0f : timeScale;
+            Time.timeScale = IsTutorialPaused || IsSquadEditing ? 0f : timeScale;
 
             if (forkCommandSlot != null && offenseData != null)
             {
                 offenseData.lastRouteCommand = forkCommandSlot.CurrentCommand;
             }
 
-            TickHealing();
+            if (!IsTutorialPaused && !IsSquadEditing)
+            {
+                TickHealing();
+            }
+        }
+
+        // Bind the player's custom button to this method in the Inspector.
+        public void OpenSquadEditor()
+        {
+            if (IsSquadEditing || (IsTutorialPaused && !AllowTutorialSquadEditing) || transitionQueued || livingUnits <= 0 || offenseData == null)
+            {
+                return;
+            }
+
+            offenseData.EnsureSquad();
+            IsSquadEditing = true;
+            Time.timeScale = 0f;
+            BattleSquadEditor.Open(this, offenseData);
+        }
+
+        public bool IsSoldierAliveAt(int cell)
+        {
+            return cell >= 0 && cell < soldiers.Length && soldiers[cell] != null && soldiers[cell].IsAlive;
+        }
+
+        public OffenseSoldier GetSoldierAt(int cell)
+        {
+            return IsSoldierAliveAt(cell) ? soldiers[cell] : null;
+        }
+
+        public int GetSoldierCell(OffenseSoldier soldier)
+        {
+            return soldier != null ? System.Array.IndexOf(soldiers, soldier) : -1;
+        }
+
+        public bool ApplySquadFormation(int[] sourceCells)
+        {
+            if (!IsSquadEditing || transitionQueued || offenseData == null || sourceCells == null || sourceCells.Length != soldiers.Length)
+            {
+                return false;
+            }
+
+            // Track individual units, including identical types, so HP and deaths are preserved.
+            var seen = new bool[soldiers.Length];
+            for (int cell = 0; cell < sourceCells.Length; cell++)
+            {
+                int source = sourceCells[cell];
+                if (source < 0 || source >= soldiers.Length || seen[source]) return false;
+                seen[source] = true;
+            }
+
+            var previousSoldiers = (OffenseSoldier[])soldiers.Clone();
+            var previousSquad = (UnitType[])offenseData.squad.Clone();
+            for (int cell = 0; cell < sourceCells.Length; cell++)
+            {
+                int source = sourceCells[cell];
+                offenseData.squad[cell] = previousSquad[source];
+                soldiers[cell] = previousSoldiers[source];
+                if (IsSoldierAliveAt(cell))
+                {
+                    soldiers[cell].SetFormationCell(cell);
+                }
+            }
+            return true;
+        }
+
+        public void EndSquadEdit()
+        {
+            // Scene teardown may already have reset the manager and global time scale.
+            if (!IsSquadEditing) return;
+            IsSquadEditing = false;
+            Time.timeScale = IsTutorialPaused ? 0f : timeScale;
         }
 
         private void TickHealing()
@@ -141,6 +215,8 @@ namespace ReverseTD.Offense
 
         private void OnDisable()
         {
+            AllowTutorialSquadEditing = false;
+            IsSquadEditing = false;
             IsTutorialPaused = false;
             Time.timeScale = 1f;
         }
@@ -182,11 +258,9 @@ namespace ReverseTD.Offense
                     : (cell == SquadRules.CenterCell ? UnitType.Attack : UnitType.None);
                 if (type == UnitType.None) continue;
 
-                int row = cell / SquadRules.Columns;
                 int column = cell % SquadRules.Columns;
-                float startDistance = (SquadRules.Rows - 1 - row) * SquadRules.Spacing;
-                float laneOffset = (1 - column) * SquadRules.Spacing;
-                soldiers[cell] = SpawnSoldier(type, column, startDistance, laneOffset, upperLane, lowerLane, forkDistance);
+                Vector2 formationOffset = SquadRules.CellOffset(cell, SquadRules.Spacing);
+                soldiers[cell] = SpawnSoldier(type, column, formationOffset, upperLane, lowerLane, forkDistance);
             }
 
             spawningComplete = true;
@@ -197,7 +271,7 @@ namespace ReverseTD.Offense
             }
         }
 
-        private OffenseSoldier SpawnSoldier(UnitType type, int column, float startDistance, float laneOffset, LanePath upperLane, LanePath lowerLane, float forkDistance)
+        private OffenseSoldier SpawnSoldier(UnitType type, int column, Vector2 formationOffset, LanePath upperLane, LanePath lowerLane, float forkDistance)
         {
             // Spawn inactive so combat registration occurs cleanly upon SetActive
             var soldierObject = new GameObject($"OffenseSoldier {spawnedCount++}");
@@ -205,7 +279,7 @@ namespace ReverseTD.Offense
             soldierObject.transform.SetParent(transform, false);
 
             var soldier = soldierObject.AddComponent<OffenseSoldier>();
-            soldier.Initialize(offenseData, type, column, startDistance, laneOffset, soldierAttackRange, upperLane, lowerLane, forkDistance, forkCommandSlot);
+            soldier.Initialize(offenseData, type, column, formationOffset, soldierAttackRange, upperLane, lowerLane, forkDistance, forkCommandSlot);
 
             soldierObject.SetActive(true);
             livingUnits++;

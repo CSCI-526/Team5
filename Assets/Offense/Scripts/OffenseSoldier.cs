@@ -32,7 +32,7 @@ namespace ReverseTD.Offense
         private OffenseData offenseData;
         private UnitType type;
         private int column;
-        private float sideOffset;
+        private Vector2 formationOffset;
         private float distanceTraveled;
         private float attackCooldown;
         private bool isAlive = true;
@@ -42,15 +42,18 @@ namespace ReverseTD.Offense
         public bool IsAlive => isAlive;
         public Vector3 Position => transform.position;
         public float DistanceTraveled => distanceTraveled;
+        public LanePath CurrentLane => lane;
         public UnitType Type => type;
 
-        public void Initialize(OffenseData data, UnitType unitType, int unitColumn, float startDistance, float laneOffset, float towerAttackRange, LanePath upperLane, LanePath alternateLane, float forkAt, ForkCommandSlot commandSlot)
+        public void Initialize(OffenseData data, UnitType unitType, int unitColumn, Vector2 cellOffset, float towerAttackRange, LanePath upperLane, LanePath alternateLane, float forkAt, ForkCommandSlot commandSlot)
         {
             offenseData = data;
             type = unitType;
             column = unitColumn;
-            distanceTraveled = startDistance;
-            sideOffset = laneOffset;
+            // All cells share the center cell's progress and keep fixed world offsets.
+            // This lets the squad translate through sharp corners without rotating or snapping.
+            distanceTraveled = SquadRules.Spacing;
+            formationOffset = cellOffset;
 
             lane = upperLane;
             lowerLane = alternateLane;
@@ -68,7 +71,7 @@ namespace ReverseTD.Offense
             defense = SquadRules.Defense(type, levels);
             attackRange = towerAttackRange;
 
-            transform.position = lane.Sample(distanceTraveled, sideOffset);
+            transform.position = lane.Sample(distanceTraveled, 0f) + formationOffset;
 
             // Create the soldier's visual (body, gun, HP bar)
             visual = SoldierVisual.Create(transform, SquadRules.UnitSize, UnitLooks.For(type));
@@ -86,6 +89,7 @@ namespace ReverseTD.Offense
 
         private void Update()
         {
+            if (OffenseWaveManager.Instance != null && OffenseWaveManager.Instance.IsSquadEditing) return;
             if (!isAlive || lane == null) return;
             float nextDistance = distanceTraveled + speed * Time.deltaTime;
 
@@ -108,7 +112,7 @@ namespace ReverseTD.Offense
             }
 
             distanceTraveled = nextDistance;
-            transform.position = lane.Sample(distanceTraveled, sideOffset);
+            transform.position = lane.Sample(distanceTraveled, 0f) + formationOffset;
 
             // Reached the end of the track
             if (distanceTraveled >= lane.TotalLength)
@@ -130,6 +134,15 @@ namespace ReverseTD.Offense
             {
                 Attack();
             }
+        }
+
+        public void SetFormationCell(int cell)
+        {
+            if (!isAlive || lane == null || cell < 0 || cell >= SquadRules.CellCount) return;
+
+            column = cell % SquadRules.Columns;
+            formationOffset = SquadRules.CellOffset(cell, SquadRules.Spacing);
+            transform.position = lane.Sample(distanceTraveled, 0f) + formationOffset;
         }
 
         public float TakeDamage(float amount)

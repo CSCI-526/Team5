@@ -1,4 +1,5 @@
 using ReverseTD.Shared;
+using ReverseTD.Offense;
 using UnityEngine;
 
 namespace ReverseTD.Defense
@@ -17,6 +18,10 @@ namespace ReverseTD.Defense
         private System.Action<float> onHit;
 
         private IDamageable target;
+        private OffenseWaveManager targetFormation;
+        private int targetCell = -1;
+        private LanePath targetLane;
+        private float targetDistance;
         private Transform visual;
         private Color color;
         private Vector3 aimPoint;
@@ -26,6 +31,26 @@ namespace ReverseTD.Defense
         private float damage;
         private float speed;
         private float age;
+        private bool fliesStraight;
+        private Vector2 flightDirection;
+        private Vector3 flightOrigin;
+        private float flightRange;
+        private float flightWidth;
+        private float flightDistance;
+
+        public static Projectile LaunchStraight(Vector3 origin, IDamageable target, float damage, float speed,
+            Vector2 direction, float range, float width)
+        {
+            Projectile projectile = Launch(origin, target, damage, speed);
+            projectile.fliesStraight = true;
+            projectile.flightDirection = direction.normalized;
+            projectile.flightOrigin = origin;
+            projectile.flightRange = range;
+            projectile.flightWidth = width;
+            projectile.launchDistance = Mathf.Max(range, MinDistance);
+            projectile.UpdateVisual();
+            return projectile;
+        }
 
         public static Projectile Launch(Vector3 origin, IDamageable target, float damage, float speed, System.Action<float> onHit = null)
         {
@@ -47,6 +72,19 @@ namespace ReverseTD.Defense
 
             var projectile = projectileObject.AddComponent<Projectile>();
             projectile.target = target;
+            // Tower shots lock the cell at launch, not the unit occupying it.
+            OffenseWaveManager formation = OffenseWaveManager.Instance;
+            if (target is OffenseSoldier soldier && formation != null)
+            {
+                int cell = formation.GetSoldierCell(soldier);
+                if (cell >= 0)
+                {
+                    projectile.targetFormation = formation;
+                    projectile.targetCell = cell;
+                    projectile.targetLane = soldier.CurrentLane;
+                    projectile.targetDistance = soldier.DistanceTraveled;
+                }
+            }
             projectile.aimPoint = target.Position;
             projectile.damage = damage;
             projectile.speed = speed;
@@ -62,16 +100,38 @@ namespace ReverseTD.Defense
         public void AppearFrom(Vector3 worldPoint)
         {
             visualOffset = worldPoint - transform.position;
-            launchDistance = Mathf.Max((aimPoint - transform.position).magnitude, MinDistance);
+            launchDistance = Mathf.Max(fliesStraight ? flightRange : (aimPoint - transform.position).magnitude, MinDistance);
             UpdateVisual();
         }
 
         private void Update()
         {
+            if (ReverseTD.Offense.OffenseWaveManager.Instance != null && ReverseTD.Offense.OffenseWaveManager.Instance.IsSquadEditing) return;
+            if (targetCell >= 0)
+            {
+                target = targetFormation != null ? targetFormation.GetSoldierAt(targetCell) : null;
+                if (target is OffenseSoldier occupant)
+                {
+                    targetLane = occupant.CurrentLane;
+                    targetDistance = occupant.DistanceTraveled;
+                }
+                else if (targetLane != null)
+                {
+                    // An empty cell still moves with the formation; a hit there deals no damage.
+                    targetDistance += SquadRules.Speed * Time.deltaTime;
+                    aimPoint = targetLane.Sample(targetDistance, 0f) + SquadRules.CellOffset(targetCell, SquadRules.Spacing);
+                }
+            }
             bool targetAlive = CombatRegistry.IsAlive(target);
             if (targetAlive)
             {
                 aimPoint = target.Position;
+            }
+
+            if (fliesStraight)
+            {
+                TickStraightFlight(targetAlive);
+                return;
             }
 
             transform.position = Vector3.MoveTowards(transform.position, aimPoint, speed * Time.deltaTime);
@@ -99,13 +159,39 @@ namespace ReverseTD.Defense
             UpdateVisual();
         }
 
+        private void TickStraightFlight(bool targetAlive)
+        {
+            float previousDistance = flightDistance;
+            flightDistance = Mathf.Min(flightRange, flightDistance + speed * Time.deltaTime);
+            transform.position = flightOrigin + (Vector3)(flightDirection * flightDistance);
+
+            if (targetAlive)
+            {
+                Vector2 offset = target.Position - flightOrigin;
+                float forward = Vector2.Dot(offset, flightDirection);
+                bool withinLane = TowerAttackGeometry.Contains(offset, flightDirection, flightRange, flightWidth);
+                // Sweep the distance travelled this frame so fast shots do not skip a unit.
+                if (withinLane && forward >= previousDistance - HitDistance && forward <= flightDistance + HitDistance)
+                {
+                    float applied = target.TakeDamage(damage);
+                    onHit?.Invoke(applied);
+                    CombatEffects.SpawnImpact(aimPoint, color, impactSize);
+                    Destroy(gameObject);
+                    return;
+                }
+            }
+
+            age += Time.deltaTime;
+            if (flightDistance >= flightRange || age >= MaxLifetime) Destroy(gameObject);
+        }
+
         private void UpdateVisual()
         {
             Vector3 position = transform.position;
-            float remaining = (aimPoint - position).magnitude;
+            float remaining = fliesStraight ? flightRange - flightDistance : (aimPoint - position).magnitude;
             Vector3 shown = position + visualOffset * Mathf.Clamp01(remaining / launchDistance);
 
-            Vector2 heading = aimPoint - shown;
+            Vector2 heading = fliesStraight ? flightDirection : (Vector2)(aimPoint - shown);
             if (heading.sqrMagnitude > MinDistance)
             {
                 visual.SetPositionAndRotation(shown, Quaternion.Euler(0f, 0f, Mathf.Atan2(heading.y, heading.x) * Mathf.Rad2Deg));

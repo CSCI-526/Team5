@@ -8,8 +8,11 @@ namespace ReverseTD.Defense
         [SerializeField, Min(1f), Tooltip("Hit points.")]
         private float maxHp = 100f;
 
-        [SerializeField, Min(0f), Tooltip("Attack range, in world units.")]
+        [SerializeField, Min(0f), Tooltip("Length of the forward attack lane, in world units.")]
         private float range = 3f;
+
+        [SerializeField, Min(0.01f), Tooltip("Width of the attack lane. Keep below the squad spacing (0.36) to cover a single aligned row or column.")]
+        private float attackWidth = 0.3f;
 
         [SerializeField, Min(0f), Tooltip("Damage per projectile hit.")]
         private float damage = 10f;
@@ -31,6 +34,7 @@ namespace ReverseTD.Defense
 
         public float MaxHp => maxHp;
         public float Range => range;
+        public float AttackWidth => attackWidth;
         public float Damage => damage;
         public float FireRate => fireRate;
         public float ProjectileSpeed => projectileSpeed;

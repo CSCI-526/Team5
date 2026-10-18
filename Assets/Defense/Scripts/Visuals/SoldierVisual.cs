@@ -235,9 +235,9 @@ namespace ReverseTD.Defense
 
         private void Apply()
         {
-            Quaternion facing = Quaternion.Euler(0f, 0f, facingAngle);
-            shadow.rotation = facing;
-            lower.rotation = facing;
+            // Keep the square body and its mark upright while the squad changes direction.
+            shadow.rotation = Quaternion.identity;
+            lower.rotation = Quaternion.identity;
             upper.rotation = Quaternion.Euler(0f, 0f, aimAngle);
 
             bool flashing = flashTimer > 0f;

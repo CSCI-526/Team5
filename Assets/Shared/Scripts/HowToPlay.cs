@@ -18,6 +18,10 @@ namespace ReverseTD.Shared
         private const string GameplaySceneName = "DefenseSandbox";
         private const string SeenPrefsKey = "HowToPlay_Seen";
         private const string TutorialPrefsKey = "InteractiveTutorial_Done";
+        private const string IntroTutorialPrefsKey = "InteractiveTutorial_IntroDone";
+        private const string SecondTowerTutorialPrefsKey = "InteractiveTutorial_SecondTowerDone";
+        private const float SecondTowerTutorialDistance = 5f;
+        private const float GoalTutorialDistance = 5f;
 
         private const int SceneButtonSortingOrder = 500;
         private const int ModalSortingOrder = 1000;
@@ -68,6 +72,11 @@ namespace ReverseTD.Shared
         private GameObject goldCalloutBox;
         private GameObject worldMarkerRing;
         private bool userClickedNext;
+        private bool waitingForFormationClick;
+        private bool formationTutorialClicked;
+        private Button formationTutorialButton;
+        private OffenseWaveManager formationTutorialManager;
+        private TutorialButtonSpotlight formationSpotlight;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
@@ -131,6 +140,7 @@ namespace ReverseTD.Shared
 
         private void OnDestroy()
         {
+            EndFormationTutorial();
             if (isControllingCamera)
             {
                 ReleaseCameraControl();
@@ -144,7 +154,7 @@ namespace ReverseTD.Shared
         private void LateUpdate()
         {
             // Check for click or Spacebar during freeze-frame tutorial
-            if (bannerPanel != null && bannerPanel.activeSelf)
+            if (bannerPanel != null && bannerPanel.activeSelf && !waitingForFormationClick)
             {
                 if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
                     userClickedNext = true;
@@ -182,7 +192,9 @@ namespace ReverseTD.Shared
         private void StartInteractiveTutorial()
         {
             BuildFreezeFrameUI();
-            StartCoroutine(RunFreezeFrameSequence());
+            StartCoroutine(PlayerPrefs.GetInt(IntroTutorialPrefsKey, 0) == 1
+                ? WaitAndShowLateTutorials()
+                : RunFreezeFrameSequence());
         }
 
         private IEnumerator RunFreezeFrameSequence()
@@ -199,8 +211,6 @@ namespace ReverseTD.Shared
             defaultCamSize = mainCam.orthographicSize;
             targetCamPos = defaultCamPos;
             targetCamSize = defaultCamSize;
-
-            BoardView boardView = FindAnyObjectByType<BoardView>();
 
             // Wait for the first OffenseSoldier to spawn and walk onto the board
             OffenseSoldier soldier = null;
@@ -226,7 +236,7 @@ namespace ReverseTD.Shared
             }
 
             ShowBanner(
-                "1/4 — YOU ARE THE ATTACKER!",
+                "1/6 — YOU ARE THE ATTACKER!",
                 "This <color=#F2594D><b>RED SQUARE</b></color> is your soldier. Your squad marches down the path automatically.",
                 "Click anywhere to continue..."
             );
@@ -244,8 +254,8 @@ namespace ReverseTD.Shared
             }
 
             ShowBanner(
-                "2/4 — ENEMY TOWERS",
-                "<color=#4D8CF5><b>BLUE SQUARES</b></color> are enemy towers. Watch the circle around them — that is their firing range!",
+                "2/6 — ENEMY TOWERS",
+                "<color=#4D8CF5><b>BLUE SQUARES</b></color> are enemy towers. The narrow strip shows each tower's fixed firing direction and range!",
                 "Click to march into range..."
             );
 
@@ -300,23 +310,76 @@ namespace ReverseTD.Shared
 
             goldCalloutBox.SetActive(true);
             ShowBanner(
-                "3/4 — DAMAGE = GOLD ($)",
+                "3/6 — DAMAGE = GOLD ($)",
                 "Every hit your soldier lands on a tower earns <b><color=#FFD93D>+$1 GOLD</color> (Top Right)</b>! When your wave dies, you'll spend that Gold on upgrades.",
-                "Click to see the Goal..."
+                "Click to learn about formations..."
             );
 
             yield return WaitForClick();
             goldCalloutBox.SetActive(false);
 
             // -----------------------------------------------------------------
-            // FREEZE 4: Pan to Goal, then Zoom Out to Full Board
+            // FREEZE 4: Keep step 3's camera framing and spotlight the real button.
             // -----------------------------------------------------------------
-            Vector3 goalPos = boardView != null ? (Vector3)boardView.Path.End : new Vector3(8f, -3f, 0f);
+            HideWorldRing();
+
+            ShowBanner(
+                "4/6 — EDIT YOUR FORMATION",
+                "Click <b>EDIT FORMATION</b> to rearrange your <b>3x3 squad</b>. Drag units to swap positions, then choose <b>APPLY & RESUME</b> to finish.",
+                "Click the highlighted EDIT FORMATION button."
+            );
+
+            yield return GuideFormationButton();
+
+            // Resume normal play; the final hint waits until the squad approaches the goal.
+            PlayerPrefs.SetInt(IntroTutorialPrefsKey, 1);
+            PlayerPrefs.Save();
+            HideBanner();
+            HideWorldRing();
+            ReleaseCameraControl();
+            SetTutorialPause(false);
+            yield return WaitAndShowLateTutorials();
+        }
+
+        private IEnumerator WaitAndShowLateTutorials()
+        {
+            // On a later wave, skip the completed introduction and initialize the normal view.
+            if (mainCam == null)
+            {
+                yield return null;
+                yield return null;
+                mainCam = Camera.main;
+                if (mainCam == null) yield break;
+                boardCamera = mainCam.GetComponent<BoardCamera>();
+                defaultCamPos = mainCam.transform.position;
+                defaultCamSize = mainCam.orthographicSize;
+            }
+
+            BoardView boardView = FindAnyObjectByType<BoardView>();
+            if (boardView == null) yield break;
+
+            if (PlayerPrefs.GetInt(SecondTowerTutorialPrefsKey, 0) == 0)
+            {
+                yield return WaitAndShowSecondTowerTutorial(boardView);
+            }
+
+            while (!IsAnySoldierNearGoal())
+            {
+                yield return null;
+            }
+
+            SetTutorialPause(true);
+            TakeCameraControl();
+
+            // -----------------------------------------------------------------
+            // FREEZE 6: Pan to Goal, then Zoom Out to Full Board
+            // -----------------------------------------------------------------
+            Vector3 goalPos = boardView.Path.End;
             FocusCamera(goalPos, 3.0f);
             ShowWorldRing(goalPos, new Color(0.3f, 0.95f, 0.4f, 0.95f));
 
             ShowBanner(
-                "4/4 — REACH THE GOAL TO WIN!",
+                "6/6 — REACH THE GOAL TO WIN!",
                 "Keep upgrading and adding units from cards between waves until <b>just 1 soldier</b> reaches this end point!",
                 "Click to zoom out & play!"
             );
@@ -343,6 +406,206 @@ namespace ReverseTD.Shared
 
             if (tutorialCanvasObj != null)
                 tutorialCanvasObj.SetActive(false);
+        }
+
+        private IEnumerator WaitAndShowSecondTowerTutorial(BoardView board)
+        {
+            if (board.Layout == null || board.Layout.TowerSlots.Count < 2) yield break;
+
+            // Use the configured second slot, not the shrinking list of surviving towers.
+            Vector2 position = board.Layout.TowerSlots[1].Position;
+            Tower secondTower = null;
+            foreach (Tower tower in board.Towers)
+            {
+                if (tower != null && ((Vector2)tower.transform.position - position).sqrMagnitude < 0.0001f)
+                {
+                    secondTower = tower;
+                    break;
+                }
+            }
+            if (secondTower == null) yield break;
+            TowerHealth health = secondTower.GetComponent<TowerHealth>();
+            OffenseSoldier nearbyUnit = null;
+            while (CombatRegistry.IsAlive(health))
+            {
+                nearbyUnit = FindSoldierNearPoint(position, SecondTowerTutorialDistance);
+                if (nearbyUnit != null || IsAnySoldierNearGoal()) break;
+                yield return null;
+            }
+            if (!CombatRegistry.IsAlive(health) || nearbyUnit == null) yield break;
+
+            SetTutorialPause(true);
+            TakeCameraControl();
+            FrameTwoPoints(nearbyUnit.Position, position, 1.9f);
+            ShowWorldRing(position, new Color(0.35f, 0.7f, 1f, 0.95f));
+            ShowBanner(
+                "5/6 — AVOID THE NEXT TOWER",
+                "You're approaching another tower! When play resumes, click <b>EDIT FORMATION</b> and move your unit <b>out of its firing line</b> to avoid damage.",
+                "Click to continue, then adjust your formation."
+            );
+            yield return WaitForClick();
+
+            PlayerPrefs.SetInt(SecondTowerTutorialPrefsKey, 1);
+            PlayerPrefs.Save();
+            HideBanner();
+            HideWorldRing();
+            ReleaseCameraControl();
+            SetTutorialPause(false);
+        }
+
+        private OffenseSoldier FindSoldierNearPoint(Vector3 point, float distance)
+        {
+            OffenseWaveManager manager = OffenseWaveManager.Instance;
+            if (manager == null || manager.IsSquadEditing) return null;
+
+            float nearestSqr = distance * distance;
+            OffenseSoldier nearest = null;
+            for (int cell = 0; cell < SquadRules.CellCount; cell++)
+            {
+                OffenseSoldier unit = manager.GetSoldierAt(cell);
+                if (unit == null) continue;
+                float distanceSqr = (unit.Position - point).sqrMagnitude;
+                if (distanceSqr <= nearestSqr)
+                {
+                    nearest = unit;
+                    nearestSqr = distanceSqr;
+                }
+            }
+            return nearest;
+        }
+
+        private bool IsAnySoldierNearGoal()
+        {
+            OffenseWaveManager manager = OffenseWaveManager.Instance;
+            if (manager == null || manager.IsSquadEditing) return false;
+
+            for (int cell = 0; cell < SquadRules.CellCount; cell++)
+            {
+                OffenseSoldier unit = manager.GetSoldierAt(cell);
+                if (unit == null || unit.CurrentLane == null) continue;
+                float remaining = unit.CurrentLane.TotalLength - unit.DistanceTraveled;
+                if (remaining >= 0f && remaining <= GoalTutorialDistance) return true;
+            }
+            return false;
+        }
+
+        private IEnumerator GuideFormationButton()
+        {
+            formationTutorialManager = OffenseWaveManager.Instance;
+            formationTutorialButton = FindFormationButton();
+            if (formationTutorialManager == null || formationTutorialButton == null)
+            {
+                // Keep the guide usable if a scene has no formation button configured.
+                bannerPrompt.text = "Click to see the Goal...";
+                yield return WaitForClick();
+                EndFormationTutorial();
+                yield break;
+            }
+
+            var unitsBeforeEdit = new OffenseSoldier[SquadRules.CellCount];
+            var positionsBeforeEdit = new Vector3[SquadRules.CellCount];
+            for (int cell = 0; cell < SquadRules.CellCount; cell++)
+            {
+                unitsBeforeEdit[cell] = formationTutorialManager.GetSoldierAt(cell);
+                if (unitsBeforeEdit[cell] != null) positionsBeforeEdit[cell] = unitsBeforeEdit[cell].Position;
+            }
+
+            waitingForFormationClick = true;
+            formationTutorialClicked = false;
+            formationTutorialManager.AllowTutorialSquadEditing = true;
+            formationTutorialButton.onClick.AddListener(OnFormationTutorialClicked);
+            formationSpotlight = TutorialButtonSpotlight.Create(tutorialCanvasObj.transform, (RectTransform)formationTutorialButton.transform, PressFormationButton);
+
+            while (!formationTutorialClicked && formationTutorialManager != null && formationTutorialButton != null)
+            {
+                yield return null;
+            }
+
+            if (formationTutorialManager != null)
+            {
+                formationTutorialManager.AllowTutorialSquadEditing = false;
+                while (formationTutorialManager != null && formationTutorialManager.IsSquadEditing)
+                {
+                    yield return null;
+                }
+            }
+            EndFormationTutorial();
+
+            // Apply moves the existing objects immediately; explain the result before releasing
+            // the tutorial pause or the camera framing inherited from step 3.
+            OffenseSoldier movedUnit = null;
+            for (int cell = 0; cell < unitsBeforeEdit.Length; cell++)
+            {
+                OffenseSoldier unit = unitsBeforeEdit[cell];
+                if (unit != null && unit.IsAlive && (unit.Position - positionsBeforeEdit[cell]).sqrMagnitude > 0.0001f)
+                {
+                    movedUnit = unit;
+                    break;
+                }
+            }
+
+            if (movedUnit != null)
+            {
+                ShowWorldRing(movedUnit.Position, new Color(0.3f, 0.95f, 0.4f, 0.95f));
+                ShowBanner(
+                    "POSITIONING AVOIDS DAMAGE",
+                    "Your formation change moved this unit on the battlefield! Moving a unit <b>out of a tower's firing line</b> lets it <b>avoid incoming damage</b>.",
+                    "Click to continue..."
+                );
+                yield return WaitForClick();
+                HideWorldRing();
+            }
+        }
+
+        private Button FindFormationButton()
+        {
+            Button[] buttons = FindObjectsByType<Button>(FindObjectsSortMode.None);
+            foreach (Button button in buttons)
+            {
+                for (int i = 0; i < button.onClick.GetPersistentEventCount(); i++)
+                {
+                    if (button.onClick.GetPersistentTarget(i) == formationTutorialManager &&
+                        button.onClick.GetPersistentMethodName(i) == nameof(OffenseWaveManager.OpenSquadEditor))
+                    {
+                        return button;
+                    }
+                }
+            }
+            return null;
+        }
+
+        private void PressFormationButton()
+        {
+            if (formationTutorialButton != null) formationTutorialButton.onClick.Invoke();
+        }
+
+        private void OnFormationTutorialClicked()
+        {
+            if (formationTutorialManager == null) return;
+            if (!formationTutorialManager.IsSquadEditing) formationTutorialManager.OpenSquadEditor();
+            if (!formationTutorialManager.IsSquadEditing) return;
+
+            formationTutorialClicked = true;
+            HideFormationSpotlight();
+            HideBanner();
+        }
+
+        private void HideFormationSpotlight()
+        {
+            if (formationSpotlight == null) return;
+            formationSpotlight.gameObject.SetActive(false);
+            Destroy(formationSpotlight.gameObject);
+            formationSpotlight = null;
+        }
+
+        private void EndFormationTutorial()
+        {
+            if (formationTutorialButton != null) formationTutorialButton.onClick.RemoveListener(OnFormationTutorialClicked);
+            if (formationTutorialManager != null) formationTutorialManager.AllowTutorialSquadEditing = false;
+            HideFormationSpotlight();
+            formationTutorialButton = null;
+            formationTutorialManager = null;
+            waitingForFormationClick = false;
         }
 
         private void SetTutorialPause(bool paused)

@@ -10,10 +10,14 @@ namespace ReverseTD.Defense
 
         private readonly List<IDamageable> candidates = new List<IDamageable>();
         private TowerDefinition definition;
+        private Vector2 direction;
+        private float range;
 
-        public void Initialize(TowerDefinition towerDefinition)
+        public void Initialize(TowerDefinition towerDefinition, Vector2 attackDirection, float attackRange)
         {
             definition = towerDefinition;
+            direction = attackDirection;
+            range = attackRange;
         }
 
         public IDamageable FindTarget()
@@ -21,7 +25,6 @@ namespace ReverseTD.Defense
             CombatRegistry.GetAlive(Team.Attacker, candidates);
 
             Vector2 origin = transform.position;
-            float rangeSqr = definition.Range * definition.Range;
             IDamageable nearest = null;
             float nearestSqr = float.MaxValue;
             IDamageable first = null;
@@ -31,8 +34,9 @@ namespace ReverseTD.Defense
             for (int i = 0; i < candidates.Count; i++)
             {
                 IDamageable candidate = candidates[i];
-                float distanceSqr = ((Vector2)candidate.Position - origin).sqrMagnitude;
-                if (distanceSqr > rangeSqr)
+                Vector2 offset = (Vector2)candidate.Position - origin;
+                float distanceSqr = offset.sqrMagnitude;
+                if (!TowerAttackGeometry.Contains(offset, direction, range, definition.AttackWidth))
                 {
                     continue;
                 }
