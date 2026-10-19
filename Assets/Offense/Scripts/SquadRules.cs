@@ -21,8 +21,8 @@ namespace ReverseTD.Offense
 
         public const float AttackBaseHealth = 4f;
         public const float AttackBaseDamage = 1f;
-        public const float TankBaseHealth = 10f;
-        public const float TankBaseDefense = 0.3f;
+        public const float TankBaseHealth = 8f;
+        public const float TankBaseDefense = 0.2f;
         public const float HealBaseHealth = 3f;
         public const float HealBaseRate = 0.20f;
 

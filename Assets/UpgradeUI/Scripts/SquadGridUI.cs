@@ -42,6 +42,7 @@ namespace ReverseTD.UpgradeUI
         private UnitType pending = UnitType.None;
         private float cellSize;
         private bool allowSwap;
+        private bool allowPlacementReplacement;
         private int dragFrom = -1;
         private int hoverCell = -1;
         private int markedCell = -1;
@@ -81,7 +82,7 @@ namespace ReverseTD.UpgradeUI
                     group.alpha = isInactive(i) ? 0.3f : 1f;
                 }
 
-                bool dropTarget = pending != UnitType.None && type == UnitType.None;
+                bool dropTarget = pending != UnitType.None && (type == UnitType.None || allowPlacementReplacement);
                 bool strong = (dropTarget && hoverCell == i) || markedCell == i;
                 cellImages[i].color = dropTarget ? Color.Lerp(UiKit.CellColor, UiKit.DropColor, strong ? HoverTint : DropTint) : UiKit.CellColor;
                 cellOutlines[i].effectColor = dropTarget || markedCell == i ? UiKit.DropColor : UiKit.PanelLineColor;
@@ -107,9 +108,10 @@ namespace ReverseTD.UpgradeUI
             }
         }
 
-        public void BeginPlacement(UnitType type, Transform trayParent, Vector2 trayPosition, Vector2 traySize, Action<int> onPlaced)
+        public void BeginPlacement(UnitType type, Transform trayParent, Vector2 trayPosition, Vector2 traySize, Action<int> onPlaced, bool allowReplace = false)
         {
             pending = type;
+            allowPlacementReplacement = allowReplace;
             placed = onPlaced;
             markedCell = -1;
 
@@ -125,6 +127,7 @@ namespace ReverseTD.UpgradeUI
         public void EndPlacement(int placedCell)
         {
             pending = UnitType.None;
+            allowPlacementReplacement = false;
             placed = null;
             hoverCell = -1;
             markedCell = placedCell;
@@ -138,10 +141,15 @@ namespace ReverseTD.UpgradeUI
 
         public void HandleClick(int index)
         {
-            if (pending != UnitType.None && index < SquadRules.CellCount && data.squad[index] == UnitType.None && placed != null)
+            if (pending != UnitType.None && CanPlaceAt(index) && placed != null)
             {
                 placed(index);
             }
+        }
+
+        private bool CanPlaceAt(int index)
+        {
+            return index >= 0 && index < SquadRules.CellCount && (data.squad[index] == UnitType.None || allowPlacementReplacement);
         }
 
         public void HandleBeginDrag(int index, PointerEventData eventData)
@@ -193,7 +201,7 @@ namespace ReverseTD.UpgradeUI
 
             if (from == TrayIndex)
             {
-                if (target >= 0 && data.squad[target] == UnitType.None && placed != null)
+                if (CanPlaceAt(target) && placed != null)
                 {
                     placed(target);
                 }

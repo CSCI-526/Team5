@@ -52,14 +52,16 @@ namespace ReverseTD.UpgradeUI
         private SquadGridUI grid;
         private UnitType placing = UnitType.None;
         private bool picked;
+        private bool isLevelOneTankReward;
 
-        public static AugmentOverlay Open(OffenseData data, Action goldChanged, Action closed)
+        public static AugmentOverlay Open(OffenseData data, Action goldChanged, Action closed, bool levelOneTankReward = false)
         {
             var host = new GameObject("Augment Overlay", typeof(RectTransform));
             var overlay = host.AddComponent<AugmentOverlay>();
             overlay.data = data;
             overlay.goldChanged = goldChanged;
             overlay.closed = closed;
+            overlay.isLevelOneTankReward = levelOneTankReward;
             overlay.Build();
             return overlay;
         }
@@ -80,7 +82,7 @@ namespace ReverseTD.UpgradeUI
                 $"Each card costs <color={UiKit.CostColorTag}>${cardCost:0}</color>  |  You have ${data.gold:0}",
                 new Vector2(0f, SubtitleY), new Vector2(900f, 30f), 18f, UiKit.MutedColor);
 
-            SquadRules.RollOffer(data.cardsTaken, data.IsSquadFull, offer);
+            if (!isLevelOneTankReward) SquadRules.RollOffer(data.cardsTaken, data.IsSquadFull, offer);
             for (int i = 0; i < offer.Count; i++)
             {
                 float x = (i - (offer.Count - 1) * 0.5f) * CardSpacing;
@@ -93,6 +95,26 @@ namespace ReverseTD.UpgradeUI
             {
                 EventSystem.current.SetSelectedGameObject(null);
             }
+            if (isLevelOneTankReward)
+            {
+                picked = true;
+                subtitle.text = "LEVEL 1 REWARD - FREE TANK";
+                BuildTankIntroduction();
+                StartCoroutine(StartPlacement(UnitType.Tank));
+            }
+        }
+
+        private void BuildTankIntroduction()
+        {
+            Image panel = UiKit.CreateImage(root, "Tank Introduction", new Vector2(-380f, 20f), new Vector2(280f, 300f),
+                UiKit.NodeGreenColor, 12f);
+            UiKit.CreateImage(panel.transform, "Background", Vector2.zero, new Vector2(276f, 296f), UiKit.PanelColor, 10f);
+            UiKit.CreateText(panel.transform, "Title", "TANK UNIT", new Vector2(0f, 108f), new Vector2(248f, 36f),
+                26f, UiKit.TextColor, FontStyles.Bold);
+            UnitIconUI.Create(panel.transform, new Vector2(0f, 40f), 80f).SetType(UnitType.Tank);
+            TextMeshProUGUI description = UiKit.CreateText(panel.transform, "Description",
+                "Place at the front to absorb damage and protect other units.\n\nCannot attack.", new Vector2(0f, -68f), new Vector2(240f, 100f), 22f, UiKit.TextColor);
+            description.textWrappingMode = TextWrappingModes.Normal;
         }
 
         private void BuildCard(AugmentCard card, int index, Vector2 position)
@@ -185,20 +207,20 @@ namespace ReverseTD.UpgradeUI
 
         private IEnumerator StartPlacement(UnitType type)
         {
-            yield return new WaitForSecondsRealtime(PickDelay);
+            if (!isLevelOneTankReward) yield return new WaitForSecondsRealtime(PickDelay);
 
             for (int i = 0; i < cards.Count; i++)
             {
                 cards[i].SetActive(false);
             }
-            subtitle.gameObject.SetActive(false);
+            subtitle.gameObject.SetActive(isLevelOneTankReward);
             title.text = "PLACE YOUR " + UnitLooks.Name(type);
             grid.SetTitleVisible(false);
 
             RectTransform gridRect = grid.Rect;
             Vector2 from = gridRect.anchoredPosition;
             float elapsed = 0f;
-            while (elapsed < ZoomTime)
+            while (!isLevelOneTankReward && elapsed < ZoomTime)
             {
                 elapsed += Time.unscaledDeltaTime;
                 float t = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(elapsed / ZoomTime));
@@ -209,18 +231,21 @@ namespace ReverseTD.UpgradeUI
             gridRect.anchoredPosition = bigGridPosition;
             gridRect.localScale = Vector3.one * ZoomScale;
 
-            hint = UiKit.CreateText(root, "Hint", "Drag the new unit into an empty cell", new Vector2(0f, HintY), new Vector2(800f, 28f), 18f,
+            bool replaceUnit = isLevelOneTankReward && data.IsSquadFull;
+            hint = UiKit.CreateText(root, "Hint", replaceUnit ? "Squad full: place your free Tank on a cell to replace that unit" : "Drag the new unit into an empty cell", new Vector2(0f, HintY), new Vector2(1000f, 28f), 18f,
                 UiKit.MutedColor);
             placing = type;
-            grid.BeginPlacement(type, root, trayPosition, traySize, Place);
+            grid.BeginPlacement(type, root, trayPosition, traySize, Place, replaceUnit);
         }
 
         private void Place(int cell)
         {
-            if (placing == UnitType.None || !data.TryTakeUnitCard(placing, cell))
+            if (placing == UnitType.None)
             {
                 return;
             }
+            bool placed = isLevelOneTankReward ? data.TryPlaceLevelOneRewardTank(cell) : data.TryTakeUnitCard(placing, cell);
+            if (!placed) return;
 
             placing = UnitType.None;
             if (goldChanged != null)

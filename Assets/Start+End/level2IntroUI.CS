@@ -27,9 +27,16 @@ public class Level2IntroUI : MonoBehaviour
         string heading = $"LEVEL {level} REWARD";
         if (rewardHeading != null && rewardHeading.text != heading) rewardHeading.text = heading;
         string label = $"+{amount:N0} GOLD";
+        if (!isLevelTwo) label += "\n+1 TANK UNIT";
         if (rewardAmount != null && rewardAmount.text != label) rewardAmount.text = label;
         string description = awarded ? "Added to your gold balance.\nSpend it on upgrades next!"
             : $"Complete Level {level} to earn this reward.";
+        if (!isLevelTwo)
+        {
+            description = awarded
+                ? (offenseData.HasPendingLevelOneTankReward ? "Gold added. Place your Tank\non the next Upgrade screen." : "Gold and Tank reward received.")
+                : "Complete Level 1 to earn these rewards.";
+        }
         if (rewardDescription != null && rewardDescription.text != description) rewardDescription.text = description;
     }
 

@@ -77,6 +77,7 @@ namespace ReverseTD.UpgradeUI
             screen.data = data;
             screen.goldChanged = goldChanged;
             screen.Build();
+            screen.OpenLevelOneTankReward();
             return screen;
         }
 
@@ -258,6 +259,14 @@ namespace ReverseTD.UpgradeUI
                 claimButtonImage.color = UiKit.NodeGreyColor;
                 claimButtonLabel.text = $"CLAIM CARD (<color={UiKit.CostColorTag}>${data.NextQuota:0}</color>)";
             }
+        }
+
+        private void OpenLevelOneTankReward()
+        {
+            if (overlayOpen || data.currentLevel != 2 || !data.levelOnePracticePending || !data.HasPendingLevelOneTankReward) return;
+            overlayOpen = true;
+            RefreshQuota();
+            AugmentOverlay.Open(data, OnGoldChanged, OnOverlayClosed, true);
         }
 
         private void ClaimCard()

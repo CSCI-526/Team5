@@ -190,6 +190,8 @@ public class UpgradeSceneUI : MonoBehaviour
             return;
         }
 
+        if (offenseData.currentLevel == 2 && offenseData.levelOnePracticePending && offenseData.HasPendingLevelOneTankReward) return;
+
         if (offenseData.currentLevel == 1)
         {
             SceneManager.LoadScene(gameplaySceneName);

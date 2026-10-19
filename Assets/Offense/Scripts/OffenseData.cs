@@ -47,10 +47,12 @@ public class OffenseData : ScriptableObject
     public LevelCompletionRewards completionRewards;
     [SerializeField, HideInInspector] private bool levelOneRewardGranted;
     [SerializeField, HideInInspector] private int levelOneGoldAwarded;
+    [SerializeField, HideInInspector] private bool levelOneTankPlaced;
     [SerializeField, HideInInspector] private bool levelTwoRewardGranted;
     [SerializeField, HideInInspector] private int levelTwoGoldAwarded;
 
     public bool HasLevelOneReward => levelOneRewardGranted;
+    public bool HasPendingLevelOneTankReward => levelOneRewardGranted && !levelOneTankPlaced;
     public int LevelOneGoldAwarded => levelOneGoldAwarded;
     public int ConfiguredLevelOneGold => completionRewards != null ? completionRewards.LevelOneGold : 0;
     public bool HasLevelTwoReward => levelTwoRewardGranted;
@@ -72,6 +74,17 @@ public class OffenseData : ScriptableObject
         levelTwoGoldAwarded = ConfiguredLevelTwoGold;
         gold += levelTwoGoldAwarded;
         levelTwoRewardGranted = true;
+        return true;
+    }
+
+    public bool TryPlaceLevelOneRewardTank(int cell)
+    {
+        EnsureSquad();
+        if (!HasPendingLevelOneTankReward || cell < 0 || cell >= SquadRules.CellCount) return false;
+        // A full squad may replace a unit; otherwise the free Tank goes into an empty cell.
+        if (squad[cell] != UnitType.None && !IsSquadFull) return false;
+        squad[cell] = UnitType.Tank;
+        levelOneTankPlaced = true;
         return true;
     }
 
@@ -270,6 +283,7 @@ public class OffenseData : ScriptableObject
         levelOnePracticePending = false;
         levelOneRewardGranted = false;
         levelOneGoldAwarded = 0;
+        levelOneTankPlaced = false;
         levelTwoRewardGranted = false;
         levelTwoGoldAwarded = 0;
         gold = 0;
