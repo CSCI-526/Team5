@@ -36,9 +36,9 @@ public class OffenseData : ScriptableObject
 
     public double GoldMultiplier => 1 + SquadRules.GoldBonusPerCard * goldCardsTaken;
     public bool HasNextQuota => cardsTaken < SquadRules.QuotaCount;
-    public double NextQuota => HasNextQuota ? SquadRules.Quota(cardsTaken) : goldEarned;
-    public bool IsCardReady => HasNextQuota && goldEarned >= SquadRules.Quota(cardsTaken);
-    public bool CanAffordCard => gold >= SquadRules.CardCost;
+    public double NextQuota => HasNextQuota ? SquadRules.Quota(cardsTaken) : 0;
+    public bool IsCardReady => HasNextQuota && gold >= SquadRules.Quota(cardsTaken);
+    public bool CanAffordCard => IsCardReady;
     public bool IsSquadFull => CountUnits() >= SquadRules.CellCount;
 
     // The game reads these properties - they now add your exact bonus amounts directly
@@ -159,7 +159,7 @@ public class OffenseData : ScriptableObject
     {
         if (!CanAffordCard) return false;
 
-        gold -= SquadRules.CardCost;
+        gold -= NextQuota;
         cardsTaken++;
         goldCardsTaken++;
         return true;
@@ -171,7 +171,7 @@ public class OffenseData : ScriptableObject
         if (type == UnitType.None || cell < 0 || cell >= SquadRules.CellCount) return false;
         if (squad[cell] != UnitType.None || !CanAffordCard) return false;
 
-        gold -= SquadRules.CardCost;
+        gold -= NextQuota;
         cardsTaken++;
         squad[cell] = type;
         return true;

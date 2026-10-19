@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 
 namespace ReverseTD.Defense
@@ -21,11 +22,10 @@ namespace ReverseTD.Defense
         private StageLayout layout;
 
         [SerializeField, Tooltip("Draw a visual goal zone at the path's final waypoint.")]
-        private bool showGoalZone;
+        private bool showGoalZone = true;
 
         private readonly List<Tower> towers = new List<Tower>();
         private StagePath path;
-        private StagePath lowerPath;
 
         public static event Action<BoardView> AllTowersDestroyed;
 
@@ -46,25 +46,9 @@ namespace ReverseTD.Defense
                 return path;
             }
         }
-        public StagePath LowerPath
-        {
-            get
-            {
-                if (layout == null ||
-                    layout.LowerWaypoints == null ||
-                    layout.LowerWaypoints.Count < 2)
-                {
-                    return null;
-                }
 
-                if (lowerPath == null)
-                {
-                    lowerPath = new StagePath(layout.LowerWaypoints);
-                }
-
-                return lowerPath;
-            }
-        }
+        // Single-path design: disable lower fork path.
+        public StagePath LowerPath => null;
 
         public IReadOnlyList<Tower> Towers => towers;
 
@@ -99,6 +83,9 @@ namespace ReverseTD.Defense
                 return;
             }
 
+            EnsureSinglePathLevel2Layout();
+            showGoalZone = true;
+
             BuildGround();
             BuildPath();
             BuildTowers();
@@ -106,6 +93,61 @@ namespace ReverseTD.Defense
             {
                 BuildGoalZone();
             }
+        }
+
+        private void EnsureSinglePathLevel2Layout()
+        {
+            // If an older Level2Stage asset with lowerWaypoints is loaded, upgrade it at runtime to the harder single-path layout.
+            if (layout == null || layout.LowerWaypoints == null || layout.LowerWaypoints.Count == 0)
+            {
+                return;
+            }
+
+            TowerDefinition towerDef = null;
+            if (layout.TowerSlots != null && layout.TowerSlots.Count > 0)
+            {
+                towerDef = layout.TowerSlots[0].Definition;
+            }
+
+            var newWaypoints = new Vector2[]
+            {
+                new Vector2(-8f, 3f),
+                new Vector2(-2f, 3f),
+                new Vector2(-2f, -3f),
+                new Vector2(3f, -3f),
+                new Vector2(3f, 3f),
+                new Vector2(8f, 3f)
+            };
+
+            var newSlots = new TowerSlot[]
+            {
+                CreateSlot(new Vector2(-0.8f, 3f), towerDef, TowerAttackDirection.Left, 5f),
+                CreateSlot(new Vector2(-5f, 4.3f), towerDef, TowerAttackDirection.Down, 2.5f),
+                CreateSlot(new Vector2(-2f, -4.3f), towerDef, TowerAttackDirection.Up, 5.5f),
+                CreateSlot(new Vector2(-1.64f, 4.3f), towerDef, TowerAttackDirection.Down, 5.5f),
+                CreateSlot(new Vector2(4.3f, -3f), towerDef, TowerAttackDirection.Left, 5f),
+                CreateSlot(new Vector2(4.3f, -3.36f), towerDef, TowerAttackDirection.Left, 5f),
+                CreateSlot(new Vector2(3f, 4.3f), towerDef, TowerAttackDirection.Down, 5.5f),
+                CreateSlot(new Vector2(3.36f, -4.3f), towerDef, TowerAttackDirection.Up, 5.5f),
+                CreateSlot(new Vector2(5.8f, 1.7f), towerDef, TowerAttackDirection.Up, 2.5f)
+            };
+
+            const BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Instance;
+            typeof(StageLayout).GetField("waypoints", flags)?.SetValue(layout, newWaypoints);
+            typeof(StageLayout).GetField("lowerWaypoints", flags)?.SetValue(layout, new Vector2[0]);
+            typeof(StageLayout).GetField("towerSlots", flags)?.SetValue(layout, newSlots);
+            path = null;
+        }
+
+        private static TowerSlot CreateSlot(Vector2 pos, TowerDefinition def, TowerAttackDirection dir, float range)
+        {
+            object boxed = new TowerSlot();
+            const BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Instance;
+            typeof(TowerSlot).GetField("position", flags)?.SetValue(boxed, pos);
+            typeof(TowerSlot).GetField("definition", flags)?.SetValue(boxed, def);
+            typeof(TowerSlot).GetField("attackDirection", flags)?.SetValue(boxed, dir);
+            typeof(TowerSlot).GetField("attackRange", flags)?.SetValue(boxed, range);
+            return (TowerSlot)boxed;
         }
 
         private void BuildGoalZone()
@@ -159,7 +201,6 @@ namespace ReverseTD.Defense
             Color dashColor = Palette.WithAlpha(Palette.Tint(layout.PathColor, DashTint), DashAlpha);
             float width = layout.PathWidth;
 
-            // Upper Path (Default)
             DrawPathSegments(
                 root,
                 layout.Waypoints,
@@ -167,19 +208,6 @@ namespace ReverseTD.Defense
                 dashColor,
                 width
             );
-
-            // Lower Path (Optional)
-            if (layout.LowerWaypoints != null &&
-                layout.LowerWaypoints.Count >= 2)
-            {
-                DrawPathSegments(
-                    root,
-                    layout.LowerWaypoints,
-                    edgeColor,
-                    dashColor,
-                    width
-                );
-            }
         }
 
         private void DrawPathSegments(
@@ -296,18 +324,6 @@ namespace ReverseTD.Defense
                 Gizmos.color = Color.red;
                 Gizmos.DrawSphere(points[points.Count - 1], 0.2f);
             }
-            // Draw Lower Path Gizmos
-            IReadOnlyList<Vector2> lowerPoints = layout.LowerWaypoints;
-            if (lowerPoints != null && lowerPoints.Count >= 2)
-            {
-                Gizmos.color = layout.PathColor;
-
-                for (int i = 1; i < lowerPoints.Count; i++)
-                {
-                    Gizmos.DrawLine(lowerPoints[i - 1], lowerPoints[i]);
-                }
-            }
-
 
             IReadOnlyList<TowerSlot> slots = layout.TowerSlots;
             for (int i = 0; i < slots.Count; i++)

@@ -13,33 +13,49 @@ MonoBehaviour:
   m_Name: Level2Stage
   m_EditorClassIdentifier: Assembly-CSharp::ReverseTD.Defense.StageLayout
   waypoints:
-  - {x: -8, y: 0}
-  - {x: -5, y: 0}
-  - {x: -5, y: 2.6}
-  - {x: 5, y: 2.6}
-  - {x: 5, y: 0}
-  - {x: 8, y: 0}
-  lowerWaypoints:
-  - {x: -8, y: 0}
-  - {x: -5, y: 0}
-  - {x: -5, y: -2.6}
-  - {x: 5, y: -2.6}
-  - {x: 5, y: 0}
-  - {x: 8, y: 0}
+  - {x: -8, y: 3}
+  - {x: -2, y: 3}
+  - {x: -2, y: -3}
+  - {x: 3, y: -3}
+  - {x: 3, y: 3}
+  - {x: 8, y: 3}
+  lowerWaypoints: []
   towerSlots:
-  - position: {x: -2, y: 4}
+  - position: {x: -0.8, y: 3}
     definition: {fileID: 11400000, guid: c16499c1ee0014574be21e377b1fa9db, type: 2}
-  - position: {x: 2, y: 4}
+    attackDirection: 1
+    attackRange: 5
+  - position: {x: -5, y: 4.3}
     definition: {fileID: 11400000, guid: c16499c1ee0014574be21e377b1fa9db, type: 2}
-  - position: {x: 0, y: 1.5}
+    attackDirection: 3
+    attackRange: 2.5
+  - position: {x: -2, y: -4.3}
     definition: {fileID: 11400000, guid: c16499c1ee0014574be21e377b1fa9db, type: 2}
-  - position: {x: -2, y: -1.5}
+    attackDirection: 2
+    attackRange: 5.5
+  - position: {x: -1.64, y: 4.3}
     definition: {fileID: 11400000, guid: c16499c1ee0014574be21e377b1fa9db, type: 2}
-  - position: {x: 3.5, y: -1.5}
+    attackDirection: 3
+    attackRange: 5.5
+  - position: {x: 4.3, y: -3}
     definition: {fileID: 11400000, guid: c16499c1ee0014574be21e377b1fa9db, type: 2}
-  - position: {x: 6, y: -2}
+    attackDirection: 1
+    attackRange: 5
+  - position: {x: 4.3, y: -3.36}
     definition: {fileID: 11400000, guid: c16499c1ee0014574be21e377b1fa9db, type: 2}
-  - position: {x: 4.5, y: -4}
+    attackDirection: 1
+    attackRange: 5
+  - position: {x: 3, y: 4.3}
     definition: {fileID: 11400000, guid: c16499c1ee0014574be21e377b1fa9db, type: 2}
+    attackDirection: 3
+    attackRange: 5.5
+  - position: {x: 3.36, y: -4.3}
+    definition: {fileID: 11400000, guid: c16499c1ee0014574be21e377b1fa9db, type: 2}
+    attackDirection: 2
+    attackRange: 5.5
+  - position: {x: 5.8, y: 1.7}
+    definition: {fileID: 11400000, guid: c16499c1ee0014574be21e377b1fa9db, type: 2}
+    attackDirection: 2
+    attackRange: 2.5
   pathWidth: 1.1
   pathColor: {r: 0.78, g: 0.72, b: 0.55, a: 1}

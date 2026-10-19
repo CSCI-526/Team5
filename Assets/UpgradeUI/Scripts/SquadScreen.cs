@@ -31,11 +31,13 @@ namespace ReverseTD.UpgradeUI
         private const float QuotaBarY = -173f;
         private const float QuotaTextY = -200f;
         private const float QuotaHintY = -224f;
+        private const float ClaimButtonY = -264f;
 
         private static readonly Vector2 referenceResolution = new Vector2(1280f, 720f);
         private static readonly Vector2 nodeSize = new Vector2(210f, 92f);
         private static readonly Vector2 gridPosition = new Vector2(465f, 43f);
         private static readonly Vector2 quotaBarSize = new Vector2(400f, 14f);
+        private static readonly Vector2 claimButtonSize = new Vector2(240f, 48f);
         private static readonly Color lineColor = new Color(1f, 1f, 1f, 0.4f);
         private static readonly UnitType[] emblemTypes = { UnitType.Attack, UnitType.Tank, UnitType.Heal };
         private static readonly UnitStat[] attackStats = { UnitStat.AttackDamage, UnitStat.AttackHealth };
@@ -56,8 +58,11 @@ namespace ReverseTD.UpgradeUI
         private Image quotaFill;
         private TextMeshProUGUI quotaText;
         private TextMeshProUGUI quotaHint;
+        private Button claimButton;
+        private Image claimButtonImage;
+        private TextMeshProUGUI claimButtonLabel;
         private UnitType selected = UnitType.Attack;
-        private bool offerShown;
+        private bool overlayOpen;
 
         public static SquadScreen Create(OffenseData data, Action goldChanged)
         {
@@ -101,15 +106,6 @@ namespace ReverseTD.UpgradeUI
             BuildBranch();
             grid.Refresh();
             RefreshQuota();
-        }
-
-        private void Start()
-        {
-            if (!offerShown && data.IsCardReady && data.CanAffordCard)
-            {
-                offerShown = true;
-                AugmentOverlay.Open(data, OnGoldChanged, Refresh);
-            }
         }
 
         private void Build()
@@ -210,6 +206,11 @@ namespace ReverseTD.UpgradeUI
             fill.anchoredPosition = Vector2.zero;
             quotaText = UiKit.CreateText(root, "Quota Text", string.Empty, new Vector2(0f, QuotaTextY), new Vector2(600f, 22f), 16f, UiKit.GoldColor);
             quotaHint = UiKit.CreateText(root, "Quota Hint", string.Empty, new Vector2(0f, QuotaHintY), new Vector2(600f, 22f), 15f, UiKit.TextColor);
+
+            claimButton = UiKit.CreateButton(root, "Claim Card Button", new Vector2(0f, ClaimButtonY), claimButtonSize, UiKit.NodeGreyColor, NodeRadius);
+            claimButtonImage = claimButton.GetComponent<Image>();
+            claimButtonLabel = UiKit.CreateText(claimButton.transform, "Label", string.Empty, Vector2.zero, claimButtonSize, 18f, Color.white, FontStyles.Bold);
+            claimButton.onClick.AddListener(ClaimCard);
         }
 
         private void RefreshQuota()
@@ -218,11 +219,11 @@ namespace ReverseTD.UpgradeUI
             if (data.HasNextQuota)
             {
                 double goal = data.NextQuota;
-                float fraction = goal > 0 ? Mathf.Clamp01((float)(data.goldEarned / goal)) : 1f;
+                float fraction = goal > 0 ? Mathf.Clamp01((float)(data.gold / goal)) : 1f;
                 quotaBack.gameObject.SetActive(true);
                 quotaFill.enabled = fraction > 0f;
                 quotaFill.rectTransform.sizeDelta = new Vector2(Mathf.Max(quotaBarSize.y, quotaBarSize.x * fraction), quotaBarSize.y);
-                text = $"${data.goldEarned:0} / ${goal:0} gold earned";
+                text = $"${data.gold:0} / ${goal:0} in bank";
             }
             else
             {
@@ -236,8 +237,45 @@ namespace ReverseTD.UpgradeUI
             }
             quotaText.text = text;
 
-            bool waiting = data.IsCardReady && (offerShown || !data.CanAffordCard);
-            quotaHint.text = waiting ? $"Card ready! Come back with ${SquadRules.CardCost:0} to pick it" : string.Empty;
+            if (!data.HasNextQuota)
+            {
+                quotaHint.text = string.Empty;
+                claimButton.interactable = false;
+                claimButtonImage.color = UiKit.NodeBlueColor;
+                claimButtonLabel.text = "ALL CARDS CLAIMED";
+            }
+            else if (data.IsCardReady)
+            {
+                quotaHint.text = "Card ready! Click below to claim your upgrade card";
+                claimButton.interactable = !overlayOpen;
+                claimButtonImage.color = UiKit.NodeGreenColor;
+                claimButtonLabel.text = $"CLAIM CARD (${data.NextQuota:0})";
+            }
+            else
+            {
+                quotaHint.text = $"Save ${data.NextQuota:0} in your bank account to unlock the next card";
+                claimButton.interactable = false;
+                claimButtonImage.color = UiKit.NodeGreyColor;
+                claimButtonLabel.text = $"CLAIM CARD (<color={UiKit.CostColorTag}>${data.NextQuota:0}</color>)";
+            }
+        }
+
+        private void ClaimCard()
+        {
+            if (overlayOpen || !data.IsCardReady || !data.CanAffordCard)
+            {
+                return;
+            }
+
+            overlayOpen = true;
+            RefreshQuota();
+            AugmentOverlay.Open(data, OnGoldChanged, OnOverlayClosed);
+        }
+
+        private void OnOverlayClosed()
+        {
+            overlayOpen = false;
+            Refresh();
         }
 
         private void Select(UnitType type)

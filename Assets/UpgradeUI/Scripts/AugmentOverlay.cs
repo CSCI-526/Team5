@@ -73,10 +73,11 @@ namespace ReverseTD.UpgradeUI
             UiKit.Stretch(backdrop.rectTransform);
             backdrop.raycastTarget = true;
 
+            double cardCost = data.NextQuota;
             title = UiKit.CreateText(root, "Title", "CHOOSE ONE", new Vector2(0f, TitleY), new Vector2(900f, 50f), 36f, UiKit.TextColor,
                 FontStyles.Bold, 8f);
             subtitle = UiKit.CreateText(root, "Subtitle",
-                $"Each card costs <color={UiKit.CostColorTag}>${SquadRules.CardCost:0}</color>  |  You have ${data.gold:0}",
+                $"Each card costs <color={UiKit.CostColorTag}>${cardCost:0}</color>  |  You have ${data.gold:0}",
                 new Vector2(0f, SubtitleY), new Vector2(900f, 30f), 18f, UiKit.MutedColor);
 
             SquadRules.RollOffer(data.cardsTaken, data.IsSquadFull, offer);
@@ -140,11 +141,12 @@ namespace ReverseTD.UpgradeUI
                     height * 0.043f, UiKit.MutedColor);
             }
 
+            double cardCost = data.NextQuota;
             var pillSize = new Vector2(width * 0.4f, height * 0.11f);
             var pillPosition = new Vector2(0f, -height * 0.5f + height * 0.06f + pillSize.y * 0.5f);
             UiKit.CreateImage(cardRoot, "Price Rim", pillPosition, pillSize + Vector2.one * 4f, UiKit.GoldColor, pillSize.y * 0.5f + 2f);
             UiKit.CreateImage(cardRoot, "Price", pillPosition, pillSize, new Color(0.18f, 0.15f, 0.06f), pillSize.y * 0.5f);
-            UiKit.CreateText(cardRoot, "Price Text", $"${SquadRules.CardCost:0}", pillPosition, pillSize, height * 0.058f, UiKit.GoldColor, FontStyles.Bold);
+            UiKit.CreateText(cardRoot, "Price Text", $"${cardCost:0}", pillPosition, pillSize, height * 0.058f, UiKit.GoldColor, FontStyles.Bold);
 
             Image dim = UiKit.CreateImage(cardRoot, "Dim", Vector2.zero, cardSize, new Color(0f, 0f, 0f, CardDimAlpha), CardRadius);
             dim.enabled = false;
