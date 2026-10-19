@@ -100,6 +100,12 @@ namespace ReverseTD.Offense
                 offenseData.currentLevel = 2;
                 offenseData.levelOnePracticePending = true;
             }
+            if (offenseData != null && offenseData.IsLevelOutOfLives(displayedLevelNumber))
+            {
+                transitionQueued = true;
+                ShowOutOfLives();
+                return;
+            }
             SpawnWave();
         }
 
@@ -166,8 +172,9 @@ namespace ReverseTD.Offense
             var deathRect = (RectTransform)deathObject.transform;
             deathRect.SetParent(canvas.transform, false);
             deathRect.anchorMin = deathRect.anchorMax = deathRect.pivot = new Vector2(0f, 1f);
-            deathRect.anchoredPosition = new Vector2(24f, -76f) * uiScale;
-            deathRect.sizeDelta = new Vector2(240f, 40f) * uiScale;
+            deathRect.anchoredPosition = new Vector2(56f, -76f) * uiScale;
+            deathRect.sizeDelta = new Vector2(208f, 40f) * uiScale;
+            UiKit.CreateHeartIcon(canvas.transform, new Vector2(24f, -80f) * uiScale, uiScale);
             deathCountLabel = deathObject.GetComponent<TextMeshProUGUI>();
             deathCountLabel.font = label.font;
             deathCountLabel.fontSize = 24f * uiScale;
@@ -184,7 +191,7 @@ namespace ReverseTD.Offense
             int count = offenseData != null ? offenseData.GetLevelDeathCount(displayedLevelNumber) : 0;
             if (count == displayedDeathCount) return;
             displayedDeathCount = count;
-            deathCountLabel.text = $"DEATHS: {count}";
+            deathCountLabel.text = UiKit.LifeCounterText(count);
         }
 
         private void EnsureEditFormationButton()
@@ -479,6 +486,11 @@ namespace ReverseTD.Offense
                 offenseData.RecordLevelDeath(displayedLevelNumber);
                 RefreshDeathCount();
             }
+            if (offenseData != null && offenseData.IsLevelOutOfLives(displayedLevelNumber))
+            {
+                ShowOutOfLives();
+                return;
+            }
             if (TutorialRewind != null)
             {
                 IsDefeated = true;
@@ -487,6 +499,13 @@ namespace ReverseTD.Offense
                 return;
             }
             StartCoroutine(TransitionToUpgradeScene());
+        }
+
+        private void ShowOutOfLives()
+        {
+            IsDefeated = true;
+            Time.timeScale = 0f;
+            OutOfLivesScreen.Open(this, offenseData, displayedLevelNumber);
         }
 
         internal System.Action CaptureTutorialState()

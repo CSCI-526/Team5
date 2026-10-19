@@ -4,6 +4,8 @@ using ReverseTD.Offense;
 [CreateAssetMenu(fileName = "OffenseData", menuName = "Scriptable Objects/OffenseData")]
 public class OffenseData : ScriptableObject
 {
+    public const int LivesPerLevel = 3;
+    public const int LevelRetryCost = 10;
     // Currency & Flow
     public double gold = 20;
     public float gameSpeed = 1f;
@@ -26,6 +28,19 @@ public class OffenseData : ScriptableObject
         if (levelNumber < 1 || levelNumber > 3) return;
         if (levelDeathCounts == null) levelDeathCounts = new int[3];
         levelDeathCounts[levelNumber - 1]++;
+    }
+
+    public bool IsLevelOutOfLives(int levelNumber)
+    {
+        return GetLevelDeathCount(levelNumber) >= LivesPerLevel;
+    }
+
+    public bool TryBuyLevelRetry(int levelNumber)
+    {
+        if (levelNumber < 1 || levelNumber > 3 || !IsLevelOutOfLives(levelNumber) || gold < LevelRetryCost) return false;
+        gold -= LevelRetryCost;
+        levelDeathCounts[levelNumber - 1] = 0;
+        return true;
     }
 
     [Header("Level Completion Rewards")]

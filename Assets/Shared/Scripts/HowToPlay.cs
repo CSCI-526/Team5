@@ -8,6 +8,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using ReverseTD.Defense;
 using ReverseTD.Offense;
+using ReverseTD.UpgradeUI;
 
 namespace ReverseTD.Shared
 {
@@ -862,7 +863,7 @@ namespace ReverseTD.Shared
             PlayerPrefs.Save();
         }
 
-        public static void ShowLevelOneDefeat(System.Action restart, System.Action rewind, bool canRewind)
+        public static void SuspendBattleTutorial()
         {
             if (current == null) return;
             current.StopAllCoroutines();
@@ -873,6 +874,12 @@ namespace ReverseTD.Shared
             current.isControllingCamera = false;
             OffenseWaveManager.IsTutorialPaused = true;
             Time.timeScale = 0f;
+        }
+
+        public static void ShowLevelOneDefeat(System.Action restart, System.Action rewind, bool canRewind)
+        {
+            if (current == null) return;
+            SuspendBattleTutorial();
 
             Canvas canvas = current.CreateCanvas("LevelOneDefeat", ModalReferenceResolution, ModalMatchWidthOrHeight, ModalSortingOrder + 200);
             Image backdrop = CreateImage(canvas.transform, "Backdrop", BackdropColor);
@@ -966,10 +973,11 @@ namespace ReverseTD.Shared
                 new Vector2(24f, -24f), new Vector2(240f, 60f));
 
             int deaths = upgrade != null ? upgrade.NextBattleDeathCount : 0;
-            TextMeshProUGUI deathLabel = CreateText(canvas.transform, "Death Count", $"DEATHS: {deaths}", 24f, Color.white, TextAlignmentOptions.TopLeft);
+            UiKit.CreateHeartIcon(canvas.transform, new Vector2(24f, -80f));
+            TextMeshProUGUI deathLabel = CreateText(canvas.transform, "Death Count", UiKit.LifeCounterText(deaths), 24f, Color.white, TextAlignmentOptions.TopLeft);
             SetRect(deathLabel.rectTransform,
                 new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
-                new Vector2(24f, -76f), new Vector2(240f, 40f));
+                new Vector2(56f, -76f), new Vector2(208f, 40f));
         }
 
         private void BuildModal()

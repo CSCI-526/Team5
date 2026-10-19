@@ -9,6 +9,25 @@ namespace ReverseTD.UpgradeUI
     {
         public const string CostColorTag = "#FFD93D";
 
+        public static string LifeCounterText(int deaths)
+        {
+            return $": {Mathf.Clamp(OffenseData.LivesPerLevel - deaths, 0, OffenseData.LivesPerLevel)}/{OffenseData.LivesPerLevel}";
+        }
+
+        public static void CreateHeartIcon(Transform parent, Vector2 topLeftPosition, float scale = 1f)
+        {
+            var root = CreateRect(parent, "Heart Icon", topLeftPosition, new Vector2(24f, 24f));
+            root.anchorMin = root.anchorMax = root.pivot = new Vector2(0f, 1f);
+            root.anchoredPosition = topLeftPosition;
+            root.localScale = new Vector3(scale, scale, 1f);
+            Color red = new Color(1f, 0.2f, 0.3f, 1f);
+            // Reuse existing UI shapes so the heart does not depend on font glyph support.
+            Image tip = CreateImage(root, "Heart Tip", new Vector2(0f, -2f), new Vector2(14f, 14f), red);
+            tip.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 45f);
+            CreateCircle(root, "Heart Left", new Vector2(-5f, 3f), 14f, red);
+            CreateCircle(root, "Heart Right", new Vector2(5f, 3f), 14f, red);
+        }
+
         public static readonly Color PanelColor = new Color(0.11f, 0.14f, 0.21f);
         public static readonly Color PanelLineColor = new Color(0.3f, 0.36f, 0.46f);
         public static readonly Color CellColor = new Color(0.07f, 0.09f, 0.14f);
