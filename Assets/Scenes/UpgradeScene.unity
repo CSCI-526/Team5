@@ -804,6 +804,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::UpgradeSceneUI
   offenseData: {fileID: 11400000, guid: db8156bb844e129458b0ae04b4ec64b2, type: 2}
   gameplaySceneName: DefenseSandbox
+  level1PracticeSceneName: DefenseLevel1Practice
+  level2SceneName: DefenseLevel2
   startGameButton: {fileID: 376369098}
   goldText: {fileID: 487523770}
   treeContainer: {fileID: 383194448}

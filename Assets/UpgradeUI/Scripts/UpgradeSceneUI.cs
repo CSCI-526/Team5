@@ -10,8 +10,13 @@ public class UpgradeSceneUI : MonoBehaviour
     [Header("Data Asset")]
     [SerializeField] private OffenseData offenseData;
 
+    public int NextBattleLevelNumber => offenseData == null || offenseData.currentLevel == 1
+        ? 1 : offenseData.levelOnePracticePending ? 2 : 3;
+    public int NextBattleDeathCount => offenseData != null ? offenseData.GetLevelDeathCount(NextBattleLevelNumber) : 0;
+
     [Header("Scene Loading")]
     [SerializeField] private string gameplaySceneName = "DefenseSandbox";
+    [SerializeField] private string level1PracticeSceneName = "DefenseLevel1Practice";
     [SerializeField] private string level2SceneName = "DefenseLevel2";
     [SerializeField] private Button startGameButton;
 
@@ -191,7 +196,7 @@ public class UpgradeSceneUI : MonoBehaviour
         }
         else if (offenseData.currentLevel == 2)
         {
-            SceneManager.LoadScene(level2SceneName);
+            SceneManager.LoadScene(offenseData.levelOnePracticePending ? level1PracticeSceneName : level2SceneName);
         }
         else
         {

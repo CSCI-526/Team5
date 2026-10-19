@@ -51,7 +51,7 @@ namespace ReverseTD.Shared
 
         private static HowToPlay current;
 
-        // Modal UI (StartGame / UpgradeScene)
+        // Modal UI (StartGame)
         private GameObject modalRoot;
         private Button closeButton;
 
@@ -900,7 +900,7 @@ namespace ReverseTD.Shared
         }
 
         // =====================================================================
-        // MODAL POPUP (StartGame & UpgradeScene "? How to Play" button)
+        // TITLE GUIDE AND UPGRADE LEVEL LABEL
         // =====================================================================
 
         public void Show()
@@ -931,11 +931,13 @@ namespace ReverseTD.Shared
 
         private void Build(bool isTitle)
         {
-            if (isTitle)
-                BuildTitleButton();
-            else
-                BuildUpgradeButton();
+            if (!isTitle)
+            {
+                BuildUpgradeLevelLabel();
+                return;
+            }
 
+            BuildTitleButton();
             BuildModal();
             modalRoot.SetActive(false);
         }
@@ -951,15 +953,23 @@ namespace ReverseTD.Shared
             button.onClick.AddListener(Show);
         }
 
-        private void BuildUpgradeButton()
+        private void BuildUpgradeLevelLabel()
         {
-            Canvas canvas = CreateCanvas("HowToPlayButtonCanvas", UpgradeReferenceResolution, SceneMatchWidthOrHeight, SceneButtonSortingOrder);
+            Canvas canvas = CreateCanvas("UpgradeLevelCanvas", UpgradeReferenceResolution, SceneMatchWidthOrHeight, SceneButtonSortingOrder);
+            UpgradeSceneUI upgrade = FindAnyObjectByType<UpgradeSceneUI>();
+            int level = upgrade != null ? upgrade.NextBattleLevelNumber : 1;
 
-            Button button = CreateButton(canvas.transform, "HowToPlayButton", "? How to Play", LightButtonColor, DarkTextColor, 22f);
-            SetRect((RectTransform)button.transform,
+            TextMeshProUGUI label = CreateText(canvas.transform, "Level Label", $"LEVEL {level}", 36f, Color.white, TextAlignmentOptions.TopLeft);
+            label.fontStyle = FontStyles.Bold;
+            SetRect(label.rectTransform,
                 new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
-                new Vector2(20f, -20f), new Vector2(180f, 44f));
-            button.onClick.AddListener(Show);
+                new Vector2(24f, -24f), new Vector2(240f, 60f));
+
+            int deaths = upgrade != null ? upgrade.NextBattleDeathCount : 0;
+            TextMeshProUGUI deathLabel = CreateText(canvas.transform, "Death Count", $"DEATHS: {deaths}", 24f, Color.white, TextAlignmentOptions.TopLeft);
+            SetRect(deathLabel.rectTransform,
+                new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
+                new Vector2(24f, -76f), new Vector2(240f, 40f));
         }
 
         private void BuildModal()

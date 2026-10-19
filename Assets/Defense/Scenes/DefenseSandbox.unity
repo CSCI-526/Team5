@@ -545,6 +545,7 @@ MonoBehaviour:
   upgradeSceneName: UpgradeScene
   timeScale: 1
   speedSlider: {fileID: 894144775}
+  displayedLevelNumber: 1
 --- !u!1 &858233387
 GameObject:
   m_ObjectHideFlags: 0

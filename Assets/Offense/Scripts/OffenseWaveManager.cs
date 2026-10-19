@@ -37,6 +37,12 @@ namespace ReverseTD.Offense
 
         [SerializeField] private Slider speedSlider;
 
+        [Header("Level Display")]
+        [SerializeField, Min(1), Tooltip("Number shown in the battle HUD; independent of progression state.")]
+        private int displayedLevelNumber = 1;
+        private TMP_Text deathCountLabel;
+        private int displayedDeathCount = -1;
+
         private readonly OffenseSoldier[] soldiers = new OffenseSoldier[SquadRules.CellCount];
         private int livingUnits = 0;
         private bool spawningComplete = false;
@@ -66,6 +72,7 @@ namespace ReverseTD.Offense
         {
             DisableForkMechanicUI();
             EnsureEditFormationButton();
+            EnsureLevelLabel();
 
             if (offenseData != null)
             {
@@ -86,6 +93,12 @@ namespace ReverseTD.Offense
             {
                 TutorialRewind = gameObject.AddComponent<LevelOneTutorialRewind>();
                 TutorialRewind.Initialize(this, offenseData);
+            }
+            else if (gameObject.scene.name == "DefenseLevel1Practice" && offenseData != null)
+            {
+                // Also support opening this scene directly in the Editor: defeat must retry it.
+                offenseData.currentLevel = 2;
+                offenseData.levelOnePracticePending = true;
             }
             SpawnWave();
         }
@@ -115,6 +128,63 @@ namespace ReverseTD.Offense
                 }
                 commands[i].gameObject.SetActive(false);
             }
+        }
+
+        private void EnsureLevelLabel()
+        {
+            Canvas canvas = speedSlider != null ? speedSlider.GetComponentInParent<Canvas>() : FindAnyObjectByType<Canvas>();
+            if (canvas == null) return;
+
+            Transform existing = canvas.transform.Find("Level Label");
+            if (existing != null) return;
+
+            var labelObject = new GameObject("Level Label", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+            labelObject.layer = canvas.gameObject.layer;
+            var rect = (RectTransform)labelObject.transform;
+            rect.SetParent(canvas.transform, false);
+            rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0f, 1f);
+
+            // Match the HUD's reference resolution while keeping a consistent screen size.
+            CanvasScaler scaler = canvas.GetComponent<CanvasScaler>();
+            float uiScale = scaler != null && scaler.uiScaleMode == CanvasScaler.ScaleMode.ScaleWithScreenSize
+                ? scaler.referenceResolution.x / 1280f : 1f;
+            rect.anchoredPosition = new Vector2(24f, -24f) * uiScale;
+            rect.sizeDelta = new Vector2(240f, 60f) * uiScale;
+
+            var label = labelObject.GetComponent<TextMeshProUGUI>();
+            if (TMP_Settings.defaultFontAsset != null) label.font = TMP_Settings.defaultFontAsset;
+            label.text = $"LEVEL {Mathf.Max(1, displayedLevelNumber)}";
+            label.fontSize = 36f * uiScale;
+            label.fontStyle = FontStyles.Bold;
+            label.color = Color.white;
+            label.alignment = TextAlignmentOptions.TopLeft;
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+            label.raycastTarget = false;
+
+            var deathObject = new GameObject("Death Count", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+            deathObject.layer = canvas.gameObject.layer;
+            var deathRect = (RectTransform)deathObject.transform;
+            deathRect.SetParent(canvas.transform, false);
+            deathRect.anchorMin = deathRect.anchorMax = deathRect.pivot = new Vector2(0f, 1f);
+            deathRect.anchoredPosition = new Vector2(24f, -76f) * uiScale;
+            deathRect.sizeDelta = new Vector2(240f, 40f) * uiScale;
+            deathCountLabel = deathObject.GetComponent<TextMeshProUGUI>();
+            deathCountLabel.font = label.font;
+            deathCountLabel.fontSize = 24f * uiScale;
+            deathCountLabel.color = Color.white;
+            deathCountLabel.alignment = TextAlignmentOptions.TopLeft;
+            deathCountLabel.textWrappingMode = TextWrappingModes.NoWrap;
+            deathCountLabel.raycastTarget = false;
+            RefreshDeathCount();
+        }
+
+        private void RefreshDeathCount()
+        {
+            if (deathCountLabel == null) return;
+            int count = offenseData != null ? offenseData.GetLevelDeathCount(displayedLevelNumber) : 0;
+            if (count == displayedDeathCount) return;
+            displayedDeathCount = count;
+            deathCountLabel.text = $"DEATHS: {count}";
         }
 
         private void EnsureEditFormationButton()
@@ -180,6 +250,7 @@ namespace ReverseTD.Offense
         private void Update()
         {
             Time.timeScale = IsCombatPaused ? 0f : timeScale;
+            RefreshDeathCount();
 
             if (forkCommandSlot != null && offenseData != null)
             {
@@ -403,6 +474,11 @@ namespace ReverseTD.Offense
             }
 
             transitionQueued = true;
+            if (offenseData != null && spawnedCount > 0)
+            {
+                offenseData.RecordLevelDeath(displayedLevelNumber);
+                RefreshDeathCount();
+            }
             if (TutorialRewind != null)
             {
                 IsDefeated = true;
@@ -458,9 +534,19 @@ namespace ReverseTD.Offense
 
                 transitionQueued = true;
 
+                offenseData.GrantLevelOneReward();
+                offenseData.levelOnePracticePending = true;
                 offenseData.currentLevel = 2;
 
                 SceneManager.LoadScene("Level2Intro");
+            }
+            else if (currentScene == "DefenseLevel1Practice")
+            {
+                transitionQueued = true;
+                offenseData.GrantLevelTwoReward();
+                offenseData.levelOnePracticePending = false;
+                offenseData.currentLevel = 2;
+                SceneManager.LoadScene("Level3Intro");
             }
             else if (currentScene == "DefenseLevel2")
             {

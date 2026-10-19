@@ -9,6 +9,56 @@ public class OffenseData : ScriptableObject
     public float gameSpeed = 1f;
 
     public int currentLevel = 1;
+    // Distinguish the inserted practice stage from the original Level 2 without renumbering it.
+    [HideInInspector] public bool levelOnePracticePending;
+
+    // Per-run failure totals live outside tutorial checkpoint JSON, so rewinds cannot erase them.
+    [System.NonSerialized] private int[] levelDeathCounts = new int[3];
+
+    public int GetLevelDeathCount(int levelNumber)
+    {
+        if (levelDeathCounts == null || levelNumber < 1 || levelNumber > levelDeathCounts.Length) return 0;
+        return levelDeathCounts[levelNumber - 1];
+    }
+
+    public void RecordLevelDeath(int levelNumber)
+    {
+        if (levelNumber < 1 || levelNumber > 3) return;
+        if (levelDeathCounts == null) levelDeathCounts = new int[3];
+        levelDeathCounts[levelNumber - 1]++;
+    }
+
+    [Header("Level Completion Rewards")]
+    public LevelCompletionRewards completionRewards;
+    [SerializeField, HideInInspector] private bool levelOneRewardGranted;
+    [SerializeField, HideInInspector] private int levelOneGoldAwarded;
+    [SerializeField, HideInInspector] private bool levelTwoRewardGranted;
+    [SerializeField, HideInInspector] private int levelTwoGoldAwarded;
+
+    public bool HasLevelOneReward => levelOneRewardGranted;
+    public int LevelOneGoldAwarded => levelOneGoldAwarded;
+    public int ConfiguredLevelOneGold => completionRewards != null ? completionRewards.LevelOneGold : 0;
+    public bool HasLevelTwoReward => levelTwoRewardGranted;
+    public int LevelTwoGoldAwarded => levelTwoGoldAwarded;
+    public int ConfiguredLevelTwoGold => completionRewards != null ? completionRewards.LevelTwoGold : 0;
+
+    public bool GrantLevelOneReward()
+    {
+        if (levelOneRewardGranted) return false;
+        levelOneGoldAwarded = ConfiguredLevelOneGold;
+        gold += levelOneGoldAwarded;
+        levelOneRewardGranted = true;
+        return true;
+    }
+
+    public bool GrantLevelTwoReward()
+    {
+        if (levelTwoRewardGranted) return false;
+        levelTwoGoldAwarded = ConfiguredLevelTwoGold;
+        gold += levelTwoGoldAwarded;
+        levelTwoRewardGranted = true;
+        return true;
+    }
 
     // Base costs
     public double baseCostHealth = 10;
@@ -202,6 +252,11 @@ public class OffenseData : ScriptableObject
 
     public void ResetLevelStats()
     {
+        levelOnePracticePending = false;
+        levelOneRewardGranted = false;
+        levelOneGoldAwarded = 0;
+        levelTwoRewardGranted = false;
+        levelTwoGoldAwarded = 0;
         gold = 0;
         bonusHealth = 0f;
         bonusDamage = 0f;
@@ -214,6 +269,7 @@ public class OffenseData : ScriptableObject
     public void ResetGame()
     {
         ResetLevelStats();
+        levelDeathCounts = new int[3];
         currentLevel = 1;
     }
 }
