@@ -15,15 +15,27 @@ namespace ReverseTD.Defense
         private float range;
         private float shownWidth;
         private Color shownColor;
+        private bool circular;
+        private SpriteRenderer circleBorder;
 
-        public void Initialize(TowerDefinition towerDefinition, Vector2 direction, float attackRange)
+        public void Initialize(TowerDefinition towerDefinition, Vector2 direction, float attackRange, bool circularAttack = false)
         {
             definition = towerDefinition;
             range = attackRange;
+            circular = circularAttack;
             transform.localRotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);
             fill = CreatePart("Fill");
-            for (int i = 0; i < borders.Length; i++) borders[i] = CreatePart("Border " + i);
-            for (int i = 0; i < arrow.Length; i++) arrow[i] = CreatePart("Direction " + i);
+            if (circular)
+            {
+                fill.sprite = ShapeSprites.Circle;
+                circleBorder = CreatePart("Circle Border");
+                circleBorder.sprite = ShapeSprites.Ring;
+            }
+            else
+            {
+                for (int i = 0; i < borders.Length; i++) borders[i] = CreatePart("Border " + i);
+                for (int i = 0; i < arrow.Length; i++) arrow[i] = CreatePart("Direction " + i);
+            }
             Apply();
         }
 
@@ -43,6 +55,13 @@ namespace ReverseTD.Defense
 
             Vector2 middle = new Vector2(shownRange * 0.5f, 0f);
             Color edge = Palette.WithAlpha(shownColor, 0.7f);
+            if (circular)
+            {
+                Vector2 diameter = Vector2.one * shownRange * 2f;
+                SetPart(fill, Vector2.zero, diameter, Palette.WithAlpha(shownColor, Alpha));
+                SetPart(circleBorder, Vector2.zero, diameter, edge);
+                return;
+            }
             SetPart(fill, middle, new Vector2(shownRange, shownWidth), Palette.WithAlpha(shownColor, Alpha));
             SetPart(borders[0], middle + new Vector2(0f, shownWidth * 0.5f), new Vector2(shownRange, BorderWidth), edge);
             SetPart(borders[1], middle - new Vector2(0f, shownWidth * 0.5f), new Vector2(shownRange, BorderWidth), edge);

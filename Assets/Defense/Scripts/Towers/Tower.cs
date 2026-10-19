@@ -30,8 +30,9 @@ namespace ReverseTD.Defense
             var visual = CreateChild("Body").AddComponent<TowerVisual>();
             visual.Initialize(definition);
             Vector2 direction = TowerAttackGeometry.Direction(attackDirection);
+            bool circular = attackDirection == TowerAttackDirection.Circle;
             visual.Face(transform.position + (Vector3)direction);
-            CreateChild("Range").AddComponent<RangeIndicator>().Initialize(definition, direction, attackRange);
+            CreateChild("Range").AddComponent<RangeIndicator>().Initialize(definition, direction, attackRange, circular);
             var marker = CreateChild("Target Marker").AddComponent<TargetMarker>();
             marker.Initialize();
 
@@ -42,8 +43,8 @@ namespace ReverseTD.Defense
             gameObject.AddComponent<TowerHealth>().Initialize(this, definition, healthBar, visual);
 
             var targeting = gameObject.AddComponent<TowerTargeting>();
-            targeting.Initialize(definition, direction, attackRange);
-            gameObject.AddComponent<TowerWeapon>().Initialize(definition, targeting, visual, marker, direction, attackRange);
+            targeting.Initialize(definition, direction, attackRange, circular);
+            gameObject.AddComponent<TowerWeapon>().Initialize(definition, targeting, visual, marker, direction, attackRange, circular);
         }
 
         internal void Die()

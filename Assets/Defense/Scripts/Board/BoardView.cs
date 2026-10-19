@@ -346,6 +346,19 @@ namespace ReverseTD.Defense
 
         private static void DrawAttackLane(TowerSlot slot, TowerDefinition definition)
         {
+            if (slot.AttackDirection == TowerAttackDirection.Circle)
+            {
+                const int segments = 64;
+                Vector2 previous = slot.Position + Vector2.right * slot.AttackRange;
+                for (int i = 1; i <= segments; i++)
+                {
+                    float angle = i * Mathf.PI * 2f / segments;
+                    Vector2 point = slot.Position + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * slot.AttackRange;
+                    Gizmos.DrawLine(previous, point);
+                    previous = point;
+                }
+                return;
+            }
             Vector2 direction = TowerAttackGeometry.Direction(slot.AttackDirection);
             Vector2 side = new Vector2(-direction.y, direction.x) * (definition.AttackWidth * 0.5f);
             Vector2 start = slot.Position;

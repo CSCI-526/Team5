@@ -12,10 +12,10 @@ namespace ReverseTD.Defense
         [SerializeField, Tooltip("The tower that stands here.")]
         private TowerDefinition definition;
 
-        [SerializeField, Tooltip("Fixed firing direction for this tower: Right, Left, Up or Down.")]
+        [SerializeField, Tooltip("Right, Left, Up or Down for a fixed firing lane; Circle attacks targets in all directions.")]
         private TowerAttackDirection attackDirection;
 
-        [SerializeField, Min(0f), Tooltip("Attack distance for this tower, in world units. 0 uses the Tower Definition's Range.")]
+        [SerializeField, Min(0f), Tooltip("Attack distance in world units, or radius in Circle mode. 0 uses the Tower Definition's Range.")]
         private float attackRange;
 
         public Vector2 Position => position;

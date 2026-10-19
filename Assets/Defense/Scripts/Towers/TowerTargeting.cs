@@ -12,12 +12,14 @@ namespace ReverseTD.Defense
         private TowerDefinition definition;
         private Vector2 direction;
         private float range;
+        private bool circular;
 
-        public void Initialize(TowerDefinition towerDefinition, Vector2 attackDirection, float attackRange)
+        public void Initialize(TowerDefinition towerDefinition, Vector2 attackDirection, float attackRange, bool circularAttack = false)
         {
             definition = towerDefinition;
             direction = attackDirection;
             range = attackRange;
+            circular = circularAttack;
         }
 
         public IDamageable FindTarget()
@@ -36,7 +38,7 @@ namespace ReverseTD.Defense
                 IDamageable candidate = candidates[i];
                 Vector2 offset = (Vector2)candidate.Position - origin;
                 float distanceSqr = offset.sqrMagnitude;
-                if (!TowerAttackGeometry.Contains(offset, direction, range, definition.AttackWidth))
+                if (!TowerAttackGeometry.Contains(offset, direction, range, definition.AttackWidth, circular))
                 {
                     continue;
                 }
