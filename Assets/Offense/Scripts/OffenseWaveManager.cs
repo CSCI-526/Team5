@@ -44,6 +44,9 @@ namespace ReverseTD.Offense
         private float healTimer;
         public bool IsSquadEditing { get; private set; }
         public bool AllowTutorialSquadEditing { get; set; }
+        public bool IsDefeated { get; private set; }
+        public bool IsCombatPaused => IsTutorialPaused || IsSquadEditing || IsDefeated;
+        public LevelOneTutorialRewind TutorialRewind { get; private set; }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
@@ -80,19 +83,24 @@ namespace ReverseTD.Offense
                 }
             }
 
+            if (gameObject.scene.name == "DefenseSandbox")
+            {
+                TutorialRewind = gameObject.AddComponent<LevelOneTutorialRewind>();
+                TutorialRewind.Initialize(this, offenseData);
+            }
             SpawnWave();
         }
 
         private void Update()
         {
-            Time.timeScale = IsTutorialPaused || IsSquadEditing ? 0f : timeScale;
+            Time.timeScale = IsCombatPaused ? 0f : timeScale;
 
             if (forkCommandSlot != null && offenseData != null)
             {
                 offenseData.lastRouteCommand = forkCommandSlot.CurrentCommand;
             }
 
-            if (!IsTutorialPaused && !IsSquadEditing)
+            if (!IsCombatPaused)
             {
                 TickHealing();
             }
@@ -309,7 +317,35 @@ namespace ReverseTD.Offense
             }
 
             transitionQueued = true;
+            if (TutorialRewind != null)
+            {
+                IsDefeated = true;
+                Time.timeScale = 0f;
+                TutorialRewind.ShowDefeat();
+                return;
+            }
             StartCoroutine(TransitionToUpgradeScene());
+        }
+
+        internal System.Action CaptureTutorialState()
+        {
+            var savedSoldiers = (OffenseSoldier[])soldiers.Clone();
+            int savedLiving = livingUnits;
+            float savedHealTimer = healTimer;
+            float savedSpeed = timeScale;
+            return () =>
+            {
+                System.Array.Copy(savedSoldiers, soldiers, soldiers.Length);
+                livingUnits = savedLiving;
+                healTimer = savedHealTimer;
+                timeScale = savedSpeed;
+                transitionQueued = false;
+                IsDefeated = false;
+                IsSquadEditing = false;
+                AllowTutorialSquadEditing = false;
+                if (speedSlider != null) speedSlider.SetValueWithoutNotify(savedSpeed == 1f ? 0 : savedSpeed == 2f ? 1 : 2);
+                if (forkCommandSlot != null && offenseData != null) forkCommandSlot.SetCommand(offenseData.lastRouteCommand);
+            };
         }
 
         public void ReportGoalReached()

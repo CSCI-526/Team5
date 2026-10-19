@@ -112,6 +112,16 @@ namespace ReverseTD.Defense
             }
         }
 
+        internal void RestoreHealth(float fraction)
+        {
+            shownHealth = Mathf.Clamp01(fraction);
+            flashTimer = hitTimer = healTimer = aimTimer = 0f;
+            lastPosition = transform.position;
+            healthBar.SetFraction(shownHealth);
+            healthBarObject.SetActive(shownHealth < 1f);
+            Apply();
+        }
+
         /** 
          * 
          * Can use this only after midterm, replaced with just square

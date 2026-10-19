@@ -106,7 +106,7 @@ namespace ReverseTD.Defense
 
         private void Update()
         {
-            if (ReverseTD.Offense.OffenseWaveManager.Instance != null && ReverseTD.Offense.OffenseWaveManager.Instance.IsSquadEditing) return;
+            if (OffenseWaveManager.Instance != null && OffenseWaveManager.Instance.IsCombatPaused) return;
             if (targetCell >= 0)
             {
                 target = targetFormation != null ? targetFormation.GetSoldierAt(targetCell) : null;
@@ -137,7 +137,7 @@ namespace ReverseTD.Defense
             transform.position = Vector3.MoveTowards(transform.position, aimPoint, speed * Time.deltaTime);
             if ((transform.position - aimPoint).sqrMagnitude <= HitDistance * HitDistance)
             {
-                Destroy(gameObject);
+                LevelOneTutorialRewind.Retire(gameObject);
                 if (targetAlive)
                 {
                     float applied = target.TakeDamage(damage);
@@ -150,7 +150,7 @@ namespace ReverseTD.Defense
             age += Time.deltaTime;
             if (age >= MaxLifetime)
             {
-                Destroy(gameObject);
+                LevelOneTutorialRewind.Retire(gameObject);
             }
         }
 
@@ -176,13 +176,34 @@ namespace ReverseTD.Defense
                     float applied = target.TakeDamage(damage);
                     onHit?.Invoke(applied);
                     CombatEffects.SpawnImpact(aimPoint, color, impactSize);
-                    Destroy(gameObject);
+                    LevelOneTutorialRewind.Retire(gameObject);
                     return;
                 }
             }
 
             age += Time.deltaTime;
-            if (flightDistance >= flightRange || age >= MaxLifetime) Destroy(gameObject);
+            if (flightDistance >= flightRange || age >= MaxLifetime) LevelOneTutorialRewind.Retire(gameObject);
+        }
+
+        internal System.Action CaptureTutorialState()
+        {
+            // Launch configuration, slot lock and hit callback stay on this retained object.
+            IDamageable savedTarget = target;
+            LanePath savedLane = targetLane;
+            float savedTargetDistance = targetDistance, savedAge = age, savedFlightDistance = flightDistance;
+            Vector3 savedPosition = transform.position, savedAim = aimPoint;
+            return () =>
+            {
+                target = savedTarget;
+                targetLane = savedLane;
+                targetDistance = savedTargetDistance;
+                age = savedAge;
+                flightDistance = savedFlightDistance;
+                aimPoint = savedAim;
+                transform.position = savedPosition;
+                UpdateVisual();
+                gameObject.SetActive(true);
+            };
         }
 
         private void UpdateVisual()

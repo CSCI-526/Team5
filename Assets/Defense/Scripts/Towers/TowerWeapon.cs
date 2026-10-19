@@ -26,7 +26,7 @@ namespace ReverseTD.Defense
 
         private void Update()
         {
-            if (ReverseTD.Offense.OffenseWaveManager.Instance != null && ReverseTD.Offense.OffenseWaveManager.Instance.IsSquadEditing) return;
+            if (ReverseTD.Offense.OffenseWaveManager.Instance != null && ReverseTD.Offense.OffenseWaveManager.Instance.IsCombatPaused) return;
             target = targeting.FindTarget();
 
             cooldown -= Time.deltaTime;
@@ -57,6 +57,13 @@ namespace ReverseTD.Defense
             {
                 marker.Hide();
             }
+        }
+
+        internal System.Action CaptureTutorialState()
+        {
+            float savedCooldown = cooldown;
+            IDamageable savedTarget = target;
+            return () => { cooldown = savedCooldown; target = savedTarget; marker.Hide(); };
         }
     }
 }

@@ -197,20 +197,23 @@ namespace ReverseTD.Shared
                 : RunFreezeFrameSequence());
         }
 
-        private IEnumerator RunFreezeFrameSequence()
+        private IEnumerator RunFreezeFrameSequence(int firstStep = 1, bool replay = false)
         {
-            // Wait 2 frames so BoardCamera.Start() finishes fitting the board
-            yield return null;
-            yield return null;
+            if (!replay)
+            {
+                // Wait 2 frames so BoardCamera.Start() finishes fitting the board
+                yield return null;
+                yield return null;
 
-            mainCam = Camera.main;
-            if (mainCam == null) yield break;
+                mainCam = Camera.main;
+                if (mainCam == null) yield break;
 
-            boardCamera = mainCam.GetComponent<BoardCamera>();
-            defaultCamPos = mainCam.transform.position;
-            defaultCamSize = mainCam.orthographicSize;
-            targetCamPos = defaultCamPos;
-            targetCamSize = defaultCamSize;
+                boardCamera = mainCam.GetComponent<BoardCamera>();
+                defaultCamPos = mainCam.transform.position;
+                defaultCamSize = mainCam.orthographicSize;
+                targetCamPos = defaultCamPos;
+                targetCamSize = defaultCamSize;
+            }
 
             // Wait for the first OffenseSoldier to spawn and walk onto the board
             OffenseSoldier soldier = null;
@@ -221,102 +224,111 @@ namespace ReverseTD.Shared
             }
 
             // Let the soldier march slightly onto the track so it's clearly visible
-            yield return new WaitForSeconds(0.55f);
+            if (!replay) yield return new WaitForSeconds(0.55f);
 
             // -----------------------------------------------------------------
             // FREEZE 1: Zoom in on Player (Attacker)
             // -----------------------------------------------------------------
-            TakeCameraControl();
+            if (!replay) TakeCameraControl();
             SetTutorialPause(true);
 
-            if (soldier != null)
+            if (firstStep <= 1)
             {
-                FocusCamera(soldier.transform.position, 2.2f);
-                ShowWorldRing(soldier.transform.position, new Color(1f, 0.35f, 0.3f, 0.95f));
+                if (soldier != null)
+                {
+                    FocusCamera(soldier.transform.position, 2.2f);
+                    ShowWorldRing(soldier.transform.position, new Color(1f, 0.35f, 0.3f, 0.95f));
+                }
+
+                ShowBanner(
+                    "1/6 — YOU ARE THE ATTACKER!",
+                    "This <color=#F2594D><b>RED SQUARE</b></color> is your soldier. Your squad marches down the path automatically.",
+                    "Click anywhere to continue...", 1
+                );
+
+                yield return WaitForClick();
             }
-
-            ShowBanner(
-                "1/6 — YOU ARE THE ATTACKER!",
-                "This <color=#F2594D><b>RED SQUARE</b></color> is your soldier. Your squad marches down the path automatically.",
-                "Click anywhere to continue..."
-            );
-
-            yield return WaitForClick();
 
             // -----------------------------------------------------------------
             // FREEZE 2: Zoom out to include Nearest Tower
             // -----------------------------------------------------------------
             Tower nearestTower = FindNearestTower(soldier != null ? soldier.transform.position : defaultCamPos);
-            if (soldier != null && nearestTower != null)
+            if (firstStep <= 2)
             {
-                FrameTwoPoints(soldier.transform.position, nearestTower.transform.position, 2.2f);
-                ShowWorldRing(nearestTower.transform.position, new Color(0.35f, 0.7f, 1f, 0.95f));
-            }
-
-            ShowBanner(
-                "2/6 — ENEMY TOWERS",
-                "<color=#4D8CF5><b>BLUE SQUARES</b></color> are enemy towers. The narrow strip shows each tower's fixed firing direction and range!",
-                "Click to march into range..."
-            );
-
-            yield return WaitForClick();
-
-            // Unpause and let the soldier enter range, shoot, and take damage
-            HideBanner();
-            HideWorldRing();
-            SetTutorialPause(false);
-
-            // Wait until both combat starts AND a hit registers (soldier takes damage or gold increases)
-            OffenseData offenseData = FindOffenseData();
-            double startGold = offenseData != null ? offenseData.gold : -1;
-            float waitTimer = 0f;
-
-            while (waitTimer < 4.5f)
-            {
-                waitTimer += Time.deltaTime;
-                if (soldier == null)
-                {
-                    soldier = FindAnyObjectByType<OffenseSoldier>();
-                    if (soldier == null) break;
-                }
-
-                if (nearestTower != null)
+                if (soldier != null && nearestTower != null)
                 {
                     FrameTwoPoints(soldier.transform.position, nearestTower.transform.position, 2.2f);
+                    ShowWorldRing(nearestTower.transform.position, new Color(0.35f, 0.7f, 1f, 0.95f));
                 }
 
-                bool goldEarned = offenseData != null && offenseData.gold > startGold;
-                bool projActive = FindAnyObjectByType<Projectile>() != null;
+                ShowBanner(
+                    "2/6 — ENEMY TOWERS",
+                    "<color=#4D8CF5><b>BLUE SQUARES</b></color> are enemy towers. The narrow strip shows each tower's fixed firing direction and range!",
+                    "Click to march into range...", 2
+                );
 
-                if (goldEarned || (projActive && waitTimer > 1.1f))
+                yield return WaitForClick();
+
+                // Unpause and let the soldier enter range, shoot, and take damage
+                HideBanner();
+                HideWorldRing();
+                SetTutorialPause(false);
+
+                // Wait until both combat starts AND a hit registers (soldier takes damage or gold increases)
+                OffenseData offenseData = FindOffenseData();
+                double startGold = offenseData != null ? offenseData.gold : -1;
+                float waitTimer = 0f;
+
+                while (waitTimer < 4.5f)
                 {
-                    // Let the impact ring & HP bar show for a beat before freezing
-                    yield return new WaitForSeconds(0.25f);
-                    break;
+                    waitTimer += Time.deltaTime;
+                    if (soldier == null)
+                    {
+                        soldier = FindAnyObjectByType<OffenseSoldier>();
+                        if (soldier == null) break;
+                    }
+
+                    if (nearestTower != null)
+                    {
+                        FrameTwoPoints(soldier.transform.position, nearestTower.transform.position, 2.2f);
+                    }
+
+                    bool goldEarned = offenseData != null && offenseData.gold > startGold;
+                    bool projActive = FindAnyObjectByType<Projectile>() != null;
+
+                    if (goldEarned || (projActive && waitTimer > 1.1f))
+                    {
+                        // Let the impact ring & HP bar show for a beat before freezing
+                        yield return new WaitForSeconds(0.25f);
+                        break;
+                    }
+
+                    yield return null;
                 }
 
-                yield return null;
             }
-
             // -----------------------------------------------------------------
             // FREEZE 3: Pause on Range & Damage Taken + Highlight Money (Top Right)
             // -----------------------------------------------------------------
             SetTutorialPause(true);
 
-            if (soldier != null && nearestTower != null)
+            if (firstStep <= 3)
             {
-                FrameTwoPoints(soldier.transform.position, nearestTower.transform.position, 1.9f);
+                if (soldier != null && nearestTower != null)
+                {
+                    FrameTwoPoints(soldier.transform.position, nearestTower.transform.position, 1.9f);
+                }
+
+                goldCalloutBox.SetActive(true);
+                ShowBanner(
+                    "3/6 — DAMAGE = GOLD ($)",
+                    "Every hit your soldier lands on a tower earns <b><color=#FFD93D>+$1 GOLD</color> (Top Right)</b>! When your wave dies, you'll spend that Gold on upgrades.",
+                    "Click to learn about formations...", 3
+                );
+
+                yield return WaitForClick();
+                goldCalloutBox.SetActive(false);
             }
-
-            goldCalloutBox.SetActive(true);
-            ShowBanner(
-                "3/6 — DAMAGE = GOLD ($)",
-                "Every hit your soldier lands on a tower earns <b><color=#FFD93D>+$1 GOLD</color> (Top Right)</b>! When your wave dies, you'll spend that Gold on upgrades.",
-                "Click to learn about formations..."
-            );
-
-            yield return WaitForClick();
-            goldCalloutBox.SetActive(false);
 
             // -----------------------------------------------------------------
             // FREEZE 4: Keep step 3's camera framing and spotlight the real button.
@@ -326,11 +338,16 @@ namespace ReverseTD.Shared
             ShowBanner(
                 "4/6 — EDIT YOUR FORMATION",
                 "Click <b>EDIT FORMATION</b> to rearrange your <b>3x3 squad</b>. Drag units to swap positions, then choose <b>APPLY & RESUME</b> to finish.",
-                "Click the highlighted EDIT FORMATION button."
+                "Click the highlighted EDIT FORMATION button.", 4
             );
 
             yield return GuideFormationButton();
 
+            yield return FinishIntroduction();
+        }
+
+        private IEnumerator FinishIntroduction()
+        {
             // Resume normal play; the final hint waits until the squad approaches the goal.
             PlayerPrefs.SetInt(IntroTutorialPrefsKey, 1);
             PlayerPrefs.Save();
@@ -381,7 +398,7 @@ namespace ReverseTD.Shared
             ShowBanner(
                 "6/6 — REACH THE GOAL TO WIN!",
                 "Keep upgrading and adding units from cards between waves until <b>just 1 soldier</b> reaches this end point!",
-                "Click to zoom out & play!"
+                "Click to zoom out & play!", 6
             );
 
             yield return WaitForClick();
@@ -441,7 +458,7 @@ namespace ReverseTD.Shared
             ShowBanner(
                 "5/6 — AVOID THE NEXT TOWER",
                 "You're approaching another tower! When play resumes, click <b>EDIT FORMATION</b> and move your unit <b>out of its firing line</b> to avoid damage.",
-                "Click to continue, then adjust your formation."
+                "Click to continue, then adjust your formation.", 5
             );
             yield return WaitForClick();
 
@@ -550,7 +567,7 @@ namespace ReverseTD.Shared
                 ShowBanner(
                     "POSITIONING AVOIDS DAMAGE",
                     "Your formation change moved this unit on the battlefield! Moving a unit <b>out of a tower's firing line</b> lets it <b>avoid incoming damage</b>.",
-                    "Click to continue..."
+                    "Click to continue...", 7
                 );
                 yield return WaitForClick();
                 HideWorldRing();
@@ -768,19 +785,118 @@ namespace ReverseTD.Shared
             goldCalloutBox.SetActive(false);
         }
 
-        private void ShowBanner(string title, string body, string prompt)
+        private void ShowBanner(string title, string body, string prompt, int step)
         {
             if (bannerPanel == null) return;
             bannerPanel.SetActive(true);
             bannerTitle.text = title;
             bannerBody.text = body;
             bannerPrompt.text = prompt;
+            CaptureTutorialCheckpoint(title, body, prompt, step);
         }
 
         private void HideBanner()
         {
             if (bannerPanel != null)
                 bannerPanel.SetActive(false);
+        }
+
+        private void CaptureTutorialCheckpoint(string title, string body, string prompt, int step)
+        {
+            LevelOneTutorialRewind rewind = OffenseWaveManager.Instance != null
+                ? OffenseWaveManager.Instance.TutorialRewind : null;
+            if (rewind == null || mainCam == null) return;
+
+            // Keep checkpoint identity independent of editable tutorial text.
+            int introDone = PlayerPrefs.GetInt(IntroTutorialPrefsKey, 0);
+            int secondDone = PlayerPrefs.GetInt(SecondTowerTutorialPrefsKey, 0);
+            int tutorialDone = PlayerPrefs.GetInt(TutorialPrefsKey, 0);
+            Vector3 cameraPosition = mainCam.transform.position, savedTarget = targetCamPos;
+            Vector3 fullPosition = defaultCamPos;
+            float cameraSize = mainCam.orthographicSize, savedSize = targetCamSize, fullSize = defaultCamSize;
+            bool ringVisible = worldMarkerRing != null && worldMarkerRing.activeSelf;
+            Vector3 ringPosition = ringVisible ? worldMarkerRing.transform.position : Vector3.zero;
+            Color ringColor = ringVisible ? worldMarkerRing.GetComponent<SpriteRenderer>().color : Color.white;
+            bool goldVisible = goldCalloutBox.activeSelf;
+
+            rewind.Capture(() =>
+            {
+                StopAllCoroutines();
+                EndFormationTutorial();
+                PlayerPrefs.SetInt(IntroTutorialPrefsKey, introDone);
+                PlayerPrefs.SetInt(SecondTowerTutorialPrefsKey, secondDone);
+                PlayerPrefs.SetInt(TutorialPrefsKey, tutorialDone);
+                PlayerPrefs.Save();
+                tutorialCanvasObj.SetActive(true);
+                defaultCamPos = fullPosition;
+                defaultCamSize = fullSize;
+                mainCam.transform.position = cameraPosition;
+                mainCam.orthographicSize = cameraSize;
+                if (boardCamera != null) boardCamera.enabled = false;
+                isControllingCamera = true;
+                targetCamPos = savedTarget;
+                targetCamSize = savedSize;
+                userClickedNext = false;
+                goldCalloutBox.SetActive(goldVisible);
+                if (ringVisible) ShowWorldRing(ringPosition, ringColor);
+                else HideWorldRing();
+                SetTutorialPause(true);
+                if (step <= 4) StartCoroutine(RunFreezeFrameSequence(step, true));
+                else if (step == 7) StartCoroutine(ReplayFormationResult(title, body, prompt));
+                else StartCoroutine(WaitAndShowLateTutorials());
+            });
+        }
+
+        private IEnumerator ReplayFormationResult(string title, string body, string prompt)
+        {
+            ShowBanner(title, body, prompt, 7);
+            yield return WaitForClick();
+            yield return FinishIntroduction();
+        }
+
+        public static void ResetLevelOneTutorial()
+        {
+            PlayerPrefs.DeleteKey(IntroTutorialPrefsKey);
+            PlayerPrefs.DeleteKey(SecondTowerTutorialPrefsKey);
+            PlayerPrefs.DeleteKey(TutorialPrefsKey);
+            PlayerPrefs.Save();
+        }
+
+        public static void ShowLevelOneDefeat(System.Action restart, System.Action rewind, bool canRewind)
+        {
+            if (current == null) return;
+            current.StopAllCoroutines();
+            current.EndFormationTutorial();
+            current.HideBanner();
+            current.HideWorldRing();
+            if (current.goldCalloutBox != null) current.goldCalloutBox.SetActive(false);
+            current.isControllingCamera = false;
+            OffenseWaveManager.IsTutorialPaused = true;
+            Time.timeScale = 0f;
+
+            Canvas canvas = current.CreateCanvas("LevelOneDefeat", ModalReferenceResolution, ModalMatchWidthOrHeight, ModalSortingOrder + 200);
+            Image backdrop = CreateImage(canvas.transform, "Backdrop", BackdropColor);
+            backdrop.raycastTarget = true;
+            Stretch(backdrop.rectTransform);
+            Image card = CreateImage(canvas.transform, "DefeatCard", CardColor);
+            SetRect(card.rectTransform, Vector2.one * 0.5f, Vector2.one * 0.5f, Vector2.one * 0.5f, Vector2.zero, new Vector2(660f, 300f));
+            Outline outline = card.gameObject.AddComponent<Outline>();
+            outline.effectColor = new Color(0.3f, 0.85f, 0.4f, 1f);
+            outline.effectDistance = new Vector2(3f, -3f);
+            var heading = CreateText(card.transform, "Title", "SQUAD DEFEATED", 34f, HeadingColor, TextAlignmentOptions.Center);
+            heading.fontStyle = FontStyles.Bold;
+            SetRect(heading.rectTransform, new Vector2(0f, 0.7f), new Vector2(1f, 0.95f), Vector2.one * 0.5f, Vector2.zero, Vector2.zero);
+            var description = CreateText(card.transform, "Description", canRewind
+                ? "Try again, or return to the last tutorial hint.\nYour squad and battle state will be restored."
+                : "No tutorial checkpoint is available yet.\nRestart the level to try again.", 23f, BodyColor, TextAlignmentOptions.Center);
+            SetRect(description.rectTransform, new Vector2(0f, 0.38f), new Vector2(1f, 0.7f), Vector2.one * 0.5f, Vector2.zero, new Vector2(-40f, 0f));
+            Button restartButton = CreateButton(card.transform, "Restart", "RESTART LEVEL", AccentColor, Color.white, 23f);
+            SetRect((RectTransform)restartButton.transform, new Vector2(0.26f, 0.2f), new Vector2(0.26f, 0.2f), Vector2.one * 0.5f, Vector2.zero, new Vector2(270f, 60f));
+            Button rewindButton = CreateButton(card.transform, "Rewind", "BACK TO LAST HINT", new Color(0.2f, 0.45f, 0.8f), Color.white, 23f);
+            SetRect((RectTransform)rewindButton.transform, new Vector2(0.74f, 0.2f), new Vector2(0.74f, 0.2f), Vector2.one * 0.5f, Vector2.zero, new Vector2(300f, 60f));
+            rewindButton.interactable = canRewind;
+            restartButton.onClick.AddListener(() => { canvas.gameObject.SetActive(false); Destroy(canvas.gameObject); restart(); });
+            rewindButton.onClick.AddListener(() => { canvas.gameObject.SetActive(false); Destroy(canvas.gameObject); rewind(); });
         }
 
         // =====================================================================

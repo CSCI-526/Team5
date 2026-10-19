@@ -89,7 +89,7 @@ namespace ReverseTD.Offense
 
         private void Update()
         {
-            if (OffenseWaveManager.Instance != null && OffenseWaveManager.Instance.IsSquadEditing) return;
+            if (OffenseWaveManager.Instance != null && OffenseWaveManager.Instance.IsCombatPaused) return;
             if (!isAlive || lane == null) return;
             float nextDistance = distanceTraveled + speed * Time.deltaTime;
 
@@ -231,7 +231,32 @@ namespace ReverseTD.Offense
                 OffenseWaveManager.Instance.ReportSoldierDeath();
             }
 
-            Destroy(gameObject);
+            LevelOneTutorialRewind.Retire(gameObject);
+        }
+
+        internal System.Action CaptureTutorialState()
+        {
+            float savedHp = hp, savedDistance = distanceTraveled, savedCooldown = attackCooldown;
+            bool savedAlive = isAlive, savedForkDecision = forkDecisionMade, savedEnabled = enabled;
+            int savedColumn = column;
+            Vector2 savedOffset = formationOffset;
+            Vector3 savedPosition = transform.position;
+            LanePath savedLane = lane;
+            return () =>
+            {
+                hp = savedHp;
+                distanceTraveled = savedDistance;
+                attackCooldown = savedCooldown;
+                isAlive = savedAlive;
+                forkDecisionMade = savedForkDecision;
+                column = savedColumn;
+                formationOffset = savedOffset;
+                lane = savedLane;
+                transform.position = savedPosition;
+                enabled = savedEnabled;
+                visual.RestoreHealth(hp / maxHp);
+                gameObject.SetActive(savedAlive);
+            };
         }
     }
 }

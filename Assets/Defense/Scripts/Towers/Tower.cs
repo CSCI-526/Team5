@@ -48,7 +48,7 @@ namespace ReverseTD.Defense
 
         internal void Die()
         {
-            Destroy(gameObject);
+            ReverseTD.Offense.LevelOneTutorialRewind.Retire(gameObject);
             try
             {
                 Destroyed?.Invoke(this);

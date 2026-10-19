@@ -68,6 +68,15 @@ namespace ReverseTD.Defense
 
         public IReadOnlyList<Tower> Towers => towers;
 
+        internal void RestoreLivingTowers()
+        {
+            towers.Clear();
+            foreach (Tower tower in GetComponentsInChildren<Tower>(true))
+            {
+                if (tower.GetComponent<TowerHealth>().IsAlive) towers.Add(tower);
+            }
+        }
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
         {

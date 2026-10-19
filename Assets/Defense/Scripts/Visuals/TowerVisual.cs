@@ -111,6 +111,12 @@ namespace ReverseTD.Defense
             Apply();
         }
 
+        internal void ResetCombatEffects()
+        {
+            recoilTimer = flashTimer = hitTimer = 0f;
+            Apply();
+        }
+
         public void AimAt(Vector3 worldPoint)
         {
             Vector2 direction = worldPoint - transform.position;

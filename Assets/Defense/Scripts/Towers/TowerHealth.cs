@@ -57,5 +57,19 @@ namespace ReverseTD.Defense
             visual.FlashHit();
             return applied;
         }
+
+        internal System.Action CaptureTutorialState()
+        {
+            float savedHp = hp;
+            bool savedAlive = isAlive;
+            return () =>
+            {
+                hp = savedHp;
+                isAlive = savedAlive;
+                healthBar.SetFraction(hp / definition.MaxHp);
+                visual.ResetCombatEffects();
+                gameObject.SetActive(savedAlive);
+            };
+        }
     }
 }
