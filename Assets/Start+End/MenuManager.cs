@@ -14,6 +14,7 @@ public class MenuManager : MonoBehaviour
         }
 
         offenseData.ResetGame();
+        ReverseTD.Analytics.AttemptAnalytics.BeginRun();
         SceneManager.LoadScene("DefenseSandbox");
     }
 }

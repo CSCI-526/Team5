@@ -115,6 +115,7 @@ namespace ReverseTD.Offense
             // A replayed banner replaces the checkpoint, so invoke a stable local copy.
             Action restore = restoreCheckpoint;
             restore?.Invoke();
+            ReverseTD.Analytics.AttemptAnalytics.BeginAttempt(1);
         }
 
         private void Restart()

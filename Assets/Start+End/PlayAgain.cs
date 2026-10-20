@@ -7,11 +7,6 @@ public class PlayAgain : MonoBehaviour
 
     public void GoToStart()
     {
-        if (offenseData != null)
-        {
-            offenseData.ResetGame();
-        }
-
-        SceneManager.LoadScene("StartGame");
+        ReverseTD.Analytics.AttemptResultsScreen.Open();
     }
 }
