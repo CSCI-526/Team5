@@ -45,7 +45,13 @@ namespace ReverseTD.Analytics
             if (current == null) BeginRun();
             activeLevel = level;
             resolved = false;
+
+            if (Application.isPlaying)
+            {
+                FirebaseAnalyticsSender.Instance.StartNewAttempt(level);
+            }
         }
+
         public static void FinishAttempt(bool success)
         {
             if (current == null || resolved || activeLevel < 1 || activeLevel > 3) return;
@@ -55,6 +61,11 @@ namespace ReverseTD.Analytics
             if (success) result.completed = true;
             else result.failures++;
             Save();
+
+            if (Application.isPlaying)
+            {
+                FirebaseAnalyticsSender.Instance.MarkCompleted(success, current.id, result.Attempts);
+            }
         }
         private static void Load()
         {
@@ -68,5 +79,6 @@ namespace ReverseTD.Analytics
             try { File.WriteAllText(SavePath, JsonUtility.ToJson(archive, true)); }
             catch (Exception e) { Debug.LogWarning("Could not save attempts history: " + e.Message); }
         }
+
     }
 }
