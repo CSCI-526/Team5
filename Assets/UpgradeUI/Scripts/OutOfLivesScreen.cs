@@ -87,9 +87,7 @@ namespace ReverseTD.UpgradeUI
         {
             if (submitted) return;
             submitted = true;
-            if (data != null) data.ResetGame();
-            gameObject.SetActive(false);
-            SceneManager.LoadScene("StartGame");
+            ReverseTD.Analytics.AttemptResultsScreen.Open();
         }
     }
 }

@@ -29,6 +29,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/EndGame.unity
     guid: 513191e8c7a87ed4fad08e1990e249d4
+  - enabled: 1
+    path: Assets/Scenes/AttemptResults.unity
+    guid: 11c8b8b6d03b5413abb40d9c28ffadb7
   m_configObjects:
     com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}

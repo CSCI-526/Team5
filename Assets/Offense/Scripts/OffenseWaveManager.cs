@@ -408,6 +408,7 @@ namespace ReverseTD.Offense
                 return;
             }
 
+            ReverseTD.Analytics.AttemptAnalytics.BeginAttempt(displayedLevelNumber);
             SpawnSquad();
         }
 
@@ -483,6 +484,7 @@ namespace ReverseTD.Offense
             transitionQueued = true;
             if (offenseData != null && spawnedCount > 0)
             {
+                ReverseTD.Analytics.AttemptAnalytics.FinishAttempt(false);
                 offenseData.RecordLevelDeath(displayedLevelNumber);
                 RefreshDeathCount();
             }
@@ -542,6 +544,7 @@ namespace ReverseTD.Offense
                 return;
             }
 
+            ReverseTD.Analytics.AttemptAnalytics.FinishAttempt(true);
             string currentScene = SceneManager.GetActiveScene().name;
 
             Debug.Log("Current Scene: " + currentScene);
