@@ -50,6 +50,22 @@ public class FirebaseAnalyticsSender : MonoBehaviour
         _sessionStartTime = Time.realtimeSinceStartup;
     }
 
+    private static string PlayerId
+    {
+        get
+        {
+            const string key = "ReverseTD_PlayerId";
+            string id = PlayerPrefs.GetString(key, "");
+            if (string.IsNullOrEmpty(id))
+            {
+                id = Guid.NewGuid().ToString("N");
+                PlayerPrefs.SetString(key, id);
+                PlayerPrefs.Save();
+            }
+            return id;
+        }
+    }
+
     public void StartNewAttempt(int level)
     {
         _currentLevel = level;
@@ -133,17 +149,21 @@ public class FirebaseAnalyticsSender : MonoBehaviour
         string timestampStr = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture);
         string boolStr = victory ? "true" : "false";
 
+        string runId2 = ReverseTD.Analytics.AttemptAnalytics.Current?.id ?? "unknown_run";
+        string isEditorStr = Application.isEditor ? "true" : "false";
+
         string jsonBody = "{"
             + "\"fields\": {"
-            + $"\"runId\": {{\"stringValue\": \"{runId}\"}},"
+            + $"\"playerId\": {{\"stringValue\": \"{PlayerId}\"}},"
+            + $"\"runId\": {{\"stringValue\": \"{runId2}\"}},"
+            + $"\"isEditor\": {{\"booleanValue\": {isEditorStr}}},"
             + $"\"level\": {{\"integerValue\": \"{levelIndex}\"}},"
-            + $"\"attemptNumber\": {{\"integerValue\": \"{attemptNumber}\"}},"
-            + $"\"victory\": {{\"booleanValue\": {boolStr}}},"
-            + $"\"durationSeconds\": {{\"doubleValue\": {durationStr}}},"
+            + $"\"victory\": {{\"booleanValue\": {victory.ToString().ToLower()}}},"
+            + $"\"durationSeconds\": {{\"doubleValue\": {durationSeconds.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)}}},"
             + $"\"totalDeployedUnits\": {{\"integerValue\": \"{totalDeployedUnits}\"}},"
             + $"\"towersDestroyed\": {{\"integerValue\": \"{towersDestroyed}\"}},"
             + $"\"status\": {{\"stringValue\": \"{exitStatus}\"}},"
-            + $"\"clientTimestamp\": {{\"timestampValue\": \"{timestampStr}\"}}"
+            + $"\"clientTimestamp\": {{\"timestampValue\": \"{DateTime.UtcNow:yyyy-MM-ddTHH:mm:ssZ}\"}}"
             + "}"
             + "}";
 
