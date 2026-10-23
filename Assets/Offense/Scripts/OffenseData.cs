@@ -205,23 +205,6 @@ public class OffenseData : ScriptableObject
         return GetLevel(stat) >= SquadRules.MaxLevel(stat);
     }
 
-    public double GetUpgradeCost(UnitStat stat)
-    {
-        return SquadRules.UpgradeCost(stat, GetLevel(stat));
-    }
-
-    public bool TryBuyUpgrade(UnitStat stat)
-    {
-        if (!IsUnlocked(SquadRules.OwnerOf(stat)) || IsMaxed(stat)) return false;
-
-        double cost = GetUpgradeCost(stat);
-        if (gold < cost) return false;
-
-        gold -= cost;
-        upgradeLevels[(int)stat]++;
-        return true;
-    }
-
     public void AddEarnedGold(float amount)
     {
         goldRemainder += amount * GoldMultiplier;
@@ -252,6 +235,17 @@ public class OffenseData : ScriptableObject
         gold -= NextQuota;
         cardsTaken++;
         squad[cell] = type;
+        return true;
+    }
+
+    public bool TryTakeStatCard(UnitStat stat)
+    {
+        EnsureSquad();
+        if (!CanAffordCard || !IsUnlocked(SquadRules.OwnerOf(stat)) || IsMaxed(stat)) return false;
+
+        gold -= NextQuota;
+        cardsTaken++;
+        upgradeLevels[(int)stat]++;
         return true;
     }
 

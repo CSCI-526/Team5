@@ -27,11 +27,14 @@ namespace ReverseTD.Offense
         public const float HealBaseRate = 0.20f;
 
         private static readonly float[] steps = { 1f, 2f, 0.1f, 4f, 0.1f, 2f };
-        private static readonly double[] baseCosts = { 8, 6, 8, 6, 8, 6 };
-        private static readonly double[] costMultipliers = { 1.8, 1.6, 1.6, 1.6, 1.6, 1.6 };
         private static readonly int[] maxLevels = { 5, 5, 4, 5, 5, 5 };
         private static readonly double[] quotas = { 10, 100, 500 };
         private static readonly AugmentCard[] unitCards = { AugmentCard.AddAttack, AugmentCard.AddTank, AugmentCard.AddHeal };
+        private static readonly AugmentCard[] statCards =
+        {
+            AugmentCard.AttackDamageUp, AugmentCard.AttackHealthUp, AugmentCard.TankDefenseUp,
+            AugmentCard.TankHealthUp, AugmentCard.HealRateUp, AugmentCard.HealHealthUp
+        };
 
         public static int QuotaCount => quotas.Length;
 
@@ -59,9 +62,11 @@ namespace ReverseTD.Offense
             return maxLevels[(int)stat];
         }
 
-        public static double UpgradeCost(UnitStat stat, int level)
+        public static bool IsMaxed(UnitStat stat, int[] levels)
         {
-            return System.Math.Round(baseCosts[(int)stat] * System.Math.Pow(costMultipliers[(int)stat], level));
+            int index = (int)stat;
+            int level = levels != null && index < levels.Length ? levels[index] : 0;
+            return level >= maxLevels[index];
         }
 
         public static UnitType OwnerOf(UnitStat stat)
@@ -137,29 +142,95 @@ namespace ReverseTD.Offense
             }
         }
 
-        public static void RollOffer(int cardsTaken, bool squadFull, List<AugmentCard> offer)
+        public static AugmentCard StatCard(UnitStat stat)
         {
-            offer.Clear();
-            if (!squadFull)
+            return statCards[(int)stat];
+        }
+
+        public static bool TryGetStat(AugmentCard card, out UnitStat stat)
+        {
+            for (int i = 0; i < statCards.Length; i++)
             {
-                if (cardsTaken == 0)
+                if (statCards[i] == card)
                 {
-                    offer.Add(AugmentCard.AddTank);
-                    offer.Add(AugmentCard.AddHeal);
-                }
-                else
-                {
-                    int skipped = UnityEngine.Random.Range(0, unitCards.Length);
-                    for (int i = 0; i < unitCards.Length; i++)
-                    {
-                        if (i != skipped)
-                        {
-                            offer.Add(unitCards[i]);
-                        }
-                    }
+                    stat = (UnitStat)i;
+                    return true;
                 }
             }
+            stat = UnitStat.AttackDamage;
+            return false;
+        }
+
+        public static UnitType TypeOf(AugmentCard card)
+        {
+            return TryGetStat(card, out UnitStat stat) ? OwnerOf(stat) : UnitOf(card);
+        }
+
+        public static void RollOffer(UnitType[] squad, int[] levels, System.Random random, List<AugmentCard> offer)
+        {
+            offer.Clear();
+            var stats = new List<AugmentCard>();
+            for (int i = 0; i < statCards.Length; i++)
+            {
+                var stat = (UnitStat)i;
+                if (Owns(squad, OwnerOf(stat)) && !IsMaxed(stat, levels))
+                {
+                    stats.Add(statCards[i]);
+                }
+            }
+
+            if (CountUnits(squad) < CellCount)
+            {
+                offer.Add(RollUnitCard(squad, random));
+            }
+            else
+            {
+                TakeRandom(stats, random, offer);
+            }
+            TakeRandom(stats, random, offer);
             offer.Add(AugmentCard.GoldBonus);
+        }
+
+        private static AugmentCard RollUnitCard(UnitType[] squad, System.Random random)
+        {
+            var missing = new List<AugmentCard>();
+            for (int i = 0; i < unitCards.Length; i++)
+            {
+                if (!Owns(squad, UnitOf(unitCards[i])))
+                {
+                    missing.Add(unitCards[i]);
+                }
+            }
+            return missing.Count > 0 ? missing[random.Next(missing.Count)] : unitCards[random.Next(unitCards.Length)];
+        }
+
+        private static void TakeRandom(List<AugmentCard> pool, System.Random random, List<AugmentCard> offer)
+        {
+            if (pool.Count == 0) return;
+            int index = random.Next(pool.Count);
+            offer.Add(pool[index]);
+            pool.RemoveAt(index);
+        }
+
+        private static bool Owns(UnitType[] squad, UnitType type)
+        {
+            if (squad == null) return false;
+            for (int i = 0; i < squad.Length; i++)
+            {
+                if (squad[i] == type) return true;
+            }
+            return false;
+        }
+
+        private static int CountUnits(UnitType[] squad)
+        {
+            int count = 0;
+            if (squad == null) return count;
+            for (int i = 0; i < squad.Length; i++)
+            {
+                if (squad[i] != UnitType.None) count++;
+            }
+            return count;
         }
 
         private static float Bonus(UnitStat stat, int[] levels)

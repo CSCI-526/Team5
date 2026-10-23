@@ -22,6 +22,10 @@ namespace ReverseTD.UpgradeUI
         private const float CardGlow = 8f;
         private const float CardGlowAlpha = 0.3f;
         private const float CardDimAlpha = 0.5f;
+        private const float BoostOffset = 0.74f;
+        private const float BoostSize = 0.6f;
+        private const float BoostRim = 2f;
+        private const float BoostTextScale = 0.75f;
         private const float GridCell = 58f;
         private const float GridGap = 8f;
         private const float ZoomScale = 2.2f;
@@ -82,7 +86,11 @@ namespace ReverseTD.UpgradeUI
                 $"Each card costs <color={UiKit.CostColorTag}>${cardCost:0}</color>  |  You have ${data.gold:0}",
                 new Vector2(0f, SubtitleY), new Vector2(900f, 30f), 18f, UiKit.MutedColor);
 
-            if (!isLevelOneTankReward) SquadRules.RollOffer(data.cardsTaken, data.IsSquadFull, offer);
+            if (!isLevelOneTankReward)
+            {
+                data.EnsureSquad();
+                SquadRules.RollOffer(data.squad, data.upgradeLevels, new System.Random(UnityEngine.Random.Range(int.MinValue, int.MaxValue)), offer);
+            }
             for (int i = 0; i < offer.Count; i++)
             {
                 float x = (i - (offer.Count - 1) * 0.5f) * CardSpacing;
@@ -135,7 +143,8 @@ namespace ReverseTD.UpgradeUI
             Image face = UiKit.CreateImage(cardRoot, "Face", Vector2.zero, cardSize, UiKit.PanelColor, CardRadius);
             UiKit.MakeButton(face).onClick.AddListener(() => Pick(card, index));
 
-            UnitType unit = SquadRules.UnitOf(card);
+            UnitType unit = SquadRules.TypeOf(card);
+            bool boost = SquadRules.TryGetStat(card, out _);
             Color accent = unit == UnitType.None ? UiKit.GoldColor : UnitLooks.For(unit).Body;
             UiKit.CreateImage(cardRoot, "Band", new Vector2(0f, height * 0.5f - 20f), new Vector2(width - 32f, 8f), accent, 4f);
 
@@ -151,11 +160,15 @@ namespace ReverseTD.UpgradeUI
             {
                 UnitIconUI.Create(cardRoot, emblem, radius * 2.6f).SetType(unit);
             }
+            if (boost)
+            {
+                BuildBoostBadge(cardRoot, emblem + new Vector2(radius, radius) * BoostOffset, radius * BoostSize);
+            }
 
             UiKit.CreateText(cardRoot, "Title", CardTitle(card), Vector2.zero, new Vector2(width, 30f), height * 0.068f, UiKit.TextColor,
                 FontStyles.Bold, 2f);
             UiKit.CreateText(cardRoot, "Stats", CardStats(card), new Vector2(0f, -height * 0.085f), new Vector2(width, 24f), height * 0.05f,
-                unit == UnitType.None ? UiKit.GoldColor : UiKit.TextColor);
+                unit == UnitType.None || boost ? UiKit.GoldColor : UiKit.TextColor);
             string[] lines = CardLines(card);
             for (int i = 0; i < lines.Length; i++)
             {
@@ -173,6 +186,14 @@ namespace ReverseTD.UpgradeUI
             Image dim = UiKit.CreateImage(cardRoot, "Dim", Vector2.zero, cardSize, new Color(0f, 0f, 0f, CardDimAlpha), CardRadius);
             dim.enabled = false;
             cardDims.Add(dim);
+        }
+
+        private static void BuildBoostBadge(Transform parent, Vector2 position, float diameter)
+        {
+            UiKit.CreateCircle(parent, "Boost Rim", position, diameter + BoostRim * 2f, UiKit.GoldDarkColor);
+            UiKit.CreateCircle(parent, "Boost", position, diameter, UiKit.GoldColor);
+            UiKit.CreateText(parent, "Boost Sign", "+", position, new Vector2(diameter, diameter), diameter * BoostTextScale, UiKit.GoldDarkColor,
+                FontStyles.Bold);
         }
 
         private void Pick(AugmentCard card, int index)
@@ -194,6 +215,14 @@ namespace ReverseTD.UpgradeUI
             if (card == AugmentCard.GoldBonus)
             {
                 if (data.TryTakeGoldCard() && goldChanged != null)
+                {
+                    goldChanged();
+                }
+                StartCoroutine(CloseAfter(PickDelay));
+            }
+            else if (SquadRules.TryGetStat(card, out UnitStat stat))
+            {
+                if (data.TryTakeStatCard(stat) && goldChanged != null)
                 {
                     goldChanged();
                 }
@@ -277,6 +306,10 @@ namespace ReverseTD.UpgradeUI
 
         private string CardTitle(AugmentCard card)
         {
+            if (SquadRules.TryGetStat(card, out UnitStat stat))
+            {
+                return StatText.Step(stat);
+            }
             UnitType unit = SquadRules.UnitOf(card);
             return unit == UnitType.None ? $"+{SquadRules.GoldBonusPerCard * 100:0}% GOLD" : "ADD " + UnitLooks.Name(unit);
         }
@@ -284,6 +317,10 @@ namespace ReverseTD.UpgradeUI
         private string CardStats(AugmentCard card)
         {
             int[] levels = data.upgradeLevels;
+            if (SquadRules.TryGetStat(card, out UnitStat stat))
+            {
+                return StatText.Change(stat, levels);
+            }
             switch (card)
             {
                 case AugmentCard.AddTank:
@@ -299,6 +336,10 @@ namespace ReverseTD.UpgradeUI
 
         private string[] CardLines(AugmentCard card)
         {
+            if (SquadRules.TryGetStat(card, out UnitStat stat))
+            {
+                return new[] { "Boosts every", UnitLooks.Name(SquadRules.OwnerOf(stat)) + " unit." };
+            }
             switch (card)
             {
                 case AugmentCard.AddTank:

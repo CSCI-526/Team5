@@ -47,7 +47,7 @@ namespace ReverseTD.Shared
         private const string RulesText =
             "• <b>YOU ARE THE ATTACKER: </b> March past towers trying to stop you.\n" +
             "• <b>EARN GOLD ($):</b> Every 1 damage your soldiers deal to towers = <b>+$1 Gold</b> (Top Right).\n" +
-            "• <b>UPGRADE:</b> When your squad dies, spend Gold on <color=#4CC24C>Green</color> upgrades and pick new units from cards.\n" +
+            "• <b>CARDS:</b> When your squad dies, spend Gold on cards: new units, unit boosts, or more Gold.\n" +
             "• <b>WIN:</b> Get <b>1 soldier</b> to the end of the path!";
 
         private static HowToPlay current;
@@ -323,7 +323,7 @@ namespace ReverseTD.Shared
                 goldCalloutBox.SetActive(true);
                 ShowBanner(
                     "3/6 — DAMAGE = GOLD ($)",
-                    "Every hit your soldier lands on a tower earns <b><color=#FFD93D>+$1 GOLD</color> (Top Right)</b>! When your wave dies, you'll spend that Gold on upgrades.",
+                    "Every hit your soldier lands on a tower earns <b><color=#FFD93D>+$1 GOLD</color> (Top Right)</b>! When your wave dies, you'll spend that Gold on cards.",
                     "Click to learn about formations...", 3
                 );
 
@@ -398,7 +398,7 @@ namespace ReverseTD.Shared
 
             ShowBanner(
                 "6/6 — REACH THE GOAL TO WIN!",
-                "Keep upgrading and adding units from cards between waves until <b>just 1 soldier</b> reaches this end point!",
+                "Keep claiming cards between waves until <b>just 1 soldier</b> reaches this end point!",
                 "Click to zoom out & play!", 6
             );
 
@@ -774,7 +774,7 @@ namespace ReverseTD.Shared
             TextMeshProUGUI goldLabel = CreateText(
                 goldCalloutBox.transform,
                 "GoldPointerText",
-                "▲ YOUR GOLD ($) ▲\nSpend this on Upgrades!",
+                "▲ YOUR GOLD ($) ▲\nSpend this on Cards!",
                 22f,
                 new Color(1f, 0.92f, 0.3f, 1f),
                 TextAlignmentOptions.Center

@@ -5,6 +5,12 @@ namespace ReverseTD.Offense
         AddAttack,
         AddTank,
         AddHeal,
-        GoldBonus
+        GoldBonus,
+        AttackDamageUp,
+        AttackHealthUp,
+        TankDefenseUp,
+        TankHealthUp,
+        HealRateUp,
+        HealHealthUp
     }
 }
