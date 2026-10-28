@@ -7,9 +7,12 @@ namespace ReverseTD.Defense
 {
     public class BoardView : MonoBehaviour
     {
+        public const float EdgeWidth = 0.1f;
+        public const float EdgeShade = 0.7f;
+        public const float GoalZoneLength = 1.2f;
+        public const float GoalZoneDepth = 1.4f;
+        public const float GoalZoneBorder = 0.06f;
         private const int GroundMargin = 16;
-        private const float EdgeWidth = 0.1f;
-        private const float EdgeShade = 0.7f;
         private const float DashSpacing = 0.6f;
         private const float DashLength = 0.26f;
         private const float DashWidth = 0.045f;
@@ -17,6 +20,8 @@ namespace ReverseTD.Defense
         private const float DashAlpha = 0.55f;
 
         private static readonly Color groundDotColor = new Color(0.17f, 0.2f, 0.24f);
+        private static readonly Color goalZoneFill = new Color(0.35f, 0.75f, 1f, 0.3f);
+        private static readonly Color goalZoneLine = new Color(0.05f, 0.4f, 1f, 1f);
 
         [SerializeField, Tooltip("The stage to build: the single source of truth for the path and the towers.")]
         private StageLayout layout;
@@ -28,6 +33,9 @@ namespace ReverseTD.Defense
         private StagePath path;
 
         public static event Action<BoardView> AllTowersDestroyed;
+
+        public static Color GoalZoneFill => goalZoneFill;
+        public static Color GoalZoneLine => goalZoneLine;
 
         public StageLayout Layout => layout;
 
@@ -152,8 +160,8 @@ namespace ReverseTD.Defense
 
         private void BuildGoalZone()
         {
-            const float borderWidth = 0.06f;
-            Vector2 size = new Vector2(layout.PathWidth * 1.2f, layout.PathWidth * 1.4f);
+            const float borderWidth = GoalZoneBorder;
+            Vector2 size = new Vector2(layout.PathWidth * GoalZoneLength, layout.PathWidth * GoalZoneDepth);
             IReadOnlyList<Vector2> points = Path.Waypoints;
             Vector2 direction = points[points.Count - 1] - points[points.Count - 2];
             Quaternion rotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);
@@ -162,9 +170,9 @@ namespace ReverseTD.Defense
             Vector2 offset = new Vector2(0f, 0f);
             root.SetPositionAndRotation(Path.End + offset, rotation);
             ShapeSprites.AddPart(root, "Fill", ShapeSprites.Square, Vector2.zero, size,
-                new Color(0.35f, 0.75f, 1f, 0.3f), SortingOrders.GoalZone);
+                goalZoneFill, SortingOrders.GoalZone);
 
-            Color borderColor = new Color(0.05f, 0.4f, 1f, 1f);
+            Color borderColor = goalZoneLine;
             Vector2 horizontal = new Vector2(size.x, borderWidth);
             Vector2 vertical = new Vector2(borderWidth, size.y);
             float halfX = (size.x - borderWidth) * 0.5f;

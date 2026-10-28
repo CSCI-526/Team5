@@ -4,13 +4,15 @@ namespace ReverseTD.Defense
 {
     public class TargetMarker : MonoBehaviour
     {
-        private const float RingDiameter = 0.64f;
-        private const float TickStart = 0.2f;
-        private const float TickEnd = 0.4f;
-        private const float TickWidth = 0.06f;
-        private const float Scale = 0.75f;
+        public const float RingDiameter = 0.64f;
+        public const float TickStart = 0.2f;
+        public const float TickEnd = 0.4f;
+        public const float TickWidth = 0.06f;
+        public const float Scale = 0.75f;
 
         private static readonly Color markColor = new Color(0.93f, 0.11f, 0.14f);
+
+        public static Color MarkColor => markColor;
 
         public void Initialize()
         {

@@ -4,8 +4,9 @@ namespace ReverseTD.Defense
 {
     public class RangeIndicator : MonoBehaviour
     {
-        private const float Alpha = 0.15f;
-        private const float BorderWidth = 0.025f;
+        public const float Alpha = 0.15f;
+        public const float EdgeAlpha = 0.7f;
+        public const float BorderWidth = 0.025f;
 
         private TowerDefinition definition;
         private SpriteRenderer fill;
@@ -54,7 +55,7 @@ namespace ReverseTD.Defense
             shownColor = definition.Color;
 
             Vector2 middle = new Vector2(shownRange * 0.5f, 0f);
-            Color edge = Palette.WithAlpha(shownColor, 0.7f);
+            Color edge = Palette.WithAlpha(shownColor, EdgeAlpha);
             if (circular)
             {
                 Vector2 diameter = Vector2.one * shownRange * 2f;

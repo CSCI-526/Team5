@@ -1,4 +1,5 @@
 using System;
+using ReverseTD.Defense;
 using ReverseTD.Offense;
 using TMPro;
 using UnityEngine;
@@ -30,17 +31,20 @@ namespace ReverseTD.UpgradeUI
         private const float GridCell = 58f;
         private const float GridGap = 8f;
         private const float ButtonRadius = 6f;
-        private const float QuotaLabelY = -30f;
-        private const float QuotaBarY = -55f;
-        private const float QuotaTextY = -82f;
-        private const float QuotaHintY = -106f;
-        private const float ClaimButtonY = -146f;
+        private const float CardColumnX = 430f;
+        private const float QuotaBarY = -104f;
+        private const float QuotaTextY = -126f;
+        private const float QuotaHintY = -149f;
+        private const float ClaimButtonY = -192f;
 
         private static readonly Vector2 referenceResolution = new Vector2(1280f, 720f);
         private static readonly Vector2 panelSize = new Vector2(200f, 262f);
         private static readonly Vector2 gridPosition = new Vector2(465f, 43f);
-        private static readonly Vector2 quotaBarSize = new Vector2(400f, 14f);
-        private static readonly Vector2 claimButtonSize = new Vector2(240f, 48f);
+        private static readonly Vector2 quotaBarSize = new Vector2(380f, 14f);
+        private static readonly Vector2 quotaTextSize = new Vector2(400f, 22f);
+        private static readonly Vector2 claimButtonSize = new Vector2(220f, 40f);
+        private static readonly Vector2 previewPosition = new Vector2(-114f, -164f);
+        private static readonly Vector2 previewSize = new Vector2(608f, 368f);
         private static readonly UnitType[] panelTypes = { UnitType.Attack, UnitType.Tank, UnitType.Heal };
         private static readonly UnitStat[] attackStats = { UnitStat.AttackDamage, UnitStat.AttackHealth };
         private static readonly UnitStat[] tankStats = { UnitStat.TankDefense, UnitStat.TankHealth };
@@ -52,8 +56,10 @@ namespace ReverseTD.UpgradeUI
         private readonly TextMeshProUGUI[] statValues = new TextMeshProUGUI[SquadRules.StatCount];
         private OffenseData data;
         private Action goldChanged;
+        private string nextSceneName;
         private RectTransform root;
         private SquadGridUI grid;
+        private StagePreviewUI preview;
         private Image quotaBack;
         private Image quotaFill;
         private TextMeshProUGUI quotaText;
@@ -63,7 +69,7 @@ namespace ReverseTD.UpgradeUI
         private TextMeshProUGUI claimButtonLabel;
         private bool overlayOpen;
 
-        public static SquadScreen Create(OffenseData data, Action goldChanged)
+        public static SquadScreen Create(OffenseData data, Action goldChanged, string nextSceneName = null)
         {
             if (data == null)
             {
@@ -75,6 +81,7 @@ namespace ReverseTD.UpgradeUI
             var screen = host.AddComponent<SquadScreen>();
             screen.data = data;
             screen.goldChanged = goldChanged;
+            screen.nextSceneName = nextSceneName;
             screen.Build();
             screen.OpenLevelOneTankReward();
             return screen;
@@ -103,6 +110,10 @@ namespace ReverseTD.UpgradeUI
             }
 
             grid.Refresh();
+            if (preview != null)
+            {
+                preview.Refresh();
+            }
             RefreshQuota();
         }
 
@@ -118,6 +129,7 @@ namespace ReverseTD.UpgradeUI
             }
             grid = SquadGridUI.Create(root, root, data, gridPosition, GridCell, GridGap, "SQUAD", "Drag to swap", true, Refresh);
             BuildQuota();
+            preview = StagePreviewUI.Create(root, previewPosition, previewSize, StageCatalog.Find(nextSceneName), data);
             Refresh();
         }
 
@@ -165,19 +177,17 @@ namespace ReverseTD.UpgradeUI
 
         private void BuildQuota()
         {
-            UiKit.CreateText(root, "Quota Label", "NEXT CARD", new Vector2(0f, QuotaLabelY), new Vector2(300f, 20f), 14f, UiKit.MutedColor,
-                FontStyles.Bold, 6f);
-            quotaBack = UiKit.CreateImage(root, "Quota Bar", new Vector2(0f, QuotaBarY), quotaBarSize, UiKit.CellColor, quotaBarSize.y * 0.5f);
+            quotaBack = UiKit.CreateImage(root, "Quota Bar", new Vector2(CardColumnX, QuotaBarY), quotaBarSize, UiKit.CellColor, quotaBarSize.y * 0.5f);
             quotaFill = UiKit.CreateImage(quotaBack.transform, "Quota Fill", Vector2.zero, quotaBarSize, UiKit.GoldColor, quotaBarSize.y * 0.5f);
             RectTransform fill = quotaFill.rectTransform;
             fill.anchorMin = new Vector2(0f, 0.5f);
             fill.anchorMax = new Vector2(0f, 0.5f);
             fill.pivot = new Vector2(0f, 0.5f);
             fill.anchoredPosition = Vector2.zero;
-            quotaText = UiKit.CreateText(root, "Quota Text", string.Empty, new Vector2(0f, QuotaTextY), new Vector2(600f, 22f), 16f, UiKit.GoldColor);
-            quotaHint = UiKit.CreateText(root, "Quota Hint", string.Empty, new Vector2(0f, QuotaHintY), new Vector2(600f, 22f), 15f, UiKit.TextColor);
+            quotaText = UiKit.CreateText(root, "Quota Text", string.Empty, new Vector2(CardColumnX, QuotaTextY), quotaTextSize, 16f, UiKit.GoldColor);
+            quotaHint = UiKit.CreateText(root, "Quota Hint", string.Empty, new Vector2(CardColumnX, QuotaHintY), quotaTextSize, 15f, UiKit.TextColor);
 
-            claimButton = UiKit.CreateButton(root, "Claim Card Button", new Vector2(0f, ClaimButtonY), claimButtonSize, UiKit.NodeGreyColor, ButtonRadius);
+            claimButton = UiKit.CreateButton(root, "Claim Card Button", new Vector2(CardColumnX, ClaimButtonY), claimButtonSize, UiKit.NodeGreyColor, ButtonRadius);
             claimButtonImage = claimButton.GetComponent<Image>();
             claimButtonLabel = UiKit.CreateText(claimButton.transform, "Label", string.Empty, Vector2.zero, claimButtonSize, 18f, Color.white, FontStyles.Bold);
             claimButton.onClick.AddListener(ClaimCard);

@@ -13,6 +13,8 @@ public class UpgradeSceneUI : MonoBehaviour
     public int NextBattleLevelNumber => offenseData == null || offenseData.currentLevel == 1
         ? 1 : offenseData.levelOnePracticePending ? 2 : 3;
     public int NextBattleDeathCount => offenseData != null ? offenseData.GetLevelDeathCount(NextBattleLevelNumber) : 0;
+    public string NextBattleSceneName => offenseData == null || offenseData.currentLevel == 1
+        ? gameplaySceneName : offenseData.levelOnePracticePending ? level1PracticeSceneName : level2SceneName;
 
     [Header("Scene Loading")]
     [SerializeField] private string gameplaySceneName = "DefenseSandbox";
@@ -50,7 +52,7 @@ public class UpgradeSceneUI : MonoBehaviour
         RestoreTreeProgress(rootUpgrade, spawnedNodes[rootUpgrade]);
         */
 
-        SquadScreen.Create(offenseData, RefreshUI);
+        SquadScreen.Create(offenseData, RefreshUI, NextBattleSceneName);
 
         RefreshUI();
     }
