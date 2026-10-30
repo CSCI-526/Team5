@@ -1,0 +1,5 @@
+{
+  "name": "Team5.Rebuild.DebugPresentation",
+  "rootNamespace": "Team5.Rebuild",
+  "references": ["Team5.Rebuild.Simulation", "Team5.Rebuild.World", "Team5.Rebuild.Session"]
+}

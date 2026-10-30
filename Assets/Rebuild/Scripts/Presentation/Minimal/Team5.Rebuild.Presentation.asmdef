@@ -1,0 +1,5 @@
+{
+  "name": "Team5.Rebuild.Presentation",
+  "rootNamespace": "Team5.Rebuild.Presentation",
+  "references": ["Team5.Rebuild.Simulation", "Team5.Rebuild.Session", "Team5.Rebuild.World", "Unity.TextMeshPro", "Unity.ugui", "Unity.InputSystem"]
+}

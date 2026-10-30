@@ -1,0 +1,6 @@
+{
+  "name": "Team5.Rebuild.Editor",
+  "rootNamespace": "Team5.Rebuild",
+  "references": ["Team5.Rebuild.Simulation", "Team5.Rebuild.World", "Team5.Rebuild.Session", "Team5.Rebuild.DebugPresentation", "Team5.Rebuild.Presentation", "Unity.RenderPipelines.Universal.Runtime", "UnityEditor.TestRunner"],
+  "includePlatforms": ["Editor"]
+}
