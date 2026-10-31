@@ -4,53 +4,88 @@ using Team5.Rebuild.Simulation;
 
 namespace Team5.Rebuild.Session
 {
-    // Per-run draft, never writes to the shared roster or a Scene's configuration.
     public sealed class SquadPreparation
     {
         public const int WarehouseRows = 2, WarehouseColumns = 6;
         public const int WarehouseCapacity = WarehouseRows * WarehouseColumns;
         public const int MaxDeployed = 6;
+
         private readonly List<MemberSpawnDefinition> members;
-        private readonly int[] memberIds = new int[9]; // 0 = empty; stable IDs are never slot indexes.
-        public bool CanAddMember => members.Count < WarehouseCapacity && !members.Exists(member => member.MemberId == int.MaxValue);
+        private readonly int[] memberIds = new int[9];
+
+        public bool CanAddMember => members.Count < WarehouseCapacity && !members.Exists(m => m.MemberId == int.MaxValue);
         public SquadRoster Roster { get; }
         public IReadOnlyList<MemberSpawnDefinition> Members => members.AsReadOnly();
         public event Action Changed;
+
         public int DeployedCount
         {
-            get { var count = 0; foreach (var id in memberIds) if (id != 0) count++; return count; }
+            get
+            {
+                var count = 0;
+                foreach (var id in memberIds) if (id != 0) count++;
+                return count;
+            }
         }
+
         public bool CanStart => DeployedCount > 0 && DeployedCount <= MaxDeployed;
-        public SquadPreparation(SquadRoster roster) : this(roster != null ? roster.CaptureMembers() : throw new ArgumentNullException(nameof(roster)))
+
+        public SquadPreparation(SquadRoster roster)
+            : this(roster != null ? roster.CaptureMembers() : throw new ArgumentNullException(nameof(roster)))
             => Roster = roster;
+
         public SquadPreparation(IReadOnlyList<MemberSpawnDefinition> availableMembers)
         {
             if (availableMembers == null) throw new ArgumentNullException(nameof(availableMembers));
             members = new List<MemberSpawnDefinition>(availableMembers);
             var ids = new HashSet<int>();
             foreach (var member in members)
-                if (member == null || !ids.Add(member.MemberId)) throw new ArgumentException("Warehouse members require unique IDs.");
-            if (members.Count > WarehouseCapacity) throw new ArgumentException("Warehouse supports up to twelve members.");
+                if (member == null || !ids.Add(member.MemberId))
+                    throw new ArgumentException("Warehouse members require unique IDs.");
+            if (members.Count > WarehouseCapacity)
+                throw new ArgumentException("Warehouse supports up to twelve members.");
         }
-        public bool TryAddRewardMember(UnitRole role)
+
+        public bool TryAddSummonedUnit(UnitDefinition unit)
         {
-            if (role == UnitRole.Test || !Enum.IsDefined(typeof(UnitRole), role)) throw new ArgumentOutOfRangeException(nameof(role));
+            if (unit == null || unit.Role == UnitRole.Test) throw new ArgumentException(nameof(unit));
             if (!CanAddMember) return false;
             var id = 0;
             foreach (var member in members) id = Math.Max(id, member.MemberId);
-            var reward = new MemberSpawnDefinition(checked(id + 1), 4, SquadCombatRules.Create(role));
-            members.Add(reward);
+            members.Add(new MemberSpawnDefinition(checked(id + 1), 4, unit));
             Changed?.Invoke();
             return true;
         }
+
+        public bool TryAddRewardMember(UnitRole role) =>
+            TryAddSummonedUnit(SquadCombatRules.Create(role));
+
+        // Allows dismissing older/weaker units to free up storage space (protects Captain and last unit)
+        public bool TryDismissMember(int memberId)
+        {
+            if (members.Count <= 1) return false;
+            var member = FindMember(memberId);
+            if (member == null || member.Unit.Role == UnitRole.Captain) return false;
+
+            var slot = Array.IndexOf(memberIds, memberId);
+            if (slot >= 0) memberIds[slot] = 0;
+
+            members.Remove(member);
+            Changed?.Invoke();
+            return true;
+        }
+
         public int MemberAtSlot(int slot) => slot >= 0 && slot < 9 ? memberIds[slot] : 0;
         public UnitRole RoleAtSlot(int slot) => FindMember(MemberAtSlot(slot))?.Unit.Role ?? UnitRole.Test;
         public bool IsDeployed(int memberId) => memberId > 0 && Array.IndexOf(memberIds, memberId) >= 0;
+
         public MemberSpawnDefinition FindMember(int memberId)
         {
-            foreach (var member in members) if (member.MemberId == memberId) return member;
+            foreach (var member in members)
+                if (member.MemberId == memberId) return member;
             return null;
         }
+
         public bool TryAssign(int memberId, int slot)
         {
             if (slot < 0 || slot >= 9 || FindMember(memberId) == null) return false;
@@ -62,11 +97,13 @@ namespace Team5.Rebuild.Session
             Changed?.Invoke();
             return true;
         }
+
         public bool TryMove(int from, int to)
         {
             if (from < 0 || from >= 9 || to < 0 || to >= 9 || memberIds[from] == 0) return false;
             return TryAssign(memberIds[from], to);
         }
+
         public bool TryRemove(int slot)
         {
             if (slot < 0 || slot >= 9 || memberIds[slot] == 0) return false;
@@ -74,6 +111,7 @@ namespace Team5.Rebuild.Session
             Changed?.Invoke();
             return true;
         }
+
         public IReadOnlyList<MemberSpawnDefinition> CaptureDeployment()
         {
             if (!CanStart) throw new InvalidOperationException("Deploy between one and six members before starting.");
@@ -81,7 +119,8 @@ namespace Team5.Rebuild.Session
             for (var slot = 0; slot < 9; slot++)
             {
                 var member = FindMember(memberIds[slot]);
-                if (member != null) result.Add(new MemberSpawnDefinition(member.MemberId, slot, member.Unit, member.SpawnTime));
+                if (member != null)
+                    result.Add(new MemberSpawnDefinition(member.MemberId, slot, member.Unit, member.SpawnTime));
             }
             return result.AsReadOnly();
         }

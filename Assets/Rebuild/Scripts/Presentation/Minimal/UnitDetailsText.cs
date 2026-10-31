@@ -4,7 +4,6 @@ using Team5.Rebuild.Simulation;
 
 namespace Team5.Rebuild.Presentation
 {
-    // Formatting only: values come from the selected member's read-only state.
     public static class UnitDetailsText
     {
         public static string Format(UnitState unit)
@@ -12,7 +11,7 @@ namespace Team5.Rebuild.Presentation
             if (unit == null) return string.Empty;
             var stats = unit.Definition;
             var text = new StringBuilder();
-            text.AppendLine($"Role: {unit.Role.ToString().ToLowerInvariant()}");
+            text.AppendLine($"Role: {unit.Role.ToString().ToLowerInvariant()} (Lv.{stats.Level} {stats.Rarity})");
             text.AppendLine(FormattableString.Invariant($"HP: {unit.Hp:0.##} / {unit.MaxHp:0.##}"));
             text.AppendLine(FormattableString.Invariant($"Attack: {stats.Damage:0.##}"));
             text.AppendLine(FormattableString.Invariant($"Defense: {stats.Defense * 100:0.##}% damage reduction"));

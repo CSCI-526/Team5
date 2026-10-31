@@ -1,4 +1,3 @@
-
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -7,26 +6,6 @@ namespace Team5.Rebuild.Presentation.LegacyUI
 {
     public static class LegacyUiKit
     {
-
-        public static string LifeCounterText(int remaining, int limit)
-        {
-            return $": {Mathf.Clamp(remaining, 0, limit)}/{limit}";
-        }
-
-        public static void CreateHeartIcon(Transform parent, Vector2 topLeftPosition, float scale = 1f)
-        {
-            var root = CreateRect(parent, "Heart Icon", topLeftPosition, new Vector2(24f, 24f));
-            root.anchorMin = root.anchorMax = root.pivot = new Vector2(0f, 1f);
-            root.anchoredPosition = topLeftPosition;
-            root.localScale = new Vector3(scale, scale, 1f);
-            Color red = new Color(1f, 0.2f, 0.3f, 1f);
-            // Reuse existing UI shapes so the heart does not depend on font glyph support.
-            Image tip = CreateImage(root, "Heart Tip", new Vector2(0f, -2f), new Vector2(14f, 14f), red);
-            tip.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 45f);
-            CreateCircle(root, "Heart Left", new Vector2(-5f, 3f), 14f, red);
-            CreateCircle(root, "Heart Right", new Vector2(5f, 3f), 14f, red);
-        }
-
         public static readonly Color PanelColor = new Color(0.11f, 0.14f, 0.21f);
         public static readonly Color PanelLineColor = new Color(0.3f, 0.36f, 0.46f);
         public static readonly Color CellColor = new Color(0.07f, 0.09f, 0.14f);
@@ -44,11 +23,29 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         private const float RoundedPixelsPerUnit = 100f;
 
         private static Sprite rounded;
+        private static Sprite circle;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
         {
             rounded = null;
+            circle = null;
+        }
+
+        public static string LifeCounterText(int remaining, int limit) =>
+            $": {Mathf.Clamp(remaining, 0, limit)}/{limit}";
+
+        public static void CreateHeartIcon(Transform parent, Vector2 topLeftPosition, float scale = 1f)
+        {
+            var root = CreateRect(parent, "Heart Icon", topLeftPosition, new Vector2(24f, 24f));
+            root.anchorMin = root.anchorMax = root.pivot = new Vector2(0f, 1f);
+            root.anchoredPosition = topLeftPosition;
+            root.localScale = new Vector3(scale, scale, 1f);
+            var red = new Color(1f, 0.2f, 0.3f, 1f);
+            var tip = CreateImage(root, "Heart Tip", new Vector2(0f, -2f), new Vector2(14f, 14f), red);
+            tip.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 45f);
+            CreateCircle(root, "Heart Left", new Vector2(-5f, 3f), 14f, red);
+            CreateCircle(root, "Heart Right", new Vector2(5f, 3f), 14f, red);
         }
 
         public static Canvas CreateCanvas(GameObject host, int sortingOrder, Vector2 referenceResolution, float matchWidthOrHeight)
@@ -89,20 +86,17 @@ namespace Team5.Rebuild.Presentation.LegacyUI
 
         public static Image CreateImage(Transform parent, string name, Vector2 position, Vector2 size, Color color, float radius = 0f)
         {
-            Image image = CreateRect(parent, name, position, size).gameObject.AddComponent<Image>();
+            var image = CreateRect(parent, name, position, size).gameObject.AddComponent<Image>();
             image.color = color;
             image.raycastTarget = false;
-            if (radius > 0f)
-            {
-                Round(image, radius);
-            }
+            if (radius > 0f) Round(image, radius);
             return image;
         }
 
         public static Image CreateCircle(Transform parent, string name, Vector2 position, float diameter, Color color)
         {
-            Image image = CreateImage(parent, name, position, new Vector2(diameter, diameter), color);
-            image.sprite = LegacyUiShapes.Circle;
+            var image = CreateImage(parent, name, position, new Vector2(diameter, diameter), color);
+            image.sprite = CircleSprite;
             return image;
         }
 
@@ -116,11 +110,8 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         public static TextMeshProUGUI CreateText(Transform parent, string name, string text, Vector2 position, Vector2 size, float fontSize,
             Color color, FontStyles style = FontStyles.Normal, float spacing = 0f)
         {
-            TextMeshProUGUI label = CreateRect(parent, name, position, size).gameObject.AddComponent<TextMeshProUGUI>();
-            if (TMP_Settings.defaultFontAsset != null)
-            {
-                label.font = TMP_Settings.defaultFontAsset;
-            }
+            var label = CreateRect(parent, name, position, size).gameObject.AddComponent<TextMeshProUGUI>();
+            if (TMP_Settings.defaultFontAsset != null) label.font = TMP_Settings.defaultFontAsset;
             label.text = text;
             label.fontSize = fontSize;
             label.color = color;
@@ -142,40 +133,18 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             return button;
         }
 
-        public static Button CreateButton(Transform parent, string name, Vector2 position, Vector2 size, Color color, float radius)
-        {
-            return MakeButton(CreateImage(parent, name, position, size, color, radius));
-        }
+        public static Button CreateButton(Transform parent, string name, Vector2 position, Vector2 size, Color color, float radius) =>
+            MakeButton(CreateImage(parent, name, position, size, color, radius));
 
-        public static RectTransform CreateLock(Transform parent, Vector2 position, float scale)
-        {
-            RectTransform root = CreateRect(parent, "Lock", position, new Vector2(30f, 38f) * scale);
-            CreateImage(root, "Shackle Left", new Vector2(-9f, 8f) * scale, new Vector2(5f, 16f) * scale, LockColor);
-            CreateImage(root, "Shackle Right", new Vector2(9f, 8f) * scale, new Vector2(5f, 16f) * scale, LockColor);
-            CreateImage(root, "Shackle Top", new Vector2(0f, 15f) * scale, new Vector2(23f, 5f) * scale, LockColor, 2.5f * scale);
-            CreateImage(root, "Body", new Vector2(0f, -5f) * scale, new Vector2(30f, 22f) * scale, LockColor, 4f * scale);
-            CreateCircle(root, "Keyhole", new Vector2(0f, -4f) * scale, 6.5f * scale, PanelColor);
-            return root;
-        }
-
-        private static Sprite RoundedSprite
-        {
-            get
-            {
-                if (rounded == null)
-                {
-                    rounded = CreateRoundedSprite();
-                }
-                return rounded;
-            }
-        }
+        private static Sprite RoundedSprite => rounded != null ? rounded : (rounded = CreateRoundedSprite());
+        private static Sprite CircleSprite => circle != null ? circle : (circle = CreateCircleSprite());
 
         private static Sprite CreateRoundedSprite()
         {
-            int size = RoundedTextureSize;
-            float radius = RoundedTextureRadius;
-            float half = size * 0.5f;
-            float inner = half - radius;
+            const int size = RoundedTextureSize;
+            const float radius = RoundedTextureRadius;
+            const float half = size * 0.5f;
+            const float inner = half - radius;
 
             var texture = new Texture2D(size, size, TextureFormat.RGBA32, false)
             {
@@ -185,21 +154,42 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             };
 
             var pixels = new Color32[size * size];
-            for (int y = 0; y < size; y++)
-            {
-                for (int x = 0; x < size; x++)
+            for (var y = 0; y < size; y++)
+                for (var x = 0; x < size; x++)
                 {
-                    float dx = Mathf.Max(Mathf.Abs(x + 0.5f - half) - inner, 0f);
-                    float dy = Mathf.Max(Mathf.Abs(y + 0.5f - half) - inner, 0f);
-                    float alpha = Mathf.Clamp01(radius - Mathf.Sqrt(dx * dx + dy * dy) + 0.5f);
+                    var dx = Mathf.Max(Mathf.Abs(x + 0.5f - half) - inner, 0f);
+                    var dy = Mathf.Max(Mathf.Abs(y + 0.5f - half) - inner, 0f);
+                    var alpha = Mathf.Clamp01(radius - Mathf.Sqrt(dx * dx + dy * dy) + 0.5f);
                     pixels[y * size + x] = new Color32(255, 255, 255, (byte)Mathf.RoundToInt(alpha * 255f));
                 }
-            }
             texture.SetPixels32(pixels);
             texture.Apply(false, true);
 
             return Sprite.Create(texture, new Rect(0f, 0f, size, size), new Vector2(0.5f, 0.5f), RoundedPixelsPerUnit, 0,
                 SpriteMeshType.FullRect, new Vector4(radius, radius, radius, radius));
+        }
+
+        private static Sprite CreateCircleSprite()
+        {
+            const int size = 64;
+            var texture = new Texture2D(size, size, TextureFormat.RGBA32, false)
+            {
+                name = "RK Circle",
+                wrapMode = TextureWrapMode.Clamp,
+                filterMode = FilterMode.Bilinear
+            };
+            var center = Vector2.one * (size * 0.5f);
+            var pixels = new Color32[size * size];
+            for (var y = 0; y < size; y++)
+                for (var x = 0; x < size; x++)
+                {
+                    var distance = Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), center);
+                    var alpha = Mathf.Clamp01(size * 0.5f - distance + 0.5f);
+                    pixels[y * size + x] = new Color32(255, 255, 255, (byte)Mathf.RoundToInt(alpha * 255));
+                }
+            texture.SetPixels32(pixels);
+            texture.Apply(false, true);
+            return Sprite.Create(texture, new Rect(0, 0, size, size), Vector2.one * 0.5f, size, 0, SpriteMeshType.FullRect);
         }
     }
 }

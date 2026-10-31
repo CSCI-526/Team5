@@ -1,27 +1,43 @@
-
 using Team5.Rebuild.Simulation;
 using UnityEngine;
 using TMPro;
 
 namespace Team5.Rebuild.Presentation.LegacyUI
 {
-    // Shared introduction content for warehouse members and Claim Card previews.
     public static class LegacyUnitIntroductionUI
     {
         public static TMP_Text Build(Transform panel, UnitDefinition stats, bool showAvailability = true)
         {
             var role = stats.Role;
-            LegacyUiKit.CreateCircle(panel, "Emblem Ring", new Vector2(0, 75), 76, LegacyUiKit.PanelLineColor);
+            var rarityColor = LegacyUnitLooks.RarityColor(stats.Rarity);
+
+            LegacyUiKit.CreateCircle(panel, "Emblem Ring", new Vector2(0, 75), 76, rarityColor);
             var face = LegacyUiKit.CreateCircle(panel, "Emblem", new Vector2(0, 75), 70, LegacyUiKit.PanelColor);
             LegacyUnitIconUI.Create(face.transform, Vector2.zero, 76 * 1.15f).SetType(role);
-            LegacyUiKit.CreateText(panel, "Name", LegacyUnitLooks.Name(role), new Vector2(0, 15), new Vector2(200, 24), 18,
-                LegacyUiKit.TextColor, FontStyles.Bold, 4);
-            var status = showAvailability ? LegacyUiKit.CreateText(panel, "Availability", "", new Vector2(0, -8), new Vector2(200, 20), 14, LegacyUiKit.MutedColor) : null;
-            var description = role == UnitRole.Captain ? "Shoots towers / DEF 50%" : role == UnitRole.Tank ? "Takes less damage" : role == UnitRole.Heal ? "Heals neighbors" : "Shoots towers";
-            LegacyUiKit.CreateText(panel, "Role", description, new Vector2(0, -32), new Vector2(200, 20), 13, LegacyUiKit.MutedColor);
-            LegacyUiKit.CreateImage(panel, "Divider", new Vector2(0, -52), new Vector2(160, 2), LegacyUiKit.PanelLineColor);
+
+            LegacyUiKit.CreateText(panel, "Name", $"{LegacyUnitLooks.Name(role)}  Lv.{stats.Level}", new Vector2(0, 18), new Vector2(200, 24), 17,
+                LegacyUiKit.TextColor, FontStyles.Bold, 2);
+
+            LegacyUiKit.CreateText(panel, "Rarity", stats.Rarity.ToString().ToUpperInvariant(), new Vector2(0, -2), new Vector2(200, 18), 13,
+                rarityColor, FontStyles.Bold, 2);
+
+            var status = showAvailability
+                ? LegacyUiKit.CreateText(panel, "Availability", "", new Vector2(0, -20), new Vector2(200, 20), 13, LegacyUiKit.MutedColor)
+                : null;
+
+            var description = role == UnitRole.Captain ? "Shoots towers / DEF 50%"
+                : role == UnitRole.Tank ? "Takes less damage"
+                : role == UnitRole.Heal ? "Heals neighbors"
+                : "Shoots towers";
+
+            LegacyUiKit.CreateText(panel, "Role", description, new Vector2(0, -38), new Vector2(200, 18), 12, LegacyUiKit.MutedColor);
+            LegacyUiKit.CreateImage(panel, "Divider", new Vector2(0, -54), new Vector2(160, 2), rarityColor);
+
             var key = role == UnitRole.Attack || role == UnitRole.Captain ? "ATK" : role == UnitRole.Tank ? "DEF" : "HEAL";
-            var value = role == UnitRole.Attack || role == UnitRole.Captain ? $"{stats.Damage:0.##}" : role == UnitRole.Tank ? $"{stats.Defense * 100:0}%" : $"{stats.HealPerSecond:0.##}/s";
+            var value = role == UnitRole.Attack || role == UnitRole.Captain ? $"{stats.Damage:0.##}"
+                : role == UnitRole.Tank ? $"{stats.Defense * 100:0}%"
+                : $"{stats.HealPerSecond:0.##}/s";
+
             BuildStat(panel, key, value, -76);
             BuildStat(panel, "HP", $"{stats.MaxHp:0.##}", -104);
             return status;
@@ -40,7 +56,6 @@ namespace Team5.Rebuild.Presentation.LegacyUI
     public class LegacyUnitIconUI : MonoBehaviour
     {
         private const float ShadowAlpha = 0.5f;
-
         private static readonly Vector2 shadowOffset = new Vector2(0.03f, -0.05f);
 
         private RectTransform rect;
@@ -51,7 +66,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
 
         public static LegacyUnitIconUI Create(Transform parent, Vector2 position, float pixelsPerUnit)
         {
-            RectTransform rect = LegacyUiKit.CreateRect(parent, "Unit Icon", position, Vector2.one * pixelsPerUnit * 0.5f);
+            var rect = LegacyUiKit.CreateRect(parent, "Unit Icon", position, Vector2.one * pixelsPerUnit * 0.5f);
             var icon = rect.gameObject.AddComponent<LegacyUnitIconUI>();
             icon.rect = rect;
             icon.pixelsPerUnit = pixelsPerUnit;
@@ -60,24 +75,17 @@ namespace Team5.Rebuild.Presentation.LegacyUI
 
         public void SetType(UnitRole type)
         {
-            if (type == shown)
-            {
-                return;
-            }
+            if (type == shown) return;
             shown = type;
 
-            for (int i = transform.childCount - 1; i >= 0; i--)
-            {
+            for (var i = transform.childCount - 1; i >= 0; i--)
                 Destroy(transform.GetChild(i).gameObject);
-            }
-            if (type == UnitRole.Test)
-            {
-                return;
-            }
 
-            SoldierLook look = LegacyUnitLooks.For(type);
-            float k = pixelsPerUnit;
-            Vector2 outer = Vector2.one * look.OuterSize * k;
+            if (type == UnitRole.Test) return;
+
+            var look = LegacyUnitLooks.For(type);
+            var k = pixelsPerUnit;
+            var outer = Vector2.one * look.OuterSize * k;
             LegacyUiKit.CreateImage(transform, "Shadow", shadowOffset * k, outer, new Color(0f, 0f, 0f, ShadowAlpha));
             LegacyUiKit.CreateImage(transform, "Outline", Vector2.zero, outer, look.Outline);
             LegacyUiKit.CreateImage(transform, "Body", Vector2.zero, Vector2.one * look.InnerSize * k, look.Body);

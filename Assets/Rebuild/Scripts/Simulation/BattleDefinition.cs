@@ -15,28 +15,51 @@ namespace Team5.Rebuild.Simulation
         internal static bool Finite(Vector3 value) => Finite(value.x) && Finite(value.y) && Finite(value.z);
     }
 
+    // Immutable unit stats rolled at creation/summon time. Units cannot be upgraded post-creation.
     public sealed class UnitDefinition
     {
         public float MaxHp { get; }
         public float Speed { get; }
         public UnitRole Role { get; }
+        public UnitRarity Rarity { get; }
+        public int Level { get; }
         public float Damage { get; }
         public float Range { get; }
         public float AttackInterval { get; }
         public float Defense { get; }
         public float HealPerSecond { get; }
-        public UnitDefinition(float maxHp, float speed, UnitRole role = UnitRole.Test, float damage = 0,
-            float range = 2.5f, float attackInterval = 1, float defense = 0, float healPerSecond = 0.2f)
+
+        public UnitDefinition(
+            float maxHp,
+            float speed,
+            UnitRole role = UnitRole.Test,
+            float damage = 0,
+            float range = 2.5f,
+            float attackInterval = 1,
+            float defense = 0,
+            float healPerSecond = 0.2f,
+            UnitRarity rarity = UnitRarity.Common,
+            int level = 1)
         {
             if (!BattleNumbers.Finite(maxHp) || maxHp <= 0 || !BattleNumbers.Finite(speed) || speed <= 0)
                 throw new ArgumentOutOfRangeException(nameof(maxHp), "HP and speed must be finite and positive.");
-            MaxHp = maxHp;
-            Speed = speed;
             if (!Enum.IsDefined(typeof(UnitRole), role) || !BattleNumbers.Finite(damage) || damage < 0 ||
                 !BattleNumbers.Finite(range) || range < 0 || !BattleNumbers.Finite(attackInterval) || attackInterval <= 0 ||
-                !BattleNumbers.Finite(defense) || defense < 0 || defense >= 1) throw new ArgumentOutOfRangeException(nameof(role));
-            if (!BattleNumbers.Finite(healPerSecond) || healPerSecond < 0) throw new ArgumentOutOfRangeException(nameof(healPerSecond));
-            Role = role; Damage = damage; Range = range; AttackInterval = attackInterval; Defense = defense; HealPerSecond = healPerSecond;
+                !BattleNumbers.Finite(defense) || defense < 0 || defense >= 1)
+                throw new ArgumentOutOfRangeException(nameof(role));
+            if (!BattleNumbers.Finite(healPerSecond) || healPerSecond < 0)
+                throw new ArgumentOutOfRangeException(nameof(healPerSecond));
+
+            MaxHp = maxHp;
+            Speed = speed;
+            Role = role;
+            Rarity = rarity;
+            Level = Math.Max(1, level);
+            Damage = damage;
+            Range = range;
+            AttackInterval = attackInterval;
+            Defense = defense;
+            HealPerSecond = healPerSecond;
         }
     }
 
@@ -52,6 +75,7 @@ namespace Team5.Rebuild.Simulation
         public float MaxHp { get; }
         public AttackArea Area { get; }
         public float AttackWidth { get; }
+
         public TowerDefinition(int id, Vector3 position, float range, float damage, float attackInterval, TargetRule targetRule,
             int footprintSize = 1, float maxHp = 20, AttackArea area = AttackArea.Square, float attackWidth = 0.3f)
         {
@@ -60,6 +84,9 @@ namespace Team5.Rebuild.Simulation
                 throw new ArgumentOutOfRangeException(nameof(range), "Invalid tower configuration.");
             if (!Enum.IsDefined(typeof(TargetRule), targetRule)) throw new ArgumentOutOfRangeException(nameof(targetRule));
             if (footprintSize != 1 && footprintSize != 3) throw new ArgumentOutOfRangeException(nameof(footprintSize));
+            if (!BattleNumbers.Finite(maxHp) || maxHp <= 0 || !BattleNumbers.Finite(attackWidth) || attackWidth <= 0 ||
+                !Enum.IsDefined(typeof(AttackArea), area)) throw new ArgumentOutOfRangeException(nameof(maxHp));
+
             Id = id;
             Position = position;
             Range = range;
@@ -67,13 +94,12 @@ namespace Team5.Rebuild.Simulation
             AttackInterval = attackInterval;
             TargetRule = targetRule;
             FootprintSize = footprintSize;
-            if (!BattleNumbers.Finite(maxHp) || maxHp <= 0 || !BattleNumbers.Finite(attackWidth) || attackWidth <= 0 ||
-                !Enum.IsDefined(typeof(AttackArea), area)) throw new ArgumentOutOfRangeException(nameof(maxHp));
-            MaxHp = maxHp; Area = area; AttackWidth = attackWidth;
+            MaxHp = maxHp;
+            Area = area;
+            AttackWidth = attackWidth;
         }
     }
 
-    // Immutable start-of-battle data, derived from Scene references. Not an editable second map.
     public sealed class BattleDefinition
     {
         public ReadOnlyCollection<Vector3> Waypoints { get; }
@@ -101,12 +127,15 @@ namespace Team5.Rebuild.Simulation
             Members = captured.AsReadOnly();
             WalkableCells = walkableCells == null ? null : new List<Vector3Int>(walkableCells).AsReadOnly();
         }
+
         private static UnitDefinition FirstUnit(IEnumerable<MemberSpawnDefinition> members, out List<MemberSpawnDefinition> captured)
         {
             captured = members == null ? throw new ArgumentNullException(nameof(members)) : new List<MemberSpawnDefinition>(members);
-            if (captured.Count < 1 || captured.Count > 9 || captured[0] == null) throw new ArgumentException("A squad needs 1..9 planned members.");
+            if (captured.Count < 1 || captured.Count > 9 || captured[0] == null)
+                throw new ArgumentException("A squad needs 1..9 planned members.");
             return captured[0].Unit;
         }
+
         public BattleDefinition(IEnumerable<Vector3> waypoints, IEnumerable<TowerDefinition> towers,
             UnitDefinition unit, int unitCount, float spawnInterval, int goalLives, int formationSize = 1)
         {
@@ -128,6 +157,7 @@ namespace Team5.Rebuild.Simulation
             var ids = new HashSet<int>();
             foreach (var tower in towerList)
                 if (tower == null || !ids.Add(tower.Id)) throw new ArgumentException("Tower IDs must be unique.");
+
             Waypoints = points.AsReadOnly();
             Towers = towerList.AsReadOnly();
             Unit = unit;

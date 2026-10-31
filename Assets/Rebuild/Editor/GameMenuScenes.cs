@@ -9,22 +9,37 @@ namespace Team5.Rebuild.Editor
     {
         [MenuItem("Team5/Rebuild/Open Start Game")]
         public static void OpenStart() => Open(BattleSceneFlow.StartScene);
+
         [MenuItem("Team5/Rebuild/Open End Game")]
         public static void OpenEnd() => Open(BattleSceneFlow.EndScene);
+
         [MenuItem("Team5/Rebuild/Open Upgrade Scene")]
         public static void OpenUpgrade() => Open(BattleSceneFlow.UpgradeScene);
+
+        [MenuItem("Team5/Rebuild/Open Level 1 Grid Battle")]
+        public static void OpenLevelOne() => Open(BattleSceneFlow.BattleScene);
+
         [MenuItem("Team5/Rebuild/Open Level 2 Grid Battle")]
         public static void OpenLevelTwo() => Open(BattleSceneFlow.LevelTwoScene);
+
         [MenuItem("Team5/Rebuild/Open Level 3 Grid Battle")]
         public static void OpenLevelThree() => Open(BattleSceneFlow.LevelThreeScene);
+
         [MenuItem("Team5/Rebuild/Open Level 4 Grid Battle")]
         public static void OpenLevelFour() => Open(BattleSceneFlow.LevelFourScene);
+
         [MenuItem("Team5/Rebuild/Open Level Settlement")]
         public static void OpenSettlement() => Open(BattleSceneFlow.SettlementScene);
+
         private static void Open(string path)
         {
-            if (Application.isPlaying) { Debug.LogWarning("Exit Play Mode before opening a scene."); return; }
-            if (EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) EditorSceneManager.OpenScene(path);
+            if (Application.isPlaying)
+            {
+                Debug.LogWarning("Exit Play Mode before opening a scene.");
+                return;
+            }
+            if (EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
+                EditorSceneManager.OpenScene(path);
         }
     }
 }
