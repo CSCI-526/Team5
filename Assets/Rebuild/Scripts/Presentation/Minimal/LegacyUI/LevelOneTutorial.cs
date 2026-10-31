@@ -387,6 +387,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             session.CaptureTutorialCheckpoint(wasPaused);
             CurrentStep = step; next = false; ui.SetActive(true); banner.gameObject.SetActive(true);
             title.text = $"{step}/{TotalSteps} - {heading}"; body.text = message;
+            LayoutBanner(!modal);
             blocker.SetActive(modal); nextButton.gameObject.SetActive(modal);
             ClearButtonGlow();
         }
@@ -430,18 +431,32 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             LegacyUiKit.CreateCanvas(ui, 900, new Vector2(1280, 720), 0.5f); root = (RectTransform)ui.transform;
             var shade = LegacyUiKit.CreateImage(root, "Modal Input Blocker", Vector2.zero, Vector2.zero, new Color(0, 0, 0, 0.08f));
             LegacyUiKit.Stretch(shade.rectTransform); shade.raycastTarget = true; blocker = shade.gameObject;
-            var panel = LegacyUiKit.CreateImage(root, "Tutorial Banner", Vector2.zero, new Vector2(560, 190), new Color(0.11f, 0.14f, 0.21f, 0.98f), 10);
+            // Match the original HowToPlay.BuildFreezeFrameUI card and TMP typography.
+            // Both projects use LiberationSans SDF through TMP_Settings.defaultFontAsset.
+            var panel = LegacyUiKit.CreateImage(root, "Tutorial Banner", Vector2.zero, new Vector2(880, 175), new Color(0.08f, 0.11f, 0.17f, 0.96f));
             panel.raycastTarget = true; banner = panel.rectTransform;
-            banner.anchorMin = banner.anchorMax = new Vector2(0.75f, 0); banner.pivot = new Vector2(0.5f, 0); banner.anchoredPosition = new Vector2(0, 18);
-            title = LegacyUiKit.CreateText(banner, "Title", "", new Vector2(0, 68), new Vector2(520, 30), 20, Color.white, FontStyles.Bold);
-            body = LegacyUiKit.CreateText(banner, "Body", "", new Vector2(0, 4), new Vector2(520, 98), 18, LegacyUiKit.TextColor);
-            body.textWrappingMode = TextWrappingModes.Normal; body.alignment = TextAlignmentOptions.TopLeft;
-            var skip = LegacyUiKit.CreateButton(banner, "Skip Tutorial", new Vector2(-202, -70), new Vector2(110, 30), LegacyUiKit.PanelLineColor, 4);
-            LegacyUiKit.CreateText(skip.transform, "Label", "SKIP", Vector2.zero, new Vector2(100, 28), 16, Color.white);
+            var outline = panel.gameObject.AddComponent<Outline>();
+            outline.effectColor = new Color(0.3f, 0.85f, 0.4f, 1);
+            outline.effectDistance = new Vector2(3, -3);
+            title = LegacyUiKit.CreateText(banner, "Title", "", Vector2.zero, Vector2.zero, 30, new Color(0.35f, 0.95f, 0.45f), FontStyles.Bold);
+            title.enableAutoSizing = true; title.fontSizeMin = 26; title.fontSizeMax = 30;
+            body = LegacyUiKit.CreateText(banner, "Body", "", Vector2.zero, Vector2.zero, 23, Color.white);
+            body.textWrappingMode = TextWrappingModes.Normal; body.alignment = TextAlignmentOptions.Center;
+            // Keep every existing message, including its line breaks, visible in the legacy card.
+            body.enableAutoSizing = true; body.fontSizeMin = 18; body.fontSizeMax = 23;
+            var skip = LegacyUiKit.CreateButton(banner, "Skip Tutorial", Vector2.zero, new Vector2(110, 30), Color.white, 0);
+            var skipRect = (RectTransform)skip.transform;
+            skipRect.anchorMin = skipRect.anchorMax = new Vector2(0, 0); skipRect.pivot = new Vector2(0, 0.5f);
+            skipRect.anchoredPosition = new Vector2(24, 22);
+            LegacyUiKit.CreateText(skip.transform, "Label", "SKIP", Vector2.zero, new Vector2(100, 28), 18, new Color(0.196f, 0.196f, 0.196f));
             skip.onClick.AddListener(Skip);
-            nextButton = LegacyUiKit.CreateButton(banner, "Continue", new Vector2(202, -70), new Vector2(110, 30), LegacyUiKit.NodeGreenColor, 4);
-            LegacyUiKit.CreateText(nextButton.transform, "Label", "CONTINUE", Vector2.zero, new Vector2(106, 28), 14, Color.white);
+            nextButton = LegacyUiKit.CreateButton(banner, "Continue", Vector2.zero, new Vector2(144, 30), new Color(0.2f, 0.6f, 0.2f), 0);
+            var nextRect = (RectTransform)nextButton.transform;
+            nextRect.anchorMin = nextRect.anchorMax = new Vector2(1, 0); nextRect.pivot = new Vector2(1, 0.5f);
+            nextRect.anchoredPosition = new Vector2(-24, 22);
+            LegacyUiKit.CreateText(nextButton.transform, "Label", "CONTINUE", Vector2.zero, new Vector2(138, 28), 18, Color.white);
             nextButton.onClick.AddListener(Continue);
+            LayoutBanner(false);
             squadArrow = LegacyUiKit.CreateRect(root, "Team1 Tutorial Arrow", Vector2.zero, new Vector2(84, 62));
             // Native Image strokes use the same rendering path as the existing working HUD.
             ArrowStroke("Shaft Border", new Vector2(-34, 0), new Vector2(42, 0), 12, Color.black);
@@ -451,6 +466,23 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             ArrowStroke("Upper", new Vector2(-37, 0), new Vector2(-10, 22), 6, Color.white);
             ArrowStroke("Lower", new Vector2(-37, 0), new Vector2(-10, -22), 6, Color.white);
             squadArrow.gameObject.SetActive(false);
+        }
+        private void LayoutBanner(bool interactive)
+        {
+            // The full-width legacy card would cover the embedded formation editor's Apply button.
+            // Use the same visual style on a narrower right-hand card during interactive lessons.
+            banner.anchorMin = banner.anchorMax = new Vector2(interactive ? 0.75f : 0.5f, 0);
+            banner.pivot = new Vector2(0.5f, 0);
+            banner.anchoredPosition = new Vector2(0, 24);
+            banner.sizeDelta = interactive ? new Vector2(560, 230) : new Vector2(880, 175);
+            LayoutBannerText(title.rectTransform, interactive ? 0.72f : 0.68f, 0.96f, 40);
+            LayoutBannerText(body.rectTransform, interactive ? 0.20f : 0.24f, interactive ? 0.72f : 0.68f, 50);
+        }
+        private static void LayoutBannerText(RectTransform rect, float bottom, float top, float horizontalInset)
+        {
+            rect.anchorMin = new Vector2(0, bottom); rect.anchorMax = new Vector2(1, top);
+            rect.pivot = new Vector2(0.5f, 0.5f); rect.anchoredPosition = Vector2.zero;
+            rect.sizeDelta = new Vector2(-horizontalInset, 0);
         }
         private void ArrowStroke(string name, Vector2 from, Vector2 to, float thickness, Color tint)
         {

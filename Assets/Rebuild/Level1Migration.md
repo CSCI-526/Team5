@@ -1,5 +1,13 @@
 # 方块版 Level 1
 
+## Tutorial banner style update
+
+The tutorial card now follows the original Team5 `Assets/Shared/Scripts/HowToPlay.cs` freeze-frame banner: bottom-center placement, 880×175 reference pixels, 24 pixels above the bottom, dark navy RGBA `(0.08, 0.11, 0.17, 0.96)`, and a green outline with offset `(3, -3)`. Both projects already use LiberationSans SDF through TMP Settings. The title uses green bold text at up to 30 points; the centered white body uses up to 23 points. Limited auto-sizing preserves all existing messages and line breaks. Skip and Continue keep their existing labels and actions, using the original white/dark and green/white button palette at 18 points.
+
+During non-modal formation instructions, the same style uses a 560×230 bottom-right card so it cannot cover the embedded editor's Apply button. Modal explanations return to the original bottom-center layout. Tutorial messages, step order, checkpoint/recovery, pause, camera, highlighting, arrows, and input behavior are unchanged. Only `LevelOneTutorial` UI construction and layout were adjusted; no global font/UI settings or scene assets were changed.
+
+Validation: Presentation and PlayMode test sources compile offline with zero errors. A source comparison verifies that tutorial content and behavior outside UI styling remain identical. Original Team5 reference-file hashes remain unchanged. The interactive card and Apply button do not overlap in 1280×720 reference coordinates. Logs are in `Logs/TutorialStyle/`; Unity PlayMode and visual verification were not performed.
+
 教程第 3 步与第 4 步换位成功后的最后说明统一聚焦 Captain 与对应塔的世界位置中点，根据两者实际模型边界计算临时镜头距离（兼容 Perspective / Orthographic），同时容纳完整单位和塔并避开下方提示区域。未修改场景中保存的摄像机参数；第 2 步仍保持正常关卡视角。离线编译通过（0 错误），报告 `Logs/CompactLevel1Backup/TutorialPairFocusCompile.log`；未操控 Unity 界面验证。
 
 教程第 4 步等待点击小队时，在 Team1 图标右侧显示白色填充、黑色实边的左指箭头。箭头用普通 UI Image 线条绘制，黑色底边与白色内线叠加；使用屏幕坐标转换对齐目标并保持在教程 Canvas 最上层，按非缩放时间在 0.8～1.15 倍间循环缩放，尖端保持指向图标，不拦截点击。打开编队后隐藏，错误操作需要重新打开时再次显示；讲解完成、Skip 或禁用后清理。离线编译通过（0 错误），报告 `Logs/CompactLevel1Backup/TutorialArrowDisplayCompile.log`；未操控 Unity 界面验证外观。

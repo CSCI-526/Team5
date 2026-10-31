@@ -17,6 +17,8 @@ namespace Team5.Rebuild.Editor
         public static void OpenLevelTwo() => Open(BattleSceneFlow.LevelTwoScene);
         [MenuItem("Team5/Rebuild/Open Level 3 Grid Battle")]
         public static void OpenLevelThree() => Open(BattleSceneFlow.LevelThreeScene);
+        [MenuItem("Team5/Rebuild/Open Level 4 Grid Battle")]
+        public static void OpenLevelFour() => Open(BattleSceneFlow.LevelFourScene);
         [MenuItem("Team5/Rebuild/Open Level Settlement")]
         public static void OpenSettlement() => Open(BattleSceneFlow.SettlementScene);
         private static void Open(string path)

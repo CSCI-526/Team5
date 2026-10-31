@@ -10,7 +10,7 @@ This directory contains 27 prefabs. The complete example comes from the saved Le
 4. This prefab includes a connected GameplayGrid, a 24-node route, two towers, BattleSession, unit presentation, HUD, camera, light, and debug Gizmos. It is configured for standalone combat testing in Play Mode. Its initial displayed level number is 4, and it has no Level1 tutorial.
 5. In Edit Mode, right-click the root object and choose Prefab → **Unpack Completely** before editing the map as an independent scene layout. Do not use Apply All on the entire LevelStarter, since that would change the template used for future levels.
 
-The new scene is a standalone combat test. Currently, `BattleSceneFlow` recognizes only the three original campaign levels. **Setting the displayed number to 4 or adding the scene to Build Settings does not automatically add it to the campaign.** To enable campaign progression, settlement, defeat retries, and warehouse map previews, register the scene in the level list in `BattleSceneFlow` and configure `RebuildEconomy` as needed. This kit does not change the existing campaign flow.
+The new scene is a standalone combat test. Currently, `BattleSceneFlow` recognizes four configured campaign scenes (Level1 through Level4). **Setting a displayed level number or adding a new scene to Build Settings does not automatically add that scene to the campaign.** To enable campaign progression, settlement, defeat retries, and warehouse map previews, register the scene in the level list in `BattleSceneFlow` and configure `RebuildEconomy` as needed. This kit does not change the existing campaign flow.
 
 ## Asset inventory
 

@@ -41,6 +41,8 @@ namespace Team5.Rebuild.Tests
             Assert.That(scenes[0], Is.EqualTo(BattleSceneFlow.StartScene));
             Assert.That(scenes, Does.Contain(BattleSceneFlow.BattleScene));
             Assert.That(scenes, Does.Contain(BattleSceneFlow.LevelTwoScene));
+            Assert.That(scenes, Does.Contain(BattleSceneFlow.LevelThreeScene));
+            Assert.That(scenes, Does.Contain(BattleSceneFlow.LevelFourScene));
             Assert.That(scenes, Does.Contain(BattleSceneFlow.SettlementScene));
             Assert.That(scenes, Does.Contain(BattleSceneFlow.UpgradeScene));
             Assert.That(scenes, Does.Contain(BattleSceneFlow.EndScene));

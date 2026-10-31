@@ -15,7 +15,8 @@ namespace Team5.Rebuild.Session
         public const string BattleScene = "Assets/Rebuild/Scenes/Level1GridBattle.unity";
         public const string LevelTwoScene = "Assets/Rebuild/Scenes/Level2GridBattle.unity";
         public const string LevelThreeScene = "Assets/Rebuild/Scenes/Level3GridBattle.unity";
-        private static readonly string[] battleScenes = { BattleScene, LevelTwoScene, LevelThreeScene };
+        public const string LevelFourScene = "Assets/Rebuild/Scenes/Level4GridBattle.unity";
+        private static readonly string[] battleScenes = { BattleScene, LevelTwoScene, LevelThreeScene, LevelFourScene };
         public static string SceneForLevel(int level)
         {
             if(level < 1 || level > battleScenes.Length) throw new System.ArgumentOutOfRangeException(nameof(level));
