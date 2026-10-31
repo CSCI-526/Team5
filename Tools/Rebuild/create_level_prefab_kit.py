@@ -204,12 +204,14 @@ def build():
     for folder in [KIT, *sorted(p for p in KIT.rglob('*') if p.is_dir())]:
         metadata(folder, folder=True)
     assert all(hashlib.sha256(p.read_bytes()).hexdigest() == digest for p, digest in hashes.items())
-    print('Created 25 prefabs; all existing scenes and prefabs unchanged.')
+    from create_single_cell_tower import create
+    create()
+    print('Created 27 prefabs; all existing scenes and prefabs unchanged.')
 
 
 def validate():
     outputs = sorted(KIT.rglob('*.prefab'))
-    assert len(outputs) == 25, len(outputs)
+    assert len(outputs) == 27, len(outputs)
     guid_paths = {}
     for path in (ROOT / 'Assets').rglob('*.meta'):
         guid = re.search(r'(?m)^guid: (\w+)', path.read_text(encoding='utf-8-sig'))[1]
@@ -218,6 +220,11 @@ def validate():
         guid_paths[guid] = path
     package_guids = None
     for path in outputs:
+        if path.stem == 'Tower_Attack_1x1_Square':
+            from create_single_cell_tower import validate_square_variant
+            validate_square_variant()
+            print('PASS', path.relative_to(ROOT), '(Prefab Variant)')
+            continue
         text = path.read_text()
         docs = parse(text)
         assert len(docs) == len(BLOCK.findall(text))
@@ -252,12 +259,19 @@ def validate():
             validate_level(docs, path.parent.name == 'Systems')
         if path.parent.name in ('Towers', 'TowerPlatforms'):
             towers = [b for _, b in docs.values() if 'Team5.Rebuild.World.BattleTower' in b]
-            assert len(towers) == 1 and '  usesMacroFootprint: 1\n' in towers[0], path
+            assert len(towers) == 1, path
+            if path.stem == 'Tower_Attack_1x1':
+                assert '  usesMacroFootprint: 0\n' in towers[0], path
+                from create_single_cell_tower import validate as validate_single_cell
+                validate_single_cell()
+                print('PASS', path.relative_to(ROOT), f'({len(docs)} serialized objects)')
+                continue
+            assert '  usesMacroFootprint: 1\n' in towers[0], path
             direction = path.stem.removeprefix('Tower_').removesuffix('_WithPlatform')
             area = ['Square', 'PositiveX', 'NegativeX', 'PositiveZ', 'NegativeZ'].index(direction)
             assert f'  attackArea: {area}\n' in towers[0], path
         print('PASS', path.relative_to(ROOT), f'({len(docs)} serialized objects)')
-    print('PASS all 25 assets: closed hierarchy, unique IDs/GUIDs, local/resource bindings, tile types and 3x3 coordinates.')
+    print('PASS all 27 assets: closed hierarchy, unique IDs/GUIDs, local/resource bindings, tile types, footprints, coordinates and variant inheritance.')
 
 
 def validate_level(docs, blank):

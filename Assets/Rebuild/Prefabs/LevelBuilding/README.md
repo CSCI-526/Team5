@@ -1,6 +1,6 @@
 # Level Building Prefab Kit
 
-This directory contains 25 prefabs. The complete example comes from the saved Level2 scene and preserves its camera, UI, and combat rules. Existing scenes, the user's tower prefab, shared rosters, and economy settings were not modified.
+This directory contains 27 prefabs. The complete example comes from the saved Level2 scene and preserves its camera, UI, and combat rules. Existing scenes, the user's tower prefab, shared rosters, and economy settings were not modified.
 
 ## Start with the complete example
 
@@ -20,7 +20,7 @@ The new scene is a standalone combat test. Currently, `BattleSceneFlow` recogniz
 | Systems | BattleRig_3D | Empty level skeleton with an empty grid, route, and tower container, plus connected Session, HUD, presentation, camera, light, and Gizmos |
 | Tiles | Ground / Road / Obstacle / TowerPlatform / Spawn / Goal `_Cell` prefabs | Six individual Small Cell types with rule components, models, and matching materials |
 | Blocks | Six `_3x3` prefabs | Nine-cell groups for building three-cell-wide roads, spawn areas, goals, and platforms |
-| Towers | Square / PositiveX / NegativeX / PositiveZ / NegativeZ | Standalone towers with a square attack area or one of four fixed firing directions |
+| Towers | Square / PositiveX / NegativeX / PositiveZ / NegativeZ, plus Tower_Attack_1x1 and Tower_Attack_1x1_Square | Five Macro towers, a detailed single-cell attack tower, and its Square Prefab Variant |
 | TowerPlatforms | Five `_WithPlatform` prefabs | One tower and a complete nine-cell platform; the tower's local foot height is already set to 0.25 |
 | Decoration | DecorativeBorder_Cell | Visual border tile that does not participate in grid occupancy or combat |
 
@@ -33,6 +33,8 @@ Unit models reuse `Assets/Rebuild/Prefabs/MinimalUnitView.prefab`, which is alre
 - **Replace existing cells instead of overlapping them.** Before placing a group on an existing grid, delete or move the original nine cells it covers. Hiding only the Renderer is insufficient: the original BattleCell still exists.
 - Place the entire `_WithPlatform` group under GameplayGrid. For example, a group root at `(22,0,13)` puts its tower at `(22,0.25,13)`. Add the tower child containing BattleTower to the Session's Towers list.
 - Place standalone towers in the `Scene Towers` container, with their feet on the platform's top surface. For example, a platform root at `(22,0,13)` requires a tower Position of `(22,0.25,13)`. All nine supporting cells must be TowerPlatform.
+- **Single-cell tower:** `Towers/Tower_Attack_1x1.prefab` has Uses Macro Footprint disabled and needs only one clear TowerPlatform cell. Place its feet at that cell's top center, for example `(22,0.25,13)` above a cell centered at `(22,0,13)`, and add it to BattleSession → Towers. Integer X/Z positions are supported; Macro-center alignment is not required. Its model fits inside one 1×1 cell and is 1.58 units tall, with a stepped base, stone shaft, battlements, and a cannon. Range=3.5 uses the existing square attack area; HP=20, Damage=1, Attack Interval=1. The cannon is a visual model and does not rotate to track targets. It uses six shared materials in `Assets/Rebuild/Materials/SingleCellTower/`.
+- **Square variant:** `Towers/Tower_Attack_1x1_Square.prefab` is a Unity Prefab Variant of the single-cell tower. Its visual overrides replace the directional cannon silhouette with a central cyan energy core, four symmetric emitters, and a gold square frame. It uses the dedicated emissive `AreaEnergy.mat` without changing the base tower's materials. Attack Area is explicitly Square, Uses Macro Footprint is false, and combat stats are inherited. The base tower currently also uses Square; the separate variant lets you tune its parameters independently. It uses the same single-cell placement and Towers registration steps as the base. The emitters are visual only: the existing Square targeting, projectile, and damage rules are unchanged; this model does not add splash damage.
 - A directional tower's firing direction comes from **BattleTower → Attack Area**. Rotating the model alone does not change its firing direction. The Square preset uses Range=3.5; directional presets use Range=9 and Attack Width=0.9. All use HP=20, Damage=1, and Attack Interval=1. Adjust these values for your level as needed.
 - Place decorative tiles under Decorative Border Tiles. They have no BattleCell or Collider and cannot replace gameplay cells.
 - Cell rule types and visual materials are separate settings. The kit includes matching materials for each type, but changing Kind later does not automatically update the color.
@@ -52,6 +54,6 @@ Use `Systems/BattleRig_3D` to build a map entirely from scratch. Its Cells and T
 
 ## Validation scope
 
-Offline serialization checks covered all 25 prefabs: complete hierarchies, unique fileIDs/GUIDs, local and external resource references, cell types and sizes, nine-cell coordinates, and tower directions. The complete example was also checked for route continuity, nine-slot formation clearance, tower platforms, and Session/HUD/Presentation bindings. Unity was not automated, and Unity import, Play Mode, and player build verification were not performed.
+Offline serialization checks covered all 27 prefabs: complete hierarchies, unique fileIDs/GUIDs, local and external resource references, cell types and sizes, nine-cell coordinates, and tower directions. The single-cell tower was also checked for its one-cell rule configuration and model bounds. The Square variant was checked for its base asset, visual/material override targets, four emitters, central core, one-cell model bounds, and explicit Square/one-cell settings. The complete example was checked for route continuity, nine-slot formation clearance, tower platforms, and Session/HUD/Presentation bindings. Unity was not automated, and Unity import, Play Mode, and player build verification were not performed.
 
 Read-only validation command: `python Tools/Rebuild/create_level_prefab_kit.py --validate`. Creation mode refuses to overwrite an existing kit to protect subsequent manual edits.
