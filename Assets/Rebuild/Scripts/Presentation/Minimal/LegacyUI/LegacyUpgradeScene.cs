@@ -161,14 +161,15 @@ namespace Team5.Rebuild.Presentation.LegacyUI
 
         private void RefreshGoldLabel()
         {
-            if (goldLabel != null) goldLabel.text = $"$ {BattleSceneFlow.GoldBalance:N0}";
+            if (goldLabel != null) goldLabel.text = BattleSceneFlow.HasUnlimitedGold ? "$ UNLIMITED" : $"$ {BattleSceneFlow.GoldBalance:N0}";
         }
 
         private void RefreshLevelLabel()
         {
             if (levelLabel == null) return;
             var lives = $"{BattleSceneFlow.CurrentLevelLivesRemaining}/{BattleSession.DefaultLivesPerLevel}";
-            levelLabel.text = $"LEVEL {Mathf.Max(1, BattleSceneFlow.NextBattleLevelNumber)}  <space=30>{lives}";
+            var levelName = BattleSceneFlow.IsTestRun ? "TEST LEVEL" : $"LEVEL {Mathf.Max(1, BattleSceneFlow.NextBattleLevelNumber)}";
+            levelLabel.text = $"{levelName}  <space=30>{lives}";
             var buttonRect = (RectTransform)startGameButton.transform;
             var top = buttonRect.TransformPoint(new Vector3(buttonRect.rect.center.x, buttonRect.rect.yMax, 0));
             var point = levelLabel.rectTransform.parent.InverseTransformPoint(top);

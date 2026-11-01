@@ -1,0 +1,6 @@
+{
+  "name": "Team5.Rebuild.PlayModeTests",
+  "rootNamespace": "Team5.Rebuild.Tests",
+  "references": ["Team5.Rebuild.Simulation", "Team5.Rebuild.World", "Team5.Rebuild.Session", "Team5.Rebuild.DebugPresentation", "Team5.Rebuild.Presentation", "Unity.TextMeshPro", "Unity.ugui", "Unity.InputSystem"],
+  "optionalUnityReferences": ["TestAssemblies"]
+}

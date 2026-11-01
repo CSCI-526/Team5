@@ -44,7 +44,8 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             map.transform.SetParent(transform,false); image = map.GetComponent<RawImage>();
             LegacyUiKit.Stretch(image.rectTransform); image.raycastTarget = false; image.enabled = false;
             status = LegacyUiKit.CreateText(transform,"Status","Loading map...",Vector2.zero,new Vector2(1000,60),26,Color.white);
-            var title = LegacyUiKit.CreateText(transform,"Title",$"LEVEL {BattleSceneFlow.NextBattleLevelNumber} PREVIEW",Vector2.zero,new Vector2(700,50),26,Color.white,FontStyles.Bold);
+            var heading = BattleSceneFlow.IsTestRun ? "TEST LEVEL PREVIEW" : $"LEVEL {BattleSceneFlow.NextBattleLevelNumber} PREVIEW";
+            var title = LegacyUiKit.CreateText(transform,"Title",heading,Vector2.zero,new Vector2(700,50),26,Color.white,FontStyles.Bold);
             title.rectTransform.anchorMin = title.rectTransform.anchorMax = new Vector2(.5f,1);
             title.rectTransform.pivot = new Vector2(.5f,1); title.rectTransform.anchoredPosition = new Vector2(0,-18);
             var close = LegacyUiKit.CreateButton(transform,"Close",Vector2.zero,new Vector2(52,48),LegacyUiKit.PanelLineColor,6);

@@ -92,7 +92,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         private void Refresh()
         {
             if (session == null || levelLabel == null) return;
-            levelLabel.text = $"LEVEL {Mathf.Max(1, session.DisplayedLevelNumber)}";
+            levelLabel.text = BattleSceneFlow.IsTestRun ? "TEST LEVEL" : $"LEVEL {Mathf.Max(1, session.DisplayedLevelNumber)}";
             livesLabel.text = LegacyUiKit.LifeCounterText(session.AttemptsRemaining, session.AttemptsPerLevel);
             if (editButton != null) editButton.interactable = CanEditFormation;
             speedSlider.interactable = bound != null && bound.Outcome == BattleOutcome.Running && !HasOpenEditor && !session.IsUnitInspectionActive && !TutorialOwnsPause;

@@ -41,6 +41,15 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Rebuild/Scenes/Level4GridBattle.unity
     guid: c22e824be0c94f82a1bf92371a3813bf
+  - enabled: 1
+    path: Assets/Rebuild/Scenes/TestStartScene.unity
+    guid: 6e1e964abe8c455fa915656f6013967f
+  - enabled: 1
+    path: Assets/Rebuild/Scenes/TestUpdateScene.unity
+    guid: 6e5c91af0c714a59886045cd51d0d8a2
+  - enabled: 1
+    path: Assets/Rebuild/Scenes/TestLevel.unity
+    guid: 601ab0a0ccd749a88d27d4d6deb89495
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0

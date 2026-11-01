@@ -27,7 +27,8 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             var shop = BattleSceneFlow.CardShop;
             LegacyUiKit.CreateText(host.transform, "BannerInfo", shop.GetBannerSummary(),
                 new Vector2(0, 228), new Vector2(900, 30), 18, LegacyUiKit.MutedColor);
-            LegacyUiKit.CreateText(host.transform, "Price", $"Cost: {shop.NextPrice} Gold  |  Balance: {BattleSceneFlow.GoldBalance} Gold",
+            var balance = BattleSceneFlow.HasUnlimitedGold ? "UNLIMITED" : BattleSceneFlow.GoldBalance.ToString();
+            LegacyUiKit.CreateText(host.transform, "Price", $"Cost: {shop.NextPrice} Gold  |  Balance: {balance}",
                 new Vector2(0, 198), new Vector2(900, 32), 22, LegacyUiKit.HighlightColor);
 
             for (var i = 0; i < offer.Count; i++)

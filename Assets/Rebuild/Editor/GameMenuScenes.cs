@@ -28,6 +28,15 @@ namespace Team5.Rebuild.Editor
         [MenuItem("Team5/Rebuild/Open Level 4 Grid Battle")]
         public static void OpenLevelFour() => Open(BattleSceneFlow.LevelFourScene);
 
+        [MenuItem("Team5/Rebuild/Test/Open Test Start Scene")]
+        public static void OpenTestStart() => Open(BattleSceneFlow.TestStartScene);
+
+        [MenuItem("Team5/Rebuild/Test/Open Test Update Scene")]
+        public static void OpenTestUpdate() => Open(BattleSceneFlow.TestUpdateScene);
+
+        [MenuItem("Team5/Rebuild/Test/Open Test Level")]
+        public static void OpenTestLevel() => Open(BattleSceneFlow.TestLevelScene);
+
         [MenuItem("Team5/Rebuild/Open Level Settlement")]
         public static void OpenSettlement() => Open(BattleSceneFlow.SettlementScene);
 

@@ -15,6 +15,9 @@ namespace Team5.Rebuild.Session
         public const string LevelTwoScene = "Assets/Rebuild/Scenes/Level2GridBattle.unity";
         public const string LevelThreeScene = "Assets/Rebuild/Scenes/Level3GridBattle.unity";
         public const string LevelFourScene = "Assets/Rebuild/Scenes/Level4GridBattle.unity";
+        public const string TestStartScene = "Assets/Rebuild/Scenes/TestStartScene.unity";
+        public const string TestUpdateScene = "Assets/Rebuild/Scenes/TestUpdateScene.unity";
+        public const string TestLevelScene = "Assets/Rebuild/Scenes/TestLevel.unity";
         public const string SettlementScene = "Assets/Rebuild/Scenes/LevelSettlement.unity";
         public const string EndScene = "Assets/Rebuild/Scenes/EndGame.unity";
 
@@ -29,12 +32,16 @@ namespace Team5.Rebuild.Session
         private static bool IsCampaignScene(string path) => System.Array.IndexOf(battleScenes, path) >= 0;
 
         private static string previewScenePath;
-        public static string NextBattleScenePath => SceneForLevel(NextBattleLevelNumber);
+        public static string NextBattleScenePath => IsTestRun ? TestLevelScene : SceneForLevel(NextBattleLevelNumber);
+        private string PreparationScenePath => testRun ? TestUpdateScene : UpgradeScene;
+        private static bool IsInPreparationScene => current != null && SceneManager.GetActiveScene().path == current.PreparationScenePath;
+        private static bool IsTestScenePath(string path) => path == TestStartScene || path == TestUpdateScene || path == TestLevelScene;
+        public static bool IsTestRun => current != null && current.testRun;
         public static bool IsPreviewScene(Scene scene) => previewScenePath != null && scene.path == previewScenePath;
 
         public static bool TryBeginLevelPreview()
         {
-            if (current == null || current.loading || current.livesExhausted || previewScenePath != null || SceneManager.GetActiveScene().path != UpgradeScene)
+            if (current == null || current.loading || current.livesExhausted || previewScenePath != null || !IsInPreparationScene)
                 return false;
             previewScenePath = NextBattleScenePath;
             return true;
@@ -46,6 +53,7 @@ namespace Team5.Rebuild.Session
         }
 
         private static BattleSceneFlow current;
+        private bool testRun;
         private BattleSession session;
         private BattleSimulation simulation;
         private bool loading;
@@ -65,6 +73,16 @@ namespace Team5.Rebuild.Session
         public static bool IsOutOfLives => current != null && current.livesExhausted;
         public static int LastRewardGold { get; private set; }
         public static int GoldBalance => current != null && current.wallet != null ? current.wallet.Balance : 0;
+        public static bool HasUnlimitedGold => current != null && current.wallet != null && current.wallet.IsUnlimited;
+
+        // Test tools and shop controllers call this only after validating the destination.
+        public static bool TrySpendGold(int price)
+        {
+            if (price <= 0) throw new System.ArgumentOutOfRangeException(nameof(price));
+            return current != null && !current.loading && !current.livesExhausted && IsInPreparationScene
+                && current.wallet.TrySpend(price);
+        }
+
         public static BattleOutcome LastOutcome { get; private set; }
         public static int CompletedLevelNumber { get; private set; }
         public static bool IsRunActive => current != null;
@@ -73,14 +91,14 @@ namespace Team5.Rebuild.Session
 
         public static IReadOnlyList<UnitDefinition> OpenSummonOffer()
         {
-            if (current == null || current.loading || current.livesExhausted || SceneManager.GetActiveScene().path != UpgradeScene || current.claimCards == null)
+            if (current == null || current.loading || current.livesExhausted || !IsInPreparationScene || current.claimCards == null)
                 return System.Array.Empty<UnitDefinition>();
             return current.claimCards.BeginOffer();
         }
 
         public static bool TrySummonUnit(int offerIndex) =>
             current != null && !current.loading && !current.livesExhausted &&
-            SceneManager.GetActiveScene().path == UpgradeScene &&
+            IsInPreparationScene &&
             current.claimCards != null && current.claimCards.TrySummon(offerIndex);
 
         public static void RestartCurrentLevel()
@@ -117,14 +135,19 @@ namespace Team5.Rebuild.Session
         private static void EnsureLevelFlow(Scene scene, LoadSceneMode mode)
         {
             if (IsPreviewScene(scene)) return;
-            if (!IsCampaignScene(scene.path) || current != null) return;
+            if ((!IsCampaignScene(scene.path) && scene.path != TestLevelScene) || current != null) return;
             GetOrCreate().OnSceneLoaded(scene, mode);
         }
 
-        public static void BeginRun()
+        public static void BeginRun() => BeginRun(false);
+        public static void BeginTestRun() => BeginRun(true);
+
+        private static void BeginRun(bool test)
         {
             var flow = GetOrCreate();
             if (flow.loading || previewScenePath != null) return;
+            flow.testRun = test;
+            flow.gameObject.name = test ? "Test Scene Flow" : "Battle Scene Flow";
             flow.preparation = null;
             flow.claimCards = null;
             flow.deployment = null;
@@ -133,16 +156,16 @@ namespace Team5.Rebuild.Session
             flow.failedAttempts = 0;
             flow.livesExhausted = false;
             LastRewardGold = 0;
-            flow.wallet = new CampaignWallet(flow.economySettings != null ? flow.economySettings.StartingGold : 0);
+            flow.wallet = new CampaignWallet(flow.economySettings != null ? flow.economySettings.StartingGold : 0, unlimited: test);
             LastOutcome = BattleOutcome.Running;
             CompletedLevelNumber = 0;
-            flow.QueueScene(BattleScene);
+            flow.QueueScene(test ? TestUpdateScene : BattleScene);
         }
 
         public static void ContinueToUpgrade()
         {
             var flow = GetOrCreate();
-            if (!flow.livesExhausted) flow.QueueScene(UpgradeScene);
+            if (!flow.livesExhausted) flow.QueueScene(flow.PreparationScenePath);
         }
 
         public static SquadPreparation PrepareSquad(SquadRoster roster)
@@ -169,17 +192,22 @@ namespace Team5.Rebuild.Session
             if (draft == null || draft != flow.preparation) throw new System.InvalidOperationException("No current squad preparation.");
             if (flow.livesExhausted) return;
             flow.deployment = draft.CaptureDeployment();
-            flow.QueueScene(SceneForLevel(flow.nextBattleLevelNumber));
+            flow.QueueScene(flow.testRun ? TestLevelScene : SceneForLevel(flow.nextBattleLevelNumber));
         }
 
-        public static void ReturnToStart() => GetOrCreate().QueueScene(StartScene);
+        public static void ReturnToStart()
+        {
+            var flow = GetOrCreate();
+            flow.QueueScene(flow.testRun ? TestStartScene : StartScene);
+        }
 
         private static BattleSceneFlow GetOrCreate()
         {
             if (current != null) return current;
             current = new GameObject("Battle Scene Flow").AddComponent<BattleSceneFlow>();
+            current.testRun = IsTestScenePath(SceneManager.GetActiveScene().path);
             current.economySettings = Resources.Load<GameEconomySettings>("RebuildEconomy");
-            current.wallet = new CampaignWallet(current.economySettings != null ? current.economySettings.StartingGold : 0);
+            current.wallet = new CampaignWallet(current.economySettings != null ? current.economySettings.StartingGold : 0, unlimited: current.testRun);
             DontDestroyOnLoad(current.gameObject);
             return current;
         }
@@ -212,8 +240,16 @@ namespace Team5.Rebuild.Session
             if (IsPreviewScene(scene)) return;
             loading = false;
             Unbind();
-            if (scene.path == EndScene || scene.path == UpgradeScene || scene.path == SettlementScene) return;
-            if (!IsCampaignScene(scene.path)) { Destroy(gameObject); return; }
+            if (testRun)
+            {
+                if (scene.path == TestUpdateScene) return;
+                if (scene.path != TestLevelScene) { Destroy(gameObject); return; }
+            }
+            else
+            {
+                if (scene.path == EndScene || scene.path == UpgradeScene || scene.path == SettlementScene) return;
+                if (!IsCampaignScene(scene.path)) { Destroy(gameObject); return; }
+            }
 
             foreach (var root in scene.GetRootGameObjects())
             {
@@ -253,8 +289,16 @@ namespace Team5.Rebuild.Session
             if (settled || loading || outcome == BattleOutcome.Running) return;
             settled = true;
             LastOutcome = outcome;
-            CompletedLevelNumber = session.DisplayedLevelNumber;
             LastRewardGold = 0;
+            if (testRun)
+            {
+                // Tests never award campaign rewards, advance stages, or consume attempts.
+                CompletedLevelNumber = 0;
+                failedAttempts = 0;
+                session.RestoreFailedAttempts(0);
+                return;
+            }
+            CompletedLevelNumber = session.DisplayedLevelNumber;
 
             if (outcome == BattleOutcome.Victory)
             {
