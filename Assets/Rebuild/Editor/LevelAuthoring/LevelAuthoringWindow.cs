@@ -27,6 +27,7 @@ namespace Team5.Rebuild.Editor.LevelAuthoring
         {
             scroll = EditorGUILayout.BeginScrollView(scroll);
             EditorGUILayout.HelpBox("Stage 1: scene template, safe copies, basic validation and Undo. Map brushes are not included.", MessageType.Info);
+            if (GUILayout.Button("Open 2D Map Builder (custom map size)")) MapBuilderWindow.Open();
             using (new EditorGUI.DisabledScope(EditorApplication.isPlayingOrWillChangePlaymode))
             {
                 EditorGUILayout.LabelField("Level Template", EditorStyles.boldLabel);
