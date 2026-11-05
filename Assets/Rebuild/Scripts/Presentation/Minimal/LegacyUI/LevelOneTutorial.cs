@@ -36,8 +36,11 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         private bool blueWorldGlow;
         private RectTransform squadArrow;
         private readonly Vector3[] buttonCorners = new Vector3[4];
+        private const int SpeedStep = 6;
+        private bool speedPrompt;
+        private Canvas speedCanvas;
         public int CurrentStep { get; private set; }
-        private int TotalSteps => simulation != null && simulation.Towers.Count > 1 ? 8 : 6;
+        private int TotalSteps => simulation != null && simulation.Towers.Count > 1 ? 9 : 7;
         public bool IsActive => routine != null;
         private int checkpointStep, resumeStep;
         private bool checkpointResult, resumeResult;
@@ -144,6 +147,11 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                 else yield return GuideFormation(4, firstTower, startStep == 5);
             }
             if (!Running) { Finish(); yield break; }
+            if (startStep <= SpeedStep)
+            {
+                yield return GuideSpeed();
+                if (!Running) { Finish(); yield break; }
+            }
             Hide(); RestoreCamera(); ReleasePause();
 
             var secondTower = simulation.Towers.Count > 1 ? simulation.Towers[1] : null;
@@ -158,10 +166,10 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                     {
                         Focus((Captain().Position + secondTower.Position) / 2, Vector3.Distance(Captain().Position, secondTower.Position) / 2 + 2);
                         GlowWorld(session.Towers[1].transform, blue: true);
-                        Show(6, "AVOID THE TOWER", "\nThis tower fires upward. Your Captain is already outside its firing line.\nDifferent tower directions require different formation positions.", true);
+                        Show(7, "AVOID THE TOWER", "\nThis tower fires upward. Your Captain is already outside its firing line.\nDifferent tower directions require different formation positions.", true);
                         yield return WaitForNext();
                     }
-                    else yield return GuideFormation(6, secondTower);
+                    else yield return GuideFormation(7, secondTower);
                     Hide(); RestoreCamera(); ReleasePause();
                 }
             }
@@ -213,6 +221,23 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             FocusCaptainAndTower(tower);
             GlowCaptain();
             Show(step + 1, "POSITIONING AVOIDS DAMAGE", "\nYour Captain moved to a different slot.\n The new position is outside this tower's firing line.", true, true);
+            yield return WaitForNext();
+        }
+        private IEnumerator GuideSpeed()
+        {
+            if (!Running || hud.SpeedSlider == null) yield break;
+            inspection.CloseImmediately(); RestoreCamera(); ClearWorldGlow();
+            if (session.PlaybackSpeed < 3)
+            {
+                Show(SpeedStep, "SPEED IT UP", "Drag the speed slider at the top right to <b>3x</b>.\nYou can change it any time.", false);
+                speedCanvas = hud.SpeedSlider.GetComponentInParent<Canvas>();
+                GlowImage(hud.SpeedSlider.targetGraphic as Image);
+                speedPrompt = true; hud.TutorialAllowsSpeed = true;
+                while (Running && session.PlaybackSpeed < 3) yield return null;
+                speedPrompt = false; hud.TutorialAllowsSpeed = false; ClearButtonGlow();
+                if (!Running) yield break;
+            }
+            Show(SpeedStep, "NICE!", "\nThe battle now runs 3x faster.\nSlow it down any time with the same slider.", true);
             yield return WaitForNext();
         }
         public static bool OutsideLane(UnitState unit, TowerState tower)
@@ -276,6 +301,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             if (inspection != null && ownsPause) inspection.CloseImmediately();
             RestoreCamera(); ReleasePause(); Hide();
             firstHit = false; next = false; CurrentStep = 0; hasCameraSnapshot = false;
+            speedPrompt = false; if (hud != null) hud.TutorialAllowsSpeed = false;
         }
         private void FocusCaptainAndTower(TowerState tower)
         {
@@ -368,10 +394,11 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                     if (glowingRenderers[i] != null) glowingRenderers[i].SetPropertyBlock(originalGlowProperties[i]);
             glowingRenderers = null; originalGlowProperties = null;
         }
-        private void GlowButton(Button button)
+        private void GlowButton(Button button) => GlowImage(button != null ? button.targetGraphic as Image : null);
+        private void GlowImage(Image image)
         {
             ClearButtonGlow();
-            glowingButton = button != null ? button.targetGraphic as Image : null;
+            glowingButton = image;
             if (glowingButton == null) return;
             originalButtonColor = glowingButton.color; glowingButton.color = GoldPulse;
         }
@@ -409,9 +436,12 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             PulseWorld(WorldPulse);
             if (glowingButton != null) glowingButton.color = gold;
             var showArrow = CurrentStep == 4 && glowingButton != null;
-            squadArrow.gameObject.SetActive(showArrow);
-            if (showArrow)
+            var showSpeedArrow = !showArrow && speedPrompt && hud != null && hud.SpeedSlider != null;
+            squadArrow.gameObject.SetActive(showArrow || showSpeedArrow);
+            if (showSpeedArrow) PlaceSpeedArrow();
+            else if (showArrow)
             {
+                squadArrow.localRotation = Quaternion.identity;
                 glowingButton.rectTransform.GetWorldCorners(buttonCorners);
                 var sourceCanvas = glowingButton.GetComponentInParent<Canvas>();
                 var eventCamera = sourceCanvas != null && sourceCanvas.renderMode != RenderMode.ScreenSpaceOverlay ? sourceCanvas.worldCamera : null;
@@ -423,6 +453,18 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                 // Keep the left-pointing tip next to the icon while the body grows and shrinks.
                 squadArrow.anchoredPosition = new Vector2(right.x + 12 + 42 * scale, right.y);
             }
+        }
+        private void PlaceSpeedArrow()
+        {
+            ((RectTransform)hud.SpeedSlider.transform).GetWorldCorners(buttonCorners);
+            var eventCamera = speedCanvas != null && speedCanvas.renderMode != RenderMode.ScreenSpaceOverlay ? speedCanvas.worldCamera : null;
+            var screenPoint = RectTransformUtility.WorldToScreenPoint(eventCamera, (buttonCorners[0] + buttonCorners[1]) / 2);
+            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(root, screenPoint, null, out var left)) return;
+            var scale = Mathf.Lerp(0.8f, 1.15f, (Mathf.Sin(Time.unscaledTime * 4) + 1) / 2);
+            squadArrow.localScale = Vector3.one * scale;
+            squadArrow.localRotation = Quaternion.Euler(0, 0, 180);
+            squadArrow.SetAsLastSibling();
+            squadArrow.anchoredPosition = new Vector2(left.x - 12 - 42 * scale, left.y);
         }
         private void BuildUi()
         {

@@ -36,6 +36,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         public Button EditButton => editButton;
         public Button PauseButton => pauseButton;
         public bool TutorialOwnsPause { get; set; }
+        public bool TutorialAllowsSpeed { get; set; }
         public TMP_Text LevelLabel => levelLabel;
         public TMP_Text LivesLabel => livesLabel;
         public LegacyFormationEditor FormationEditor => editor;
@@ -95,7 +96,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             levelLabel.text = BattleSceneFlow.IsTestRun ? "TEST LEVEL" : $"LEVEL {Mathf.Max(1, session.DisplayedLevelNumber)}";
             livesLabel.text = LegacyUiKit.LifeCounterText(session.AttemptsRemaining, session.AttemptsPerLevel);
             if (editButton != null) editButton.interactable = CanEditFormation;
-            speedSlider.interactable = bound != null && bound.Outcome == BattleOutcome.Running && !HasOpenEditor && !session.IsUnitInspectionActive && !TutorialOwnsPause;
+            speedSlider.interactable = bound != null && bound.Outcome == BattleOutcome.Running && !HasOpenEditor && !session.IsUnitInspectionActive && (!TutorialOwnsPause || TutorialAllowsSpeed);
             pauseButton.interactable = bound != null && bound.Outcome == BattleOutcome.Running && !HasOpenEditor && !TutorialOwnsPause;
             pauseLabel.text = bound != null && bound.IsPaused ? "Resume" : "Pause";
             squadButtons[0].interactable = CanEditFormation || (inspection != null && inspection.IsSquadSelected);
