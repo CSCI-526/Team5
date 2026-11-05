@@ -106,6 +106,8 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             Preparation.Changed += Refresh;
             startGameButton.onClick.AddListener(StartWave);
             Refresh();
+            CaptainGuide.Attach(this, root);
+            StartWaveNotice.Attach(this, root);
         }
 
         private void Update()
@@ -121,6 +123,13 @@ namespace Team5.Rebuild.Presentation.LegacyUI
 
         public bool CanStartWave =>
             Preparation != null && Preparation.CanStart && !BattleSceneFlow.IsOutOfLives && claimOverlay == null && !startPending;
+
+        public bool IsOverlayOpen => claimOverlay != null || levelPreview != null;
+
+        public TMP_Text SquadCountLabel => countLabel;
+
+        public static Vector2 WarehouseCellPosition(int index) =>
+            new Vector2(-500 + index % SquadPreparation.WarehouseColumns * 134, 185 - index / SquadPreparation.WarehouseColumns * 180);
 
         public void OpenNextLevelPreview()
         {
@@ -212,7 +221,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
 
         private void BuildWarehouseCell(RectTransform root, int index)
         {
-            var position = new Vector2(-500 + index % SquadPreparation.WarehouseColumns * 134, 185 - index / SquadPreparation.WarehouseColumns * 180);
+            var position = WarehouseCellPosition(index);
             var size = new Vector2(200, 262);
             var cell = LegacyUiKit.CreateImage(root, "Warehouse Cell " + index, position, size + Vector2.one * 4, LegacyUiKit.PanelLineColor, 14).rectTransform;
             warehouseCells.Add(cell.gameObject);
