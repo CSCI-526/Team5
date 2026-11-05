@@ -25,6 +25,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         private LegacyClaimCardOverlay claimOverlay;
         private Button previewButton;
         private LegacyNextLevelPreview levelPreview;
+        private bool startPending;
         private readonly Dictionary<int, CanvasGroup> cardGroups = new Dictionary<int, CanvasGroup>();
         private readonly Dictionary<int, TMP_Text> cardStatuses = new Dictionary<int, TMP_Text>();
 
@@ -113,18 +114,28 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             RefreshGoldLabel();
             RefreshClaimCards();
             if (startGameButton != null && Preparation != null)
-                startGameButton.interactable = Preparation.CanStart && !BattleSceneFlow.IsOutOfLives && claimOverlay == null && levelPreview == null;
+                startGameButton.interactable = CanStartWave && levelPreview == null;
             if (previewButton != null)
-                previewButton.interactable = levelPreview == null && claimOverlay == null && !BattleSceneFlow.IsOutOfLives;
+                previewButton.interactable = levelPreview == null && claimOverlay == null && !BattleSceneFlow.IsOutOfLives && !startPending;
         }
+
+        public bool CanStartWave =>
+            Preparation != null && Preparation.CanStart && !BattleSceneFlow.IsOutOfLives && claimOverlay == null && !startPending;
 
         public void OpenNextLevelPreview()
         {
-            if (levelPreview != null || claimOverlay != null || BattleSceneFlow.IsOutOfLives) return;
+            if (levelPreview != null || claimOverlay != null || BattleSceneFlow.IsOutOfLives || startPending) return;
             levelPreview = LegacyNextLevelPreview.Open(this);
         }
 
-        public void OnNextLevelPreviewClosed() { levelPreview = null; Refresh(); }
+        public void OnNextLevelPreviewClosed()
+        {
+            levelPreview = null;
+            var start = startPending;
+            startPending = false;
+            Refresh();
+            if (start && Preparation.CanStart && !BattleSceneFlow.IsOutOfLives) BattleSceneFlow.StartPreparedBattle(Preparation);
+        }
 
         public void OpenClaimCards()
         {
@@ -223,7 +234,13 @@ namespace Team5.Rebuild.Presentation.LegacyUI
 
         public void StartWave()
         {
-            if (Grid == null || !Preparation.CanStart || BattleSceneFlow.IsOutOfLives || claimOverlay != null || levelPreview != null) return;
+            if (Grid == null || !CanStartWave) return;
+            if (levelPreview != null)
+            {
+                startPending = true;
+                levelPreview.Close();
+                return;
+            }
             BattleSceneFlow.StartPreparedBattle(Preparation);
         }
 
@@ -257,7 +274,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         {
             RefreshWarehouseCards();
             countLabel.text = $"{Preparation.DeployedCount}/{SquadPreparation.MaxDeployed}";
-            startGameButton.interactable = Preparation.CanStart && !BattleSceneFlow.IsOutOfLives && claimOverlay == null && levelPreview == null;
+            startGameButton.interactable = CanStartWave && levelPreview == null;
             warehouseHint.text = "Drag units into squad  |  Right-click unit to dismiss";
             foreach (var member in Preparation.Members)
             {
