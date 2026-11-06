@@ -25,16 +25,23 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                 ? LegacyUiKit.CreateText(panel, "Availability", "", new Vector2(0, -20), new Vector2(200, 20), 13, LegacyUiKit.MutedColor)
                 : null;
 
-            var description = role == UnitRole.Captain ? "Shoots towers / DEF 50%"
-                : role == UnitRole.Tank ? "Takes less damage"
-                : role == UnitRole.Heal ? "Heals neighbors"
-                : "Shoots towers";
+            var description = role switch
+            {
+                UnitRole.Captain => "Leader / DEF 50%",
+                UnitRole.Tank => "Heavy frontline shield",
+                UnitRole.Heal => "Heals 8 neighbors",
+                UnitRole.Sniper => "Long-range tower hunter",
+                UnitRole.Vanguard => "Armored bruiser / ATK+DEF",
+                UnitRole.Demolisher => "2.25x Siege DMG vs Towers",
+                _ => "1.5x DMG vs Towers"
+            };
 
             LegacyUiKit.CreateText(panel, "Role", description, new Vector2(0, -38), new Vector2(200, 18), 12, LegacyUiKit.MutedColor);
             LegacyUiKit.CreateImage(panel, "Divider", new Vector2(0, -54), new Vector2(160, 2), rarityColor);
 
-            var key = role == UnitRole.Attack || role == UnitRole.Captain ? "ATK" : role == UnitRole.Tank ? "DEF" : "HEAL";
-            var value = role == UnitRole.Attack || role == UnitRole.Captain ? $"{stats.Damage:0.##}"
+            var isAttacker = SquadCombatRules.CanAttackTowers(role);
+            var key = isAttacker ? "ATK" : role == UnitRole.Tank ? "DEF" : "HEAL";
+            var value = isAttacker ? $"{stats.Damage:0.##}"
                 : role == UnitRole.Tank ? $"{stats.Defense * 100:0}%"
                 : $"{stats.HealPerSecond:0.##}/s";
 

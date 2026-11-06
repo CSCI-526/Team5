@@ -23,6 +23,8 @@ namespace Team5.Rebuild.Editor.LevelAuthoring
         private bool resizingSplitter;
         private GameObject towerPrefab;
         private AttackArea area = AttackArea.NegativeX;
+        private bool towerIsAoe;
+        private int towerGoldBounty = 25;
         private List<string> messages = new List<string>();
         private bool painting;
         private Vector2Int lastPaint;
@@ -30,7 +32,7 @@ namespace Team5.Rebuild.Editor.LevelAuthoring
         private Scene generated;
         private string generatedSnapshot;
         private static readonly string[] Tools = { "Ground", "Road", "Obstacle", "TowerPlatform", "Spawn", "Goal", "Erase tile", "Route", "Place tower", "Remove tower" };
-        private static readonly Color[] Colors = { new Color(.28f,.48f,.31f), new Color(.64f,.53f,.32f), new Color(.25f,.26f,.29f), new Color(.18f,.42f,.85f), new Color(.85f,.22f,.25f), new Color(.12f,.73f,.86f) };
+        private static readonly Color[] Colors = { new Color(.28f, .48f, .31f), new Color(.64f, .53f, .32f), new Color(.25f, .26f, .29f), new Color(.18f, .42f, .85f), new Color(.85f, .22f, .25f), new Color(.12f, .73f, .86f) };
 
         [MenuItem("Team5/Rebuild/Map Builder (2D Grid)")]
         public static void Open() => GetWindow<MapBuilderWindow>("Map Builder");
@@ -63,53 +65,76 @@ namespace Team5.Rebuild.Editor.LevelAuthoring
         {
             using (new EditorGUI.DisabledScope(EditorApplication.isPlayingOrWillChangePlaymode))
             {
-                // Process window-coordinate input before any area/scroll view transforms it.
                 HandleSplitterInput();
                 using (new GUILayout.AreaScope(new Rect(0, 0, position.width, position.height)))
                 using (new EditorGUILayout.VerticalScope())
                 {
-                EditorGUILayout.HelpBox("Draw a single-layer map, mark the route, then generate a standalone scene. Ctrl+Z / Ctrl+Y undo grid edits. Grid drafts exist only in this window.", MessageType.Info);
-                using (new EditorGUILayout.HorizontalScope())
-                {
-                    width = EditorGUILayout.IntField("Width (X)", width);
-                    length = EditorGUILayout.IntField("Length (Z)", length);
-                    if (GUILayout.Button("New empty grid") && CanReplaceDraft()) Mutate("New Grid", () => draft.ResetGrid(width, length));
-                }
-                using (new EditorGUILayout.HorizontalScope())
-                {
-                    EditorGUILayout.LabelField($"Grid: {draft.width} x {draft.length} | Origin: {draft.originX}, {draft.originZ} | Layer: {draft.layer}");
-                    var number = Mathf.Max(1, EditorGUILayout.IntField("Level number", draft.levelNumber, GUILayout.Width(210)));
-                    if (number != draft.levelNumber) Mutate("Set Draft Level Number", () => draft.levelNumber = number);
-                }
-                tool = GUILayout.SelectionGrid(tool, Tools, 5);
-                using (new EditorGUILayout.HorizontalScope())
-                {
-                    brushSize = EditorGUILayout.Popup("Brush", brushSize == 3 ? 1 : 0, new[] { "1 x 1", "3 x 3" }) == 1 ? 3 : 1;
-                    zoom = EditorGUILayout.Slider("Zoom", zoom, 16, 48);
-                    if (GUILayout.Button("Fill grid") && tool < 4 && EditorUtility.DisplayDialog("Fill entire grid?", "Replace all tile types? Route and towers remain and will be validated.", "Fill", "Cancel"))
-                        Mutate("Fill Grid", () => { for (var i = 0; i < draft.tiles.Length; i++) draft.tiles[i] = tool; });
-                }
-                if (tool == 4 || tool == 5) EditorGUILayout.HelpBox("Spawn/Goal mark a 3x3 macro region. They do not create nine independent spawn events. Start/end the route on its center.", MessageType.None);
-                if (tool == 7)
-                {
-                    EditorGUILayout.HelpBox("Click road centerline points in travel order. Straight segments are filled automatically. Add corners explicitly; paint a full 3-cell-wide corridor first.", MessageType.None);
+                    EditorGUILayout.HelpBox("Draw a single-layer map, mark the route, then generate a standalone scene. Ctrl+Z / Ctrl+Y undo grid edits. Grid drafts exist only in this window.", MessageType.Info);
                     using (new EditorGUILayout.HorizontalScope())
                     {
-                        if (GUILayout.Button("Undo last route cell") && draft.route.Count > 0) Mutate("Trim Route", () => draft.route.RemoveAt(draft.route.Count - 1));
-                        if (GUILayout.Button("Clear route")) Mutate("Clear Route", () => draft.route.Clear());
+                        width = EditorGUILayout.IntField("Width (X)", width);
+                        length = EditorGUILayout.IntField("Length (Z)", length);
+                        if (GUILayout.Button("New empty grid") && CanReplaceDraft()) Mutate("New Grid", () => draft.ResetGrid(width, length));
                     }
-                }
-                if (tool == 8)
-                {
-                    towerPrefab = (GameObject)EditorGUILayout.ObjectField("Tower prefab", towerPrefab, typeof(GameObject), false);
-                    area = (AttackArea)EditorGUILayout.EnumPopup("Attack direction / area", area);
                     using (new EditorGUILayout.HorizontalScope())
                     {
-                        if (GUILayout.Button("Directional 1x1")) { towerPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(MapBuilderUtility.Kit + "Towers/Tower_Attack_1x1.prefab"); area = AttackArea.NegativeX; }
-                        if (GUILayout.Button("Square 1x1")) { towerPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(MapBuilderUtility.Kit + "Towers/Tower_Attack_1x1_Square.prefab"); area = AttackArea.Square; }
+                        EditorGUILayout.LabelField($"Grid: {draft.width} x {draft.length} | Origin: {draft.originX}, {draft.originZ} | Layer: {draft.layer}");
+                        var number = Mathf.Max(1, EditorGUILayout.IntField("Level number", draft.levelNumber, GUILayout.Width(210)));
+                        if (number != draft.levelNumber) Mutate("Set Draft Level Number", () => draft.levelNumber = number);
                     }
-                    EditorGUILayout.LabelField("Hover: tinted cells show attack coverage. Platforms must be painted before placing towers.");
-                }
+                    tool = GUILayout.SelectionGrid(tool, Tools, 5);
+                    using (new EditorGUILayout.HorizontalScope())
+                    {
+                        brushSize = EditorGUILayout.Popup("Brush", brushSize == 3 ? 1 : 0, new[] { "1 x 1", "3 x 3" }) == 1 ? 3 : 1;
+                        zoom = EditorGUILayout.Slider("Zoom", zoom, 16, 48);
+                        if (GUILayout.Button("Fill grid") && tool < 4 && EditorUtility.DisplayDialog("Fill entire grid?", "Replace all tile types? Route and towers remain and will be validated.", "Fill", "Cancel"))
+                            Mutate("Fill Grid", () => { for (var i = 0; i < draft.tiles.Length; i++) draft.tiles[i] = tool; });
+                    }
+                    if (tool == 4 || tool == 5) EditorGUILayout.HelpBox("Spawn/Goal mark a 3x3 macro region. They do not create nine independent spawn events. Start/end the route on its center.", MessageType.None);
+                    if (tool == 7)
+                    {
+                        EditorGUILayout.HelpBox("Click road centerline points in travel order. Straight segments are filled automatically. Add corners explicitly; paint a full 3-cell-wide corridor first.", MessageType.None);
+                        using (new EditorGUILayout.HorizontalScope())
+                        {
+                            if (GUILayout.Button("Undo last route cell") && draft.route.Count > 0) Mutate("Trim Route", () => draft.route.RemoveAt(draft.route.Count - 1));
+                            if (GUILayout.Button("Clear route")) Mutate("Clear Route", () => draft.route.Clear());
+                        }
+                    }
+                    if (tool == 8)
+                    {
+                        towerPrefab = (GameObject)EditorGUILayout.ObjectField("Tower prefab", towerPrefab, typeof(GameObject), false);
+                        area = (AttackArea)EditorGUILayout.EnumPopup("Attack direction / area", area);
+                        using (new EditorGUILayout.HorizontalScope())
+                        {
+                            towerIsAoe = EditorGUILayout.Toggle("AOE Multi-Target Tower", towerIsAoe);
+                            towerGoldBounty = Mathf.Max(0, EditorGUILayout.IntField("Destroy Gold Bounty", towerGoldBounty));
+                        }
+                        using (new EditorGUILayout.HorizontalScope())
+                        {
+                            if (GUILayout.Button("Directional 1x1"))
+                            {
+                                towerPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(MapBuilderUtility.Kit + "Towers/Tower_Attack_1x1.prefab");
+                                area = AttackArea.NegativeX;
+                                towerIsAoe = false;
+                                towerGoldBounty = 25;
+                            }
+                            if (GUILayout.Button("Square 1x1"))
+                            {
+                                towerPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(MapBuilderUtility.Kit + "Towers/Tower_Attack_1x1_Square.prefab");
+                                area = AttackArea.Square;
+                                towerIsAoe = false;
+                                towerGoldBounty = 30;
+                            }
+                            if (GUILayout.Button("AOE Tower 1x1 (New)"))
+                            {
+                                towerPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(MapBuilderUtility.Kit + "Towers/Tower_Attack_1x1_Square.prefab");
+                                area = AttackArea.Square;
+                                towerIsAoe = true;
+                                towerGoldBounty = 45;
+                            }
+                        }
+                        EditorGUILayout.LabelField("Hover: tinted cells show attack coverage. Orange = AOE Tower, Yellow = Single-Target.");
+                    }
                     var maxPanelHeight = Mathf.Max(100, position.height - workspaceTop - 128);
                     EditorGUI.BeginChangeCheck();
                     var panelHeight = EditorGUILayout.Slider("Bottom panel height", footerHeight, 100, maxPanelHeight);
@@ -123,7 +148,6 @@ namespace Team5.Rebuild.Editor.LevelAuthoring
 
         private void DrawWorkspace()
         {
-            // Explicit rectangles make the split independent of GUILayout's preferred sizes.
             var top = Mathf.Clamp(workspaceTop, 0, Mathf.Max(0, position.height - 228));
             var maxFooter = Mathf.Max(100, position.height - top - 128);
             footerHeight = Mathf.Clamp(footerHeight, 100, maxFooter);
@@ -205,8 +229,6 @@ namespace Team5.Rebuild.Editor.LevelAuthoring
 
         private void DrawGrid()
         {
-            // The full scroll content can extend behind the divider/footer. Hit-test its viewport
-            // in window coordinates BEFORE BeginScrollView transforms Event.mousePosition.
             var pointerInViewport = !resizingSplitter &&
                 new Rect(0, 0, gridViewport.width, gridViewport.height).Contains(Event.current.mousePosition);
             gridScroll = EditorGUILayout.BeginScrollView(gridScroll, GUILayout.Height(gridViewport.height), GUILayout.ExpandWidth(true));
@@ -226,12 +248,19 @@ namespace Team5.Rebuild.Editor.LevelAuthoring
                     var p = new Vector2Int(x, z);
                     var rect = new Rect(grid.x + 28 + x * zoom, grid.y + 22 + (draft.length - 1 - z) * zoom, zoom - 1, zoom - 1);
                     var value = draft.Tile(p);
-                    EditorGUI.DrawRect(rect, value < 0 ? new Color(.17f,.17f,.18f) : Colors[value]);
-                    if (tool == 8 && preview != null && draft.Inside(hover) && SquadCombatRules.Contains(new Vector3(x-hover.x,0,z-hover.y), area, preview.Range,
-                        attackWidth)) EditorGUI.DrawRect(rect, new Color(1, .8f, .15f, .23f));
+                    EditorGUI.DrawRect(rect, value < 0 ? new Color(.17f, .17f, .18f) : Colors[value]);
+                    if (tool == 8 && preview != null && draft.Inside(hover) && SquadCombatRules.Contains(new Vector3(x - hover.x, 0, z - hover.y), area, preview.Range,
+                        attackWidth))
+                    {
+                        EditorGUI.DrawRect(rect, towerIsAoe ? new Color(1f, 0.35f, 0.1f, 0.35f) : new Color(1f, .8f, .15f, .23f));
+                    }
                     towerLabels.TryGetValue(p, out var tower);
                     if (routeLabels.TryGetValue(p, out var routeIndex)) GUI.Label(rect, routeIndex.ToString(), EditorStyles.whiteMiniLabel);
-                    if (tower != null) GUI.Label(rect, tower.area == AttackArea.Square ? "▣" : tower.area == AttackArea.NegativeX ? "←" : tower.area == AttackArea.PositiveX ? "→" : tower.area == AttackArea.PositiveZ ? "↑" : "↓", EditorStyles.whiteBoldLabel);
+                    if (tower != null)
+                    {
+                        var symbol = tower.isAoe ? "✹" : tower.area == AttackArea.Square ? "▣" : tower.area == AttackArea.NegativeX ? "←" : tower.area == AttackArea.PositiveX ? "→" : tower.area == AttackArea.PositiveZ ? "↑" : "↓";
+                        GUI.Label(rect, symbol, EditorStyles.whiteBoldLabel);
+                    }
                 }
             }
             if (e.type == EventType.MouseUp) painting = false;
@@ -246,10 +275,10 @@ namespace Team5.Rebuild.Editor.LevelAuthoring
                 {
                     if (painting && tool <= 6)
                     {
-                        var count = Mathf.Max(Mathf.Abs(hover.x-lastPaint.x), Mathf.Abs(hover.y-lastPaint.y));
+                        var count = Mathf.Max(Mathf.Abs(hover.x - lastPaint.x), Mathf.Abs(hover.y - lastPaint.y));
                         for (var i = 0; i <= count; i++)
                         {
-                            var p = count == 0 ? hover : Vector2Int.RoundToInt(Vector2.Lerp(lastPaint, hover, (float)i/count));
+                            var p = count == 0 ? hover : Vector2Int.RoundToInt(Vector2.Lerp(lastPaint, hover, (float)i / count));
                             draft.Paint(p, tool == 6 ? -1 : tool, tool == 4 || tool == 5 ? 3 : brushSize);
                         }
                         lastPaint = hover; Changed();
@@ -257,8 +286,8 @@ namespace Team5.Rebuild.Editor.LevelAuthoring
                     else if (e.type == EventType.MouseDown)
                     {
                         if (tool == 7) draft.AppendRoute(hover);
-                        if (tool == 8) draft.PlaceTower(hover, towerPrefab, area);
-                        if (tool == 9) draft.towers.RemoveAll(t => Mathf.Abs(t.cell.x-hover.x) <= t.prefab.GetComponent<BattleTower>().FootprintSize / 2 && Mathf.Abs(t.cell.y-hover.y) <= t.prefab.GetComponent<BattleTower>().FootprintSize / 2);
+                        if (tool == 8) draft.PlaceTower(hover, towerPrefab, area, towerIsAoe, towerGoldBounty);
+                        if (tool == 9) draft.towers.RemoveAll(t => Mathf.Abs(t.cell.x - hover.x) <= t.prefab.GetComponent<BattleTower>().FootprintSize / 2 && Mathf.Abs(t.cell.y - hover.y) <= t.prefab.GetComponent<BattleTower>().FootprintSize / 2);
                         Changed();
                     }
                 }
@@ -296,7 +325,6 @@ namespace Team5.Rebuild.Editor.LevelAuthoring
         }
         public override void SaveChanges()
         {
-            // A saved scene is a snapshot; regenerate after subsequent draft edits.
             if (!Generate()) return;
             if (generated.IsValid() && generated.isLoaded && string.IsNullOrEmpty(generated.path)) SaveGenerated();
             if (!hasUnsavedChanges) base.SaveChanges();

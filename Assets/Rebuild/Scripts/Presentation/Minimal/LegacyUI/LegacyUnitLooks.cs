@@ -66,12 +66,21 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         private static readonly Color healBody = new Color(0.3f, 0.78f, 0.45f);
         private static readonly Color healOutline = new Color(0.07f, 0.26f, 0.12f);
         private static readonly Color healCross = new Color(0.96f, 1f, 0.97f);
+        private static readonly Color sniperBody = new Color(0.22f, 0.78f, 0.88f);
+        private static readonly Color sniperOutline = new Color(0.06f, 0.24f, 0.32f);
+        private static readonly Color vanguardBody = new Color(0.38f, 0.48f, 0.82f);
+        private static readonly Color vanguardOutline = new Color(0.12f, 0.16f, 0.34f);
+        private static readonly Color demolisherBody = new Color(0.98f, 0.55f, 0.16f);
+        private static readonly Color demolisherOutline = new Color(0.38f, 0.18f, 0.04f);
 
         public static SoldierLook For(UnitRole type) => type switch
         {
             UnitRole.Captain => new SoldierLook(new Color(0.72f, 0.56f, 0.28f), new Color(0.36f, 0.26f, 0.10f), OuterSize, InnerSize, SoldierMark.Crown, Color.white),
             UnitRole.Tank => new SoldierLook(tankBody, tankOutline, TankOuterSize, TankInnerSize, SoldierMark.Plate, tankPlate),
             UnitRole.Heal => new SoldierLook(healBody, healOutline, OuterSize, InnerSize, SoldierMark.Cross, healCross),
+            UnitRole.Sniper => new SoldierLook(sniperBody, sniperOutline, OuterSize * 0.95f, InnerSize * 0.95f, SoldierMark.Diamond, Color.white),
+            UnitRole.Vanguard => new SoldierLook(vanguardBody, vanguardOutline, TankOuterSize, InnerSize, SoldierMark.Plate, new Color(0.85f, 0.9f, 1f)),
+            UnitRole.Demolisher => new SoldierLook(demolisherBody, demolisherOutline, TankOuterSize, InnerSize, SoldierMark.Diamond, new Color(1f, 0.92f, 0.4f)),
             _ => new SoldierLook(attackBody, attackOutline, OuterSize, InnerSize, SoldierMark.Diamond, Color.Lerp(attackBody, Color.white, DiamondTint))
         };
 
@@ -81,16 +90,19 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             UnitRole.Tank => "TANK",
             UnitRole.Heal => "HEAL",
             UnitRole.Captain => "CAPTAIN",
+            UnitRole.Sniper => "SNIPER",
+            UnitRole.Vanguard => "VANGUARD",
+            UnitRole.Demolisher => "DEMOLISHER",
             _ => string.Empty
         };
 
         public static Color RarityColor(UnitRarity rarity) => rarity switch
         {
-            UnitRarity.Common => new Color(0.75f, 0.75f, 0.75f), // Silver
-            UnitRarity.Rare => new Color(0.20f, 0.55f, 0.90f), // Blue
-            UnitRarity.Epic => new Color(0.58f, 0.25f, 0.85f), // Purple
+            UnitRarity.Common => new Color(0.75f, 0.75f, 0.75f),    // Silver
+            UnitRarity.Rare => new Color(0.20f, 0.55f, 0.90f),      // Blue
+            UnitRarity.Epic => new Color(0.58f, 0.25f, 0.85f),      // Purple
             UnitRarity.Legendary => new Color(1.00f, 0.75f, 0.15f), // Gold/Orange
-            _ => new Color(0.60f, 0.60f, 0.60f)  // Fallback
+            _ => new Color(0.60f, 0.60f, 0.60f)
         };
     }
 }

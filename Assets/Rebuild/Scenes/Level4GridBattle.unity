@@ -128240,13 +128240,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Team5.Rebuild.World::Team5.Rebuild.World.BattleTower
   range: 7.5
-  damage: 1
+  damage: 2
   attackInterval: 1
   targetRule: 0
   usesMacroFootprint: 1
-  maxHp: 20
+  maxHp: 40
   attackArea: 2
   attackWidth: 0.9
+  isAoe: 0
+  goldBounty: 25
 --- !u!4 &9000011134
 Transform:
   m_ObjectHideFlags: 0
@@ -128384,13 +128386,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Team5.Rebuild.World::Team5.Rebuild.World.BattleTower
   range: 3.5
-  damage: 1
+  damage: 2
   attackInterval: 1
   targetRule: 0
   usesMacroFootprint: 1
-  maxHp: 20
+  maxHp: 40
   attackArea: 0
   attackWidth: 0.9
+  isAoe: 0
+  goldBounty: 25
 --- !u!4 &9000011141
 Transform:
   m_ObjectHideFlags: 0
@@ -128528,13 +128532,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Team5.Rebuild.World::Team5.Rebuild.World.BattleTower
   range: 3.5
-  damage: 1
+  damage: 2
   attackInterval: 1
   targetRule: 0
   usesMacroFootprint: 1
-  maxHp: 20
+  maxHp: 40
   attackArea: 0
   attackWidth: 0.9
+  isAoe: 0
+  goldBounty: 25
 --- !u!4 &9000011148
 Transform:
   m_ObjectHideFlags: 0
@@ -128672,13 +128678,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Team5.Rebuild.World::Team5.Rebuild.World.BattleTower
   range: 8.25
-  damage: 1
+  damage: 2
   attackInterval: 1
   targetRule: 0
   usesMacroFootprint: 1
-  maxHp: 20
+  maxHp: 40
   attackArea: 4
   attackWidth: 0.9
+  isAoe: 0
+  goldBounty: 25
 --- !u!4 &9000011155
 Transform:
   m_ObjectHideFlags: 0
@@ -128816,13 +128824,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Team5.Rebuild.World::Team5.Rebuild.World.BattleTower
   range: 7.5
-  damage: 1
+  damage: 2
   attackInterval: 1
   targetRule: 0
   usesMacroFootprint: 1
-  maxHp: 20
+  maxHp: 40
   attackArea: 2
   attackWidth: 0.9
+  isAoe: 0
+  goldBounty: 25
 --- !u!4 &9000011162
 Transform:
   m_ObjectHideFlags: 0
@@ -128960,13 +128970,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Team5.Rebuild.World::Team5.Rebuild.World.BattleTower
   range: 8.25
-  damage: 1
+  damage: 2
   attackInterval: 1
   targetRule: 0
   usesMacroFootprint: 1
-  maxHp: 20
+  maxHp: 40
   attackArea: 3
   attackWidth: 0.9
+  isAoe: 0
+  goldBounty: 25
 --- !u!4 &9000011183
 Transform:
   m_ObjectHideFlags: 0
@@ -129104,13 +129116,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Team5.Rebuild.World::Team5.Rebuild.World.BattleTower
   range: 3.5
-  damage: 1
+  damage: 2
   attackInterval: 1
   targetRule: 0
   usesMacroFootprint: 1
-  maxHp: 20
+  maxHp: 40
   attackArea: 0
   attackWidth: 0.9
+  isAoe: 0
+  goldBounty: 25
 --- !u!4 &9000011197
 Transform:
   m_ObjectHideFlags: 0
@@ -129218,11 +129232,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 9000011198}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!1660057539 &9223372036854775807
-SceneRoots:
-  m_ObjectHideFlags: 0
-  m_Roots:
-  - {fileID: 1499248551}
 --- !u!1001 &1600000030000
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -129248,6 +129257,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1000001, guid: f17c64aa34e9408cbc60ba73226e9659, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1000001, guid: f17c64aa34e9408cbc60ba73226e9659, type: 3}
       propertyPath: m_LocalRotation.x
       value: 0
       objectReference: {fileID: 0}
@@ -129258,10 +129271,6 @@ PrefabInstance:
     - target: {fileID: 1000001, guid: f17c64aa34e9408cbc60ba73226e9659, type: 3}
       propertyPath: m_LocalRotation.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1000001, guid: f17c64aa34e9408cbc60ba73226e9659, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1000001, guid: f17c64aa34e9408cbc60ba73226e9659, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -129310,6 +129319,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1000001, guid: cf308d4b355a4e8f83c1e7b1a654678c, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1000001, guid: cf308d4b355a4e8f83c1e7b1a654678c, type: 3}
       propertyPath: m_LocalRotation.x
       value: 0
       objectReference: {fileID: 0}
@@ -129320,10 +129333,6 @@ PrefabInstance:
     - target: {fileID: 1000001, guid: cf308d4b355a4e8f83c1e7b1a654678c, type: 3}
       propertyPath: m_LocalRotation.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1000001, guid: cf308d4b355a4e8f83c1e7b1a654678c, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1000001, guid: cf308d4b355a4e8f83c1e7b1a654678c, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -129372,6 +129381,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1000001, guid: cf308d4b355a4e8f83c1e7b1a654678c, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1000001, guid: cf308d4b355a4e8f83c1e7b1a654678c, type: 3}
       propertyPath: m_LocalRotation.x
       value: 0
       objectReference: {fileID: 0}
@@ -129382,10 +129395,6 @@ PrefabInstance:
     - target: {fileID: 1000001, guid: cf308d4b355a4e8f83c1e7b1a654678c, type: 3}
       propertyPath: m_LocalRotation.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1000001, guid: cf308d4b355a4e8f83c1e7b1a654678c, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1000001, guid: cf308d4b355a4e8f83c1e7b1a654678c, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -129434,6 +129443,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1000001, guid: f17c64aa34e9408cbc60ba73226e9659, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.707106781
+      objectReference: {fileID: 0}
+    - target: {fileID: 1000001, guid: f17c64aa34e9408cbc60ba73226e9659, type: 3}
       propertyPath: m_LocalRotation.x
       value: 0
       objectReference: {fileID: 0}
@@ -129444,10 +129457,6 @@ PrefabInstance:
     - target: {fileID: 1000001, guid: f17c64aa34e9408cbc60ba73226e9659, type: 3}
       propertyPath: m_LocalRotation.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1000001, guid: f17c64aa34e9408cbc60ba73226e9659, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 0.707106781
       objectReference: {fileID: 0}
     - target: {fileID: 1000001, guid: f17c64aa34e9408cbc60ba73226e9659, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -129496,6 +129505,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1000001, guid: f17c64aa34e9408cbc60ba73226e9659, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1000001, guid: f17c64aa34e9408cbc60ba73226e9659, type: 3}
       propertyPath: m_LocalRotation.x
       value: 0
       objectReference: {fileID: 0}
@@ -129506,10 +129519,6 @@ PrefabInstance:
     - target: {fileID: 1000001, guid: f17c64aa34e9408cbc60ba73226e9659, type: 3}
       propertyPath: m_LocalRotation.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1000001, guid: f17c64aa34e9408cbc60ba73226e9659, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1000001, guid: f17c64aa34e9408cbc60ba73226e9659, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -129558,6 +129567,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1000001, guid: f17c64aa34e9408cbc60ba73226e9659, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.707106781
+      objectReference: {fileID: 0}
+    - target: {fileID: 1000001, guid: f17c64aa34e9408cbc60ba73226e9659, type: 3}
       propertyPath: m_LocalRotation.x
       value: 0
       objectReference: {fileID: 0}
@@ -129568,10 +129581,6 @@ PrefabInstance:
     - target: {fileID: 1000001, guid: f17c64aa34e9408cbc60ba73226e9659, type: 3}
       propertyPath: m_LocalRotation.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1000001, guid: f17c64aa34e9408cbc60ba73226e9659, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 0.707106781
       objectReference: {fileID: 0}
     - target: {fileID: 1000001, guid: f17c64aa34e9408cbc60ba73226e9659, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -129620,6 +129629,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1000001, guid: cf308d4b355a4e8f83c1e7b1a654678c, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1000001, guid: cf308d4b355a4e8f83c1e7b1a654678c, type: 3}
       propertyPath: m_LocalRotation.x
       value: 0
       objectReference: {fileID: 0}
@@ -129630,10 +129643,6 @@ PrefabInstance:
     - target: {fileID: 1000001, guid: cf308d4b355a4e8f83c1e7b1a654678c, type: 3}
       propertyPath: m_LocalRotation.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1000001, guid: cf308d4b355a4e8f83c1e7b1a654678c, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1000001, guid: cf308d4b355a4e8f83c1e7b1a654678c, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -129657,3 +129666,8 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 1000001, guid: cf308d4b355a4e8f83c1e7b1a654678c, type: 3}
   m_PrefabInstance: {fileID: 1600000030060}
   m_PrefabAsset: {fileID: 0}
+--- !u!1660057539 &9223372036854775807
+SceneRoots:
+  m_ObjectHideFlags: 0
+  m_Roots:
+  - {fileID: 1499248551}

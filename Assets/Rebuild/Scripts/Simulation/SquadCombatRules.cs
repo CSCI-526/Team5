@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Team5.Rebuild.Simulation
 {
-    public enum UnitRole { Test, Attack, Tank, Heal, Captain }
+    public enum UnitRole { Test, Attack, Tank, Heal, Captain, Sniper, Vanguard, Demolisher }
     public enum UnitRarity { Common = 0, Rare = 1, Epic = 2, Legendary = 3 }
     public enum BattleObjective { DefendGoal, ReachGoal }
     public enum AttackArea { Square = 0, PositiveX = 1, NegativeX = 2, PositiveZ = 3, NegativeZ = 4 }
@@ -12,10 +12,23 @@ namespace Team5.Rebuild.Simulation
 
     public readonly struct RoleBaseStats
     {
-        public readonly float MaxHp, Damage, Range, AttackInterval, Defense, HealPerSecond;
-        public RoleBaseStats(float maxHp, float damage = 0f, float range = 2.5f, float interval = 1f, float defense = 0f, float heal = 0f)
+        public readonly float MaxHp, Damage, Range, AttackInterval, Defense, HealPerSecond, TowerDamageMultiplier;
+        public RoleBaseStats(
+            float maxHp,
+            float damage = 0f,
+            float range = 2.5f,
+            float interval = 1f,
+            float defense = 0f,
+            float heal = 0f,
+            float towerDamageMultiplier = 1f)
         {
-            MaxHp = maxHp; Damage = damage; Range = range; AttackInterval = interval; Defense = defense; HealPerSecond = heal;
+            MaxHp = maxHp;
+            Damage = damage;
+            Range = range;
+            AttackInterval = interval;
+            Defense = defense;
+            HealPerSecond = heal;
+            TowerDamageMultiplier = towerDamageMultiplier;
         }
     }
 
@@ -27,30 +40,48 @@ namespace Team5.Rebuild.Simulation
         public const float ProjectileSpeed = 8f;
         public const float HealInterval = 2f;
         public const float HealAmount = 0.4f;
-        public const float LevelStatGrowth = 0.15f; // +15% stats per level above 1
+        public const float LevelStatGrowth = 0.15f;
 
-        // Modular role table: add new unit roles here
+        // Modular role table including new offensive/hybrid units and tower-breaker multipliers
         private static readonly Dictionary<UnitRole, RoleBaseStats> RoleTable = new Dictionary<UnitRole, RoleBaseStats>
         {
-            { UnitRole.Attack,  new RoleBaseStats(maxHp: 4f, damage: 1f,   range: AttackRange, interval: AttackInterval) },
-            { UnitRole.Tank,    new RoleBaseStats(maxHp: 8f, defense: 0.2f) },
-            { UnitRole.Heal,    new RoleBaseStats(maxHp: 3f, heal: 0.2f) },
-            { UnitRole.Captain, new RoleBaseStats(maxHp: 6f, damage: 0.5f, range: AttackRange, interval: AttackInterval, defense: 0.5f) }
+            { UnitRole.Attack,     new RoleBaseStats(maxHp: 4.5f, damage: 1.6f, range: 2.8f, interval: 0.9f, towerDamageMultiplier: 1.50f) },
+            { UnitRole.Tank,       new RoleBaseStats(maxHp: 9.0f, defense: 0.25f) },
+            { UnitRole.Heal,       new RoleBaseStats(maxHp: 3.5f, heal: 0.35f) },
+            { UnitRole.Captain,    new RoleBaseStats(maxHp: 6.5f, damage: 0.8f, range: 2.6f, interval: 1.0f, defense: 0.50f, towerDamageMultiplier: 1.25f) },
+            { UnitRole.Sniper,     new RoleBaseStats(maxHp: 3.2f, damage: 2.4f, range: 4.2f, interval: 1.35f, towerDamageMultiplier: 1.85f) },
+            { UnitRole.Vanguard,   new RoleBaseStats(maxHp: 7.0f, damage: 1.1f, range: 2.2f, interval: 1.05f, defense: 0.20f, towerDamageMultiplier: 1.35f) },
+            { UnitRole.Demolisher, new RoleBaseStats(maxHp: 5.0f, damage: 2.2f, range: 2.5f, interval: 1.15f, defense: 0.10f, towerDamageMultiplier: 2.25f) }
         };
 
+        public static bool CanAttackTowers(UnitRole role) =>
+            role == UnitRole.Attack || role == UnitRole.Captain ||
+            role == UnitRole.Sniper || role == UnitRole.Vanguard || role == UnitRole.Demolisher;
+
+        // Higher rarities are much harder to pull, so their base multiplier is significantly stronger
         public static float RarityMultiplier(UnitRarity rarity) => rarity switch
         {
             UnitRarity.Common => 1.00f,
-            UnitRarity.Rare => 1.25f,
-            UnitRarity.Epic => 1.60f,
-            UnitRarity.Legendary => 2.00f,
+            UnitRarity.Rare => 1.85f,
+            UnitRarity.Epic => 3.10f,
+            UnitRarity.Legendary => 5.00f,
             _ => 1.00f
+        };
+
+        // Per-level stat growth also scales steeper with rarity
+        public static float RarityLevelGrowth(UnitRarity rarity) => rarity switch
+        {
+            UnitRarity.Common => 0.12f,
+            UnitRarity.Rare => 0.20f,
+            UnitRarity.Epic => 0.30f,
+            UnitRarity.Legendary => 0.45f,
+            _ => LevelStatGrowth
         };
 
         public static float ScaleMultiplier(UnitRarity rarity, int level)
         {
             var clampedLevel = Mathf.Max(1, level);
-            return RarityMultiplier(rarity) * (1f + LevelStatGrowth * (clampedLevel - 1));
+            return RarityMultiplier(rarity) * (1f + RarityLevelGrowth(rarity) * (clampedLevel - 1));
         }
 
         public static UnitDefinition Create(UnitRole role, UnitRarity rarity = UnitRarity.Common, int level = 1)
@@ -62,9 +93,8 @@ namespace Team5.Rebuild.Simulation
             var hp = Mathf.Round(baseStats.MaxHp * mult * 10f) / 10f;
             var dmg = Mathf.Round(baseStats.Damage * mult * 10f) / 10f;
             var heal = baseStats.HealPerSecond > 0f ? Mathf.Round(baseStats.HealPerSecond * mult * 10f) / 10f : 0.2f;
-            // Defense scales gently with rarity up to a 75% cap
             var def = baseStats.Defense > 0f
-                ? Mathf.Min(0.75f, baseStats.Defense + (int)rarity * 0.05f + (Mathf.Max(1, level) - 1) * 0.02f)
+                ? Mathf.Min(0.78f, baseStats.Defense + (int)rarity * 0.06f + (Mathf.Max(1, level) - 1) * 0.025f)
                 : 0f;
 
             return new UnitDefinition(
@@ -77,7 +107,8 @@ namespace Team5.Rebuild.Simulation
                 defense: def,
                 healPerSecond: heal,
                 rarity: rarity,
-                level: Mathf.Max(1, level)
+                level: Mathf.Max(1, level),
+                towerDamageMultiplier: baseStats.TowerDamageMultiplier
             );
         }
 

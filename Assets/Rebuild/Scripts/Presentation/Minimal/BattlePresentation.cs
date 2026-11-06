@@ -75,6 +75,7 @@ namespace Team5.Rebuild.Presentation
             simulation.UnitDied += OnUnitEnded;
             simulation.UnitReachedGoal += OnUnitEnded;
             simulation.FormationChanged += OnFormationChanged;
+            simulation.HealerPulsed += OnHealerPulsed;
             foreach (var unit in simulation.Units) if (unit.IsAlive) CreateView(unit);
         }
 
@@ -86,12 +87,18 @@ namespace Team5.Rebuild.Presentation
             simulation.UnitDied -= OnUnitEnded;
             simulation.UnitReachedGoal -= OnUnitEnded;
             simulation.FormationChanged -= OnFormationChanged;
+            simulation.HealerPulsed -= OnHealerPulsed;
             simulation = null;
+        }
+
+        private void OnHealerPulsed(int healerId)
+        {
+            if (views.TryGetValue(healerId, out var view) && view != null)
+                view.TriggerHealBurst();
         }
 
         private void OnSpawned(UnitSpawnedEvent value)
         {
-            // Look up the read-only state by ID, rather than giving the View simulation commands.
             foreach (var unit in simulation.Units)
                 if (unit.Id == value.UnitId) { CreateView(unit); break; }
         }
@@ -125,7 +132,7 @@ namespace Team5.Rebuild.Presentation
         private static void RemoveView(UnitView view)
         {
             if (view == null) return;
-            view.gameObject.SetActive(false); // Hide immediately; Destroy completes at the frame boundary.
+            view.gameObject.SetActive(false);
             Destroy(view.gameObject);
         }
 

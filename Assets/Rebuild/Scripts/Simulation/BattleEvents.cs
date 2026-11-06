@@ -2,7 +2,6 @@ using UnityEngine;
 
 namespace Team5.Rebuild.Simulation
 {
-    // Value snapshots: listeners can retain events without observing later state mutations.
     public readonly struct UnitSpawnedEvent
     {
         public int UnitId { get; }
@@ -58,6 +57,22 @@ namespace Team5.Rebuild.Simulation
         public float RemainingHp { get; }
         public TowerDamageEvent(int memberId, TowerState tower, float amount)
         { MemberId = memberId; TowerId = tower.Id; Amount = amount; RemainingHp = tower.Hp; }
+    }
+    public readonly struct TowerDestroyedEvent
+    {
+        public int KillerMemberId { get; }
+        public int TowerId { get; }
+        public int GoldBounty { get; }
+        public bool WasAoe { get; }
+        public Vector3 Position { get; }
+        public TowerDestroyedEvent(int killerMemberId, TowerState tower)
+        {
+            KillerMemberId = killerMemberId;
+            TowerId = tower.Id;
+            GoldBounty = tower.Definition.GoldBounty;
+            WasAoe = tower.Definition.IsAoe;
+            Position = tower.Position;
+        }
     }
     public readonly struct HealEvent
     {

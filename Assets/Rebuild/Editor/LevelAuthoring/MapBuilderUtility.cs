@@ -34,19 +34,19 @@ namespace Team5.Rebuild.Editor.LevelAuthoring
             var prefabs = Enum.GetValues(typeof(CellKind)).Cast<CellKind>().ToDictionary(kind => kind,
                 kind => AssetDatabase.LoadAssetAtPath<GameObject>(Kit + "Tiles/" + kind + "_Cell.prefab"));
             for (var z = 0; z < draft.length; z++)
-            for (var x = 0; x < draft.width; x++)
-            {
-                var p = new Vector2Int(x, z); var value = draft.Tile(p);
-                if (value == -1) continue;
-                if (!Enum.IsDefined(typeof(CellKind), value) || prefabs[(CellKind)value] == null)
-                    throw new ArgumentException($"Unknown tile at ({x}, {z}).");
-                var go = (GameObject)PrefabUtility.InstantiatePrefab(prefabs[(CellKind)value], scene);
-                go.transform.SetParent(session.Grid.transform, false);
-                go.transform.position = draft.Position(p);
-                go.name = $"{(CellKind)value} ({x}, {z})";
-                PrefabUtility.RecordPrefabInstancePropertyModifications(go.transform);
-                cells.Add(p, go.GetComponent<BattleCell>());
-            }
+                for (var x = 0; x < draft.width; x++)
+                {
+                    var p = new Vector2Int(x, z); var value = draft.Tile(p);
+                    if (value == -1) continue;
+                    if (!Enum.IsDefined(typeof(CellKind), value) || prefabs[(CellKind)value] == null)
+                        throw new ArgumentException($"Unknown tile at ({x}, {z}).");
+                    var go = (GameObject)PrefabUtility.InstantiatePrefab(prefabs[(CellKind)value], scene);
+                    go.transform.SetParent(session.Grid.transform, false);
+                    go.transform.position = draft.Position(p);
+                    go.name = $"{(CellKind)value} ({x}, {z})";
+                    PrefabUtility.RecordPrefabInstancePropertyModifications(go.transform);
+                    cells.Add(p, go.GetComponent<BattleCell>());
+                }
             var route = new SerializedObject(session.Route);
             var entries = route.FindProperty("cells"); entries.arraySize = draft.route.Count;
             for (var i = 0; i < draft.route.Count; i++)
@@ -70,6 +70,10 @@ namespace Team5.Rebuild.Editor.LevelAuthoring
                 if (!string.IsNullOrEmpty(stamp.configuration)) JsonUtility.FromJsonOverwrite(stamp.configuration, tower);
                 var serialized = new SerializedObject(tower);
                 serialized.FindProperty("attackArea").enumValueIndex = (int)stamp.area;
+                var isAoeProp = serialized.FindProperty("isAoe");
+                if (isAoeProp != null) isAoeProp.boolValue = stamp.isAoe;
+                var bountyProp = serialized.FindProperty("goldBounty");
+                if (bountyProp != null) bountyProp.intValue = stamp.goldBounty > 0 ? stamp.goldBounty : (stamp.isAoe ? 40 : 25);
                 serialized.ApplyModifiedPropertiesWithoutUndo();
                 towers.GetArrayElementAtIndex(i).objectReferenceValue = tower;
             }
@@ -85,7 +89,6 @@ namespace Team5.Rebuild.Editor.LevelAuthoring
 
         private static void FrameGeneratedCamera(GameObject host, MapDraft draft)
         {
-            // Fit only this newly instantiated camera. The source rig and existing scenes stay untouched.
             var camera = host.GetComponentInChildren<Camera>(true);
             if (camera == null) return;
             var center = draft.Position(Vector2Int.zero) + new Vector3((draft.width - 1) * .5f, 1.5f, (draft.length - 1) * .5f);
@@ -95,13 +98,13 @@ namespace Team5.Rebuild.Editor.LevelAuthoring
             var horizontal = vertical * (16f / 9);
             var distance = 10f; var ortho = 1f;
             for (var x = -1; x <= 1; x += 2)
-            for (var y = -1; y <= 1; y += 2)
-            for (var z = -1; z <= 1; z += 2)
-            {
-                var corner = inverse * Vector3.Scale(halfSize, new Vector3(x,y,z));
-                distance = Mathf.Max(distance, Mathf.Abs(corner.x) / horizontal - corner.z, Mathf.Abs(corner.y) / vertical - corner.z);
-                ortho = Mathf.Max(ortho, Mathf.Abs(corner.y), Mathf.Abs(corner.x) / (16f/9));
-            }
+                for (var y = -1; y <= 1; y += 2)
+                    for (var z = -1; z <= 1; z += 2)
+                    {
+                        var corner = inverse * Vector3.Scale(halfSize, new Vector3(x, y, z));
+                        distance = Mathf.Max(distance, Mathf.Abs(corner.x) / horizontal - corner.z, Mathf.Abs(corner.y) / vertical - corner.z);
+                        ortho = Mathf.Max(ortho, Mathf.Abs(corner.y), Mathf.Abs(corner.x) / (16f / 9));
+                    }
             distance = distance * 1.15f + 2;
             camera.transform.position = center - camera.transform.forward * distance;
             if (camera.orthographic) camera.orthographicSize = ortho * 1.15f;
@@ -128,7 +131,6 @@ namespace Team5.Rebuild.Editor.LevelAuthoring
             RequireEditMode();
             if (Validate(draft).Any(message => message.StartsWith("ERROR:"))) throw new InvalidOperationException("Fix map validation errors before generation.");
             if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) throw new OperationCanceledException("Generation cancelled.");
-            // A single scene prevents old sessions/cameras also running when the user presses Play.
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             try
             {
@@ -179,9 +181,15 @@ namespace Team5.Rebuild.Editor.LevelAuthoring
                     if (source == null || source.GetComponent<BattleTower>() == null)
                         throw new ArgumentException("Import requires towers created from tower prefabs; custom scene towers are not converted automatically.");
                     var serialized = new SerializedObject(tower);
-                    result.towers.Add(new MapTowerStamp { cell = new Vector2Int(Mathf.RoundToInt(tower.transform.position.x) - minX, Mathf.RoundToInt(tower.transform.position.z) - minZ),
-                        prefab = source, area = (Team5.Rebuild.Simulation.AttackArea)serialized.FindProperty("attackArea").enumValueIndex,
-                        configuration = JsonUtility.ToJson(tower) });
+                    result.towers.Add(new MapTowerStamp
+                    {
+                        cell = new Vector2Int(Mathf.RoundToInt(tower.transform.position.x) - minX, Mathf.RoundToInt(tower.transform.position.z) - minZ),
+                        prefab = source,
+                        area = (Team5.Rebuild.Simulation.AttackArea)serialized.FindProperty("attackArea").enumValueIndex,
+                        isAoe = tower.IsAoe,
+                        goldBounty = tower.GoldBounty,
+                        configuration = JsonUtility.ToJson(tower)
+                    });
                 }
                 return result;
             }

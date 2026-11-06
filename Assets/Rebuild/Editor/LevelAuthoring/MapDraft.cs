@@ -13,14 +13,15 @@ namespace Team5.Rebuild.Editor.LevelAuthoring
         public Vector2Int cell;
         public GameObject prefab;
         public AttackArea area;
+        public bool isAoe;
+        public int goldBounty = 25;
         public string configuration;
     }
 
-    // Temporary window state only. Never saved as a second map asset.
     public sealed class MapDraft : ScriptableObject
     {
         public int width = 24, length = 18, originX, originZ, layer, levelNumber = 1;
-        public int[] tiles = Array.Empty<int>(); // -1 = empty; otherwise CellKind.
+        public int[] tiles = Array.Empty<int>();
         public List<Vector2Int> route = new List<Vector2Int>();
         public List<MapTowerStamp> towers = new List<MapTowerStamp>();
         public bool Inside(Vector2Int p) => p.x >= 0 && p.y >= 0 && p.x < width && p.y < length;
@@ -37,13 +38,12 @@ namespace Team5.Rebuild.Editor.LevelAuthoring
         public void Paint(Vector2Int p, int kind, int size)
         {
             if (!Inside(p)) return;
-            // Macro brushes align to the existing world-space 3x3 macro grid.
             var x0 = size == 3 ? Mathf.FloorToInt((p.x + originX) / 3f) * 3 - originX : p.x;
             var z0 = size == 3 ? Mathf.FloorToInt((p.y + originZ) / 3f) * 3 - originZ : p.y;
             if (x0 < 0 || z0 < 0 || x0 + size > width || z0 + size > length)
                 throw new ArgumentException("The whole brush must fit inside the grid.");
             for (var z = z0; z < z0 + size; z++)
-            for (var x = x0; x < x0 + size; x++) tiles[z * width + x] = kind;
+                for (var x = x0; x < x0 + size; x++) tiles[z * width + x] = kind;
         }
 
         public void AppendRoute(Vector2Int point)
@@ -70,7 +70,7 @@ namespace Team5.Rebuild.Editor.LevelAuthoring
             route.AddRange(addition);
         }
 
-        public void PlaceTower(Vector2Int point, GameObject prefab, AttackArea area)
+        public void PlaceTower(Vector2Int point, GameObject prefab, AttackArea area, bool isAoe = false, int goldBounty = 25)
         {
             var tower = prefab != null ? prefab.GetComponent<BattleTower>() : null;
             if (tower == null) throw new ArgumentException("Choose a tower prefab with BattleTower on its root.");
@@ -78,15 +78,22 @@ namespace Team5.Rebuild.Editor.LevelAuthoring
             if (radius == 1 && (((point.x + originX) % 3 + 3) % 3 != 1 || ((point.y + originZ) % 3 + 3) % 3 != 1))
                 throw new ArgumentException("A 3x3 tower must be placed at a macro center (3n+1, 3n+1).");
             for (var z = -radius; z <= radius; z++)
-            for (var x = -radius; x <= radius; x++)
+                for (var x = -radius; x <= radius; x++)
+                {
+                    var p = point + new Vector2Int(x, z);
+                    if (Tile(p) != (int)CellKind.TowerPlatform) throw new ArgumentException("The whole tower footprint needs TowerPlatform tiles.");
+                    if (towers.Any(t => Mathf.Abs(t.cell.x - p.x) <= t.prefab.GetComponent<BattleTower>().FootprintSize / 2 &&
+                                        Mathf.Abs(t.cell.y - p.y) <= t.prefab.GetComponent<BattleTower>().FootprintSize / 2))
+                        throw new ArgumentException("Tower footprints overlap.");
+                }
+            towers.Add(new MapTowerStamp
             {
-                var p = point + new Vector2Int(x, z);
-                if (Tile(p) != (int)CellKind.TowerPlatform) throw new ArgumentException("The whole tower footprint needs TowerPlatform tiles.");
-                if (towers.Any(t => Mathf.Abs(t.cell.x - p.x) <= t.prefab.GetComponent<BattleTower>().FootprintSize / 2 &&
-                                    Mathf.Abs(t.cell.y - p.y) <= t.prefab.GetComponent<BattleTower>().FootprintSize / 2))
-                    throw new ArgumentException("Tower footprints overlap.");
-            }
-            towers.Add(new MapTowerStamp { cell = point, prefab = prefab, area = area });
+                cell = point,
+                prefab = prefab,
+                area = area,
+                isAoe = isAoe,
+                goldBounty = goldBounty > 0 ? goldBounty : (isAoe ? 40 : 25)
+            });
         }
     }
 }

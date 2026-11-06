@@ -16,14 +16,22 @@ namespace Team5.Rebuild.World
         [SerializeField, Min(0.01f)] private float maxHp = 20;
         [SerializeField] private AttackArea attackArea = AttackArea.Square;
         [SerializeField, Min(0.01f)] private float attackWidth = 0.3f;
+        [SerializeField] private bool isAoe;
+        [SerializeField, Min(0)] private int goldBounty = 25;
+
         public int FootprintSize => usesMacroFootprint ? 3 : 1;
         public float Range => range;
         public float Damage => damage;
         public float AttackInterval => attackInterval;
         public TargetRule TargetRule => targetRule;
+        public bool IsAoe => isAoe;
+        public int GoldBounty => goldBounty > 0 ? goldBounty : (isAoe ? 40 : 25);
         public TowerState RuntimeState { get; private set; }
         public float CurrentCooldown => RuntimeState?.CooldownRemaining ?? 0;
-        public TowerDefinition CaptureDefinition(int id) => new TowerDefinition(id, transform.position, range, damage, attackInterval, targetRule, FootprintSize, maxHp, attackArea, attackWidth);
+
+        public TowerDefinition CaptureDefinition(int id) =>
+            new TowerDefinition(id, transform.position, range, damage, attackInterval, targetRule, FootprintSize, maxHp, attackArea, attackWidth, isAoe, GoldBounty);
+
         public void BindRuntimeState(TowerState state) => RuntimeState = state;
 
         public bool HasValidConfiguration => float.IsFinite(range) && range >= 0 &&
@@ -45,14 +53,14 @@ namespace Team5.Rebuild.World
             }
             var radius = FootprintSize / 2;
             for (var z = -radius; z <= radius; z++)
-            for (var x = -radius; x <= radius; x++)
-            {
-                var key = center + new Vector3Int(x, 0, z);
-                if (!occupied.Add(key)) errors.Add($"{name}: tower footprint overlap at {key}.");
-                if (!grid.TryGetCell(key, out var support) || support.Kind != CellKind.TowerPlatform ||
-                    !grid.HasClearTop(support) || Mathf.Abs(position.y - support.TopCenter.y) > 0.001f)
-                    errors.Add($"{name}: footprint {key} needs a clear, equal-height TowerPlatform surface.");
-            }
+                for (var x = -radius; x <= radius; x++)
+                {
+                    var key = center + new Vector3Int(x, 0, z);
+                    if (!occupied.Add(key)) errors.Add($"{name}: tower footprint overlap at {key}.");
+                    if (!grid.TryGetCell(key, out var support) || support.Kind != CellKind.TowerPlatform ||
+                        !grid.HasClearTop(support) || Mathf.Abs(position.y - support.TopCenter.y) > 0.001f)
+                        errors.Add($"{name}: footprint {key} needs a clear, equal-height TowerPlatform surface.");
+                }
         }
     }
 }

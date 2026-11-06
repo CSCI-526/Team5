@@ -21,14 +21,23 @@ namespace Team5.Rebuild.Presentation.LegacyUI
 
             if (victory)
             {
-                var gold = BattleSceneFlow.LastRewardGold;
+                var totalGold = BattleSceneFlow.LastRewardGold;
+                var stageGold = BattleSceneFlow.LastStageClearGold;
+                var towerGold = BattleSceneFlow.LastTowerBonusGold;
+                var towersKilled = BattleSceneFlow.LastTowersDestroyedCount;
+
                 if (!BattleSceneFlow.IsRunActive)
                 {
                     var settings = Resources.Load<GameEconomySettings>("RebuildEconomy");
-                    gold = settings != null ? settings.GetStageClearGold(level) : level * 50;
+                    stageGold = settings != null ? settings.GetStageClearGold(level) : level * 45;
+                    totalGold = stageGold;
                 }
-                rewardAmount.text = gold > 0 ? $"+{gold:N0} GOLD" : "STAGE CLEARED";
-                rewardDescription.text = $"Summon Tier {level} Unlocked!\nHigher unit levels & rarity odds available in Summon.";
+
+                rewardAmount.text = totalGold > 0 ? $"+{totalGold:N0} GOLD" : "STAGE CLEARED";
+                var bountyLine = towersKilled > 0
+                    ? $"Stage Clear: +{stageGold}G  |  Towers Destroyed ({towersKilled}): +{towerGold}G\n"
+                    : $"Stage Clear: +{stageGold}G  |  Destroy enemy towers with Attack units for bonus Gold!\n";
+                rewardDescription.text = $"{bountyLine}Summon Tier {level} Unlocked! Higher levels & rarity odds available.";
             }
             else
             {

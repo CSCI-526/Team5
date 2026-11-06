@@ -15,13 +15,27 @@ namespace Team5.Rebuild.Session
         public const string LevelTwoScene = "Assets/Rebuild/Scenes/Level2GridBattle.unity";
         public const string LevelThreeScene = "Assets/Rebuild/Scenes/Level3GridBattle.unity";
         public const string LevelFourScene = "Assets/Rebuild/Scenes/Level4GridBattle.unity";
+        public const string LevelFiveScene = "Assets/Rebuild/Scenes/Level5GridBattle.unity";
+        public const string LevelSixScene = "Assets/Rebuild/Scenes/Level6GridBattle.unity";
+        public const string LevelSevenScene = "Assets/Rebuild/Scenes/Level7GridBattle.unity";
         public const string TestStartScene = "Assets/Rebuild/Scenes/TestStartScene.unity";
         public const string TestUpdateScene = "Assets/Rebuild/Scenes/TestUpdateScene.unity";
         public const string TestLevelScene = "Assets/Rebuild/Scenes/TestLevel.unity";
         public const string SettlementScene = "Assets/Rebuild/Scenes/LevelSettlement.unity";
         public const string EndScene = "Assets/Rebuild/Scenes/EndGame.unity";
 
-        private static readonly string[] battleScenes = { BattleScene, LevelTwoScene, LevelThreeScene, LevelFourScene };
+        private static readonly string[] battleScenes =
+        {
+            BattleScene,
+            LevelTwoScene,
+            LevelThreeScene,
+            LevelFourScene,
+            LevelFiveScene,
+            LevelSixScene,
+            LevelSevenScene
+        };
+
+        public static int TotalCampaignLevels => battleScenes.Length;
 
         public static string SceneForLevel(int level)
         {
@@ -72,10 +86,12 @@ namespace Team5.Rebuild.Session
         public static int HighestClearedLevel => current != null ? current.highestClearedLevel : 0;
         public static bool IsOutOfLives => current != null && current.livesExhausted;
         public static int LastRewardGold { get; private set; }
+        public static int LastStageClearGold { get; private set; }
+        public static int LastTowerBonusGold { get; private set; }
+        public static int LastTowersDestroyedCount { get; private set; }
         public static int GoldBalance => current != null && current.wallet != null ? current.wallet.Balance : 0;
         public static bool HasUnlimitedGold => current != null && current.wallet != null && current.wallet.IsUnlimited;
 
-        // Test tools and shop controllers call this only after validating the destination.
         public static bool TrySpendGold(int price)
         {
             if (price <= 0) throw new System.ArgumentOutOfRangeException(nameof(price));
@@ -120,6 +136,9 @@ namespace Team5.Rebuild.Session
             LastOutcome = BattleOutcome.Running;
             CompletedLevelNumber = 0;
             LastRewardGold = 0;
+            LastStageClearGold = 0;
+            LastTowerBonusGold = 0;
+            LastTowersDestroyedCount = 0;
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -156,7 +175,10 @@ namespace Team5.Rebuild.Session
             flow.failedAttempts = 0;
             flow.livesExhausted = false;
             LastRewardGold = 0;
-            flow.wallet = new CampaignWallet(flow.economySettings != null ? flow.economySettings.StartingGold : 0, unlimited: test);
+            LastStageClearGold = 0;
+            LastTowerBonusGold = 0;
+            LastTowersDestroyedCount = 0;
+            flow.wallet = new CampaignWallet(flow.economySettings != null ? flow.economySettings.StartingGold : 35, unlimited: test);
             LastOutcome = BattleOutcome.Running;
             CompletedLevelNumber = 0;
             flow.QueueScene(test ? TestUpdateScene : BattleScene);
@@ -174,8 +196,8 @@ namespace Team5.Rebuild.Session
             if (flow.preparation == null)
             {
                 flow.preparation = new SquadPreparation(roster);
-                var baseCost = flow.economySettings != null ? flow.economySettings.BaseSummonCost : 25;
-                var stepCost = flow.economySettings != null ? flow.economySettings.SummonCostIncreasePerPull : 10;
+                var baseCost = flow.economySettings != null ? flow.economySettings.BaseSummonCost : 30;
+                var stepCost = flow.economySettings != null ? flow.economySettings.SummonCostIncreasePerPull : 15;
                 flow.claimCards = new ClaimCardShop(flow.wallet, flow.preparation, baseCost, stepCost);
             }
             if (flow.preparation.Roster != roster)
@@ -207,7 +229,7 @@ namespace Team5.Rebuild.Session
             current = new GameObject("Battle Scene Flow").AddComponent<BattleSceneFlow>();
             current.testRun = IsTestScenePath(SceneManager.GetActiveScene().path);
             current.economySettings = Resources.Load<GameEconomySettings>("RebuildEconomy");
-            current.wallet = new CampaignWallet(current.economySettings != null ? current.economySettings.StartingGold : 0, unlimited: current.testRun);
+            current.wallet = new CampaignWallet(current.economySettings != null ? current.economySettings.StartingGold : 35, unlimited: current.testRun);
             DontDestroyOnLoad(current.gameObject);
             return current;
         }
@@ -290,9 +312,12 @@ namespace Team5.Rebuild.Session
             settled = true;
             LastOutcome = outcome;
             LastRewardGold = 0;
+            LastStageClearGold = 0;
+            LastTowerBonusGold = 0;
+            LastTowersDestroyedCount = simulation != null ? simulation.TowersDestroyedCount : 0;
+
             if (testRun)
             {
-                // Tests never award campaign rewards, advance stages, or consume attempts.
                 CompletedLevelNumber = 0;
                 failedAttempts = 0;
                 session.RestoreFailedAttempts(0);
@@ -302,19 +327,33 @@ namespace Team5.Rebuild.Session
 
             if (outcome == BattleOutcome.Victory)
             {
-                var goldReward = economySettings != null
+                var clearGold = economySettings != null
                     ? economySettings.GetStageClearGold(CompletedLevelNumber)
-                    : CompletedLevelNumber * 50;
+                    : CompletedLevelNumber * 45;
 
-                if (wallet.TryRewardLevel(CompletedLevelNumber, goldReward))
-                    LastRewardGold = goldReward;
+                if (wallet.TryRewardLevel(CompletedLevelNumber, clearGold))
+                    LastStageClearGold = clearGold;
+
+                var towerGold = simulation != null ? simulation.TowerBountyGoldEarned : 0;
+                if (towerGold > 0)
+                {
+                    wallet.AddBonusGold(towerGold);
+                    LastTowerBonusGold = towerGold;
+                }
+
+                LastRewardGold = LastStageClearGold + LastTowerBonusGold;
 
                 highestClearedLevel = Mathf.Max(highestClearedLevel, CompletedLevelNumber);
                 if (claimCards != null) claimCards.SetStageProgress(highestClearedLevel);
 
                 failedAttempts = 0;
-                if (CompletedLevelNumber >= battleScenes.Length) { QueueScene(EndScene); return; }
-                nextBattleLevelNumber = CompletedLevelNumber + 1;
+                var nextLevel = CompletedLevelNumber + 1;
+                if (CompletedLevelNumber >= battleScenes.Length || !Application.CanStreamedLevelBeLoaded(SceneForLevel(nextLevel)))
+                {
+                    QueueScene(EndScene);
+                    return;
+                }
+                nextBattleLevelNumber = nextLevel;
             }
             else
             {

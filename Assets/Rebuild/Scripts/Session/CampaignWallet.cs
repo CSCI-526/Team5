@@ -3,7 +3,6 @@ using System.Collections.Generic;
 
 namespace Team5.Rebuild.Session
 {
-    // Per-run currency. No Unity, combat, Scene or shared-asset mutation dependencies.
     public sealed class CampaignWallet
     {
         private readonly HashSet<int> rewardedLevels = new HashSet<int>();
@@ -26,6 +25,12 @@ namespace Team5.Rebuild.Session
             rewardedLevels.Add(level);
             Balance = total;
             return true;
+        }
+
+        public void AddBonusGold(int amount)
+        {
+            if (amount <= 0 || IsUnlimited) return;
+            Balance = checked(Balance + amount);
         }
 
         public bool TrySpend(int price)

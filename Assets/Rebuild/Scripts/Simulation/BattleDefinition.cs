@@ -15,7 +15,6 @@ namespace Team5.Rebuild.Simulation
         internal static bool Finite(Vector3 value) => Finite(value.x) && Finite(value.y) && Finite(value.z);
     }
 
-    // Immutable unit stats rolled at creation/summon time. Units cannot be upgraded post-creation.
     public sealed class UnitDefinition
     {
         public float MaxHp { get; }
@@ -28,6 +27,7 @@ namespace Team5.Rebuild.Simulation
         public float AttackInterval { get; }
         public float Defense { get; }
         public float HealPerSecond { get; }
+        public float TowerDamageMultiplier { get; }
 
         public UnitDefinition(
             float maxHp,
@@ -39,7 +39,8 @@ namespace Team5.Rebuild.Simulation
             float defense = 0,
             float healPerSecond = 0.2f,
             UnitRarity rarity = UnitRarity.Common,
-            int level = 1)
+            int level = 1,
+            float towerDamageMultiplier = 1f)
         {
             if (!BattleNumbers.Finite(maxHp) || maxHp <= 0 || !BattleNumbers.Finite(speed) || speed <= 0)
                 throw new ArgumentOutOfRangeException(nameof(maxHp), "HP and speed must be finite and positive.");
@@ -49,6 +50,8 @@ namespace Team5.Rebuild.Simulation
                 throw new ArgumentOutOfRangeException(nameof(role));
             if (!BattleNumbers.Finite(healPerSecond) || healPerSecond < 0)
                 throw new ArgumentOutOfRangeException(nameof(healPerSecond));
+            if (!BattleNumbers.Finite(towerDamageMultiplier) || towerDamageMultiplier <= 0)
+                throw new ArgumentOutOfRangeException(nameof(towerDamageMultiplier));
 
             MaxHp = maxHp;
             Speed = speed;
@@ -60,6 +63,7 @@ namespace Team5.Rebuild.Simulation
             AttackInterval = attackInterval;
             Defense = defense;
             HealPerSecond = healPerSecond;
+            TowerDamageMultiplier = towerDamageMultiplier;
         }
     }
 
@@ -75,9 +79,12 @@ namespace Team5.Rebuild.Simulation
         public float MaxHp { get; }
         public AttackArea Area { get; }
         public float AttackWidth { get; }
+        public bool IsAoe { get; }
+        public int GoldBounty { get; }
 
         public TowerDefinition(int id, Vector3 position, float range, float damage, float attackInterval, TargetRule targetRule,
-            int footprintSize = 1, float maxHp = 20, AttackArea area = AttackArea.Square, float attackWidth = 0.3f)
+            int footprintSize = 1, float maxHp = 20, AttackArea area = AttackArea.Square, float attackWidth = 0.3f,
+            bool isAoe = false, int goldBounty = 20)
         {
             if (!BattleNumbers.Finite(position) || !BattleNumbers.Finite(range) || range < 0 ||
                 !BattleNumbers.Finite(damage) || damage <= 0 || !BattleNumbers.Finite(attackInterval) || attackInterval <= 0)
@@ -97,6 +104,8 @@ namespace Team5.Rebuild.Simulation
             MaxHp = maxHp;
             Area = area;
             AttackWidth = attackWidth;
+            IsAoe = isAoe;
+            GoldBounty = Math.Max(0, goldBounty);
         }
     }
 

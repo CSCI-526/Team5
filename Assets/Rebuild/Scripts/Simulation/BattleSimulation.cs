@@ -5,7 +5,6 @@ using UnityEngine;
 
 namespace Team5.Rebuild.Simulation
 {
-    // Fixed-step battle rules. No scene, input, visual or UI dependencies.
     public sealed class BattleSimulation
     {
         private readonly BattleDefinition definition;
@@ -28,6 +27,8 @@ namespace Team5.Rebuild.Simulation
         public int PendingSpawnCount => definition.UnitCount - SpawnedCount;
         public int KilledCount { get; private set; }
         public int ReachedGoalCount { get; private set; }
+        public int TowersDestroyedCount { get; private set; }
+        public int TowerBountyGoldEarned { get; private set; }
         public int LivesRemaining => Math.Max(0, definition.GoalLives - ReachedGoalCount);
         public int AliveCount => SpawnedCount - KilledCount - ReachedGoalCount;
         public double ElapsedTime => time;
@@ -40,7 +41,9 @@ namespace Team5.Rebuild.Simulation
         public event Action<BattleEndedEvent> BattleEnded;
         public event Action<TowerDamageEvent> TowerDamaged;
         public event Action<int> TowerDied;
+        public event Action<TowerDestroyedEvent> TowerDestroyed;
         public event Action<HealEvent> UnitHealed;
+        public event Action<int> HealerPulsed;
         public event Action FormationChanged;
 
         public sealed class Checkpoint
@@ -68,6 +71,7 @@ namespace Team5.Rebuild.Simulation
             copy.time = time; copy.healTimer = healTimer; copy.projectileSequence = projectileSequence;
             copy.Outcome = Outcome; copy.IsPaused = IsPaused;
             copy.SpawnedCount = SpawnedCount; copy.KilledCount = KilledCount; copy.ReachedGoalCount = ReachedGoalCount;
+            copy.TowersDestroyedCount = TowersDestroyedCount; copy.TowerBountyGoldEarned = TowerBountyGoldEarned;
             return copy;
         }
 
@@ -78,13 +82,12 @@ namespace Team5.Rebuild.Simulation
             Units = units.AsReadOnly(); Towers = towers.AsReadOnly(); Projectiles = projectiles.AsReadOnly();
             if (definition.WalkableCells == null) return;
             walkable = new HashSet<Vector3Int>(definition.WalkableCells);
-            // Empty slots also need clearance because they may receive a member after swapping.
             for (var i = 1; i < definition.Waypoints.Count; i++)
-            for (var slot = 0; slot < 9; slot++)
-                foreach (var cell in FormationClearance.SweptCells(definition.Waypoints[i - 1] + SquadCombatRules.Offset(slot),
-                    definition.Waypoints[i] + SquadCombatRules.Offset(slot)))
-                    if (!walkable.Contains(cell) || HasTowerFootprint(cell))
-                        throw new ArgumentException($"Formation trajectory blocked at {cell}, slot {slot}, segment {i - 1}.");
+                for (var slot = 0; slot < 9; slot++)
+                    foreach (var cell in FormationClearance.SweptCells(definition.Waypoints[i - 1] + SquadCombatRules.Offset(slot),
+                        definition.Waypoints[i] + SquadCombatRules.Offset(slot)))
+                        if (!walkable.Contains(cell) || HasTowerFootprint(cell))
+                            throw new ArgumentException($"Formation trajectory blocked at {cell}, slot {slot}, segment {i - 1}.");
         }
 
         public void SetTowerPosition(int towerId, Vector3 position)
@@ -102,7 +105,6 @@ namespace Team5.Rebuild.Simulation
         }
         public UnitState GetMemberAtSlot(int slotId) => units.Find(unit => unit.IsAlive && unit.SlotId == slotId);
 
-        // destination -> source slot permutation. Stable IDs, HP and cooldowns never change.
         public bool TryApplyFormation(IReadOnlyList<int> sourceSlots)
         {
             if (stepping || !IsPaused || Outcome != BattleOutcome.Running || definition.FormationSize != 3 ||
@@ -200,6 +202,7 @@ namespace Team5.Rebuild.Simulation
                 }
             }
         }
+
         private void Move(UnitState unit, float deltaTime)
         {
             var remaining = unit.Speed * deltaTime;
@@ -215,17 +218,56 @@ namespace Team5.Rebuild.Simulation
             UnitMoved?.Invoke(new UnitMovedEvent(unit));
             if (unit.NextWaypoint < definition.Waypoints.Count) return;
             unit.LifeState = UnitLifeState.ReachedGoal; ReachedGoalCount++;
-            // Terminal state is locked before arrival observers can run.
             if (Objective == BattleObjective.ReachGoal) Outcome = BattleOutcome.Victory;
             UnitReachedGoal?.Invoke(new UnitEndedEvent(unit));
             if (Objective == BattleObjective.ReachGoal) BattleEnded?.Invoke(new BattleEndedEvent(Outcome, KilledCount, ReachedGoalCount));
         }
+
         private void Attack(TowerState tower, float deltaTime)
         {
             if (!tower.IsAlive) { tower.TargetId = null; return; }
             tower.CooldownRemaining = Math.Max(0, tower.CooldownRemaining - deltaTime);
             tower.TargetId = null;
             if (tower.CooldownRemaining > 0.000001f) return;
+
+            // AOE Tower Mode: hits ALL living units inside its coverage area simultaneously
+            if (tower.Definition.IsAoe)
+            {
+                var hitAny = false;
+                foreach (var unit in units)
+                {
+                    if (!unit.IsAlive) continue;
+                    var offset = unit.Position - tower.Position;
+                    if (!SquadCombatRules.Contains(offset, tower.Definition.Area, tower.Definition.Range, tower.Definition.AttackWidth)) continue;
+                    hitAny = true;
+                    tower.TargetId = unit.Id;
+                    TowerAttacked?.Invoke(new TowerAttackEvent(tower, unit));
+                    if (Objective == BattleObjective.DefendGoal)
+                    {
+                        DamageUnit(tower.Id, unit, tower.Definition.Damage);
+                    }
+                    else
+                    {
+                        projectiles.Add(new ProjectileState
+                        {
+                            Id = ++projectileSequence,
+                            SourceId = tower.Id,
+                            TargetKind = ProjectileTargetKind.FormationSlot,
+                            TargetId = unit.SlotId,
+                            Position = tower.Position,
+                            Origin = tower.Position,
+                            Damage = tower.Definition.Damage,
+                            Straight = false,
+                            Range = tower.Definition.Range,
+                            Width = tower.Definition.AttackWidth
+                        });
+                    }
+                }
+                if (hitAny) tower.CooldownRemaining = tower.Definition.AttackInterval;
+                return;
+            }
+
+            // Standard Single-Target Mode
             UnitState target = null;
             var bestDistance = float.MaxValue;
             foreach (var unit in units)
@@ -246,15 +288,23 @@ namespace Team5.Rebuild.Simulation
             if (Objective == BattleObjective.DefendGoal) DamageUnit(tower.Id, target, tower.Definition.Damage);
             else projectiles.Add(new ProjectileState
             {
-                Id = ++projectileSequence, SourceId = tower.Id, TargetKind = ProjectileTargetKind.FormationSlot,
-                TargetId = target.SlotId, Position = tower.Position, Origin = tower.Position, Damage = tower.Definition.Damage,
-                Straight = tower.Definition.Area != AttackArea.Square, Direction = SquadCombatRules.Direction(tower.Definition.Area),
-                Range = tower.Definition.Range, Width = tower.Definition.AttackWidth
+                Id = ++projectileSequence,
+                SourceId = tower.Id,
+                TargetKind = ProjectileTargetKind.FormationSlot,
+                TargetId = target.SlotId,
+                Position = tower.Position,
+                Origin = tower.Position,
+                Damage = tower.Definition.Damage,
+                Straight = tower.Definition.Area != AttackArea.Square,
+                Direction = SquadCombatRules.Direction(tower.Definition.Area),
+                Range = tower.Definition.Range,
+                Width = tower.Definition.AttackWidth
             });
         }
+
         private void AttackTower(UnitState unit, float deltaTime)
         {
-            if (!unit.IsAlive || (unit.Role != UnitRole.Attack && unit.Role != UnitRole.Captain)) return;
+            if (!unit.IsAlive || !SquadCombatRules.CanAttackTowers(unit.Role)) return;
             unit.AttackCooldown = Math.Max(0, unit.AttackCooldown - deltaTime);
             if (unit.AttackCooldown > 0.000001f) return;
             TowerState target = null;
@@ -268,9 +318,18 @@ namespace Team5.Rebuild.Simulation
             }
             if (target == null) return;
             unit.AttackCooldown = unit.Definition.AttackInterval;
-            projectiles.Add(new ProjectileState { Id = ++projectileSequence, SourceId = unit.Id,
-                TargetKind = ProjectileTargetKind.Tower, TargetId = target.Id, Position = unit.Position, Damage = unit.Definition.Damage });
+            var effectiveTowerDamage = unit.Definition.Damage * unit.Definition.TowerDamageMultiplier;
+            projectiles.Add(new ProjectileState
+            {
+                Id = ++projectileSequence,
+                SourceId = unit.Id,
+                TargetKind = ProjectileTargetKind.Tower,
+                TargetId = target.Id,
+                Position = unit.Position,
+                Damage = effectiveTowerDamage
+            });
         }
+
         private void TickProjectiles(float deltaTime)
         {
             foreach (var shot in projectiles)
@@ -314,6 +373,7 @@ namespace Team5.Rebuild.Simulation
                 if (shot.Age >= 5 || (shot.Straight && shot.Travel >= shot.Range)) shot.IsActive = false;
             }
         }
+
         private void DamageUnit(int sourceId, UnitState unit, float rawDamage)
         {
             if (!unit.IsAlive) return;
@@ -323,14 +383,27 @@ namespace Team5.Rebuild.Simulation
             UnitDamaged?.Invoke(new DamageEvent(sourceId, unit, applied));
             if (!unit.IsAlive) UnitDied?.Invoke(new UnitEndedEvent(unit));
         }
+
         private void DamageTower(int sourceId, TowerState tower, float rawDamage)
         {
             if (!tower.IsAlive) return;
             var applied = Math.Min(tower.Hp, rawDamage);
             tower.Hp = Math.Max(0, tower.Hp - applied);
+            // Active suppression: hitting a tower slightly delays its next shot
+            if (tower.IsAlive)
+                tower.CooldownRemaining = Mathf.Min(tower.Definition.AttackInterval, tower.CooldownRemaining + 0.08f);
+
             TowerDamaged?.Invoke(new TowerDamageEvent(sourceId, tower, applied));
-            if (!tower.IsAlive) { tower.TargetId = null; TowerDied?.Invoke(tower.Id); }
+            if (!tower.IsAlive)
+            {
+                tower.TargetId = null;
+                TowersDestroyedCount++;
+                TowerBountyGoldEarned += tower.Definition.GoldBounty;
+                TowerDestroyed?.Invoke(new TowerDestroyedEvent(sourceId, tower));
+                TowerDied?.Invoke(tower.Id);
+            }
         }
+
         private void Heal(float deltaTime)
         {
             healTimer += deltaTime;
@@ -339,9 +412,9 @@ namespace Team5.Rebuild.Simulation
             foreach (var healer in units)
             {
                 if (!healer.IsAlive || healer.Role != UnitRole.Heal) continue;
+                HealerPulsed?.Invoke(healer.Id);
                 foreach (var member in units)
                 {
-                    // Explicit migration decision: eight neighboring slots, no world-distance gate.
                     if (!member.IsAlive || member.SquadId != healer.SquadId || !SquadCombatRules.AreNeighbors(healer.SlotId, member.SlotId)) continue;
                     var amount = Math.Min(member.MaxHp - member.Hp, healer.Definition.HealPerSecond * SquadCombatRules.HealInterval);
                     if (amount <= 0) continue;
@@ -349,6 +422,7 @@ namespace Team5.Rebuild.Simulation
                 }
             }
         }
+
         private void End(BattleOutcome outcome)
         {
             if (Outcome != BattleOutcome.Running) return;

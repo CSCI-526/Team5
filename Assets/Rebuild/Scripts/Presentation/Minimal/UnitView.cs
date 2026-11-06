@@ -1,34 +1,47 @@
 using Team5.Rebuild.Simulation;
 using Team5.Rebuild.Presentation.LegacyUI;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace Team5.Rebuild.Presentation
 {
-    // The root is the foot position; the authored square model uses the formation UI's look.
-    // This observer can only read UnitState; it never advances or changes the simulation.
     public sealed class UnitView : MonoBehaviour
     {
-        public const float LookScale = 2f; // Largest Tank remains 0.88 wide inside one Small Cell.
+        public const float LookScale = 2f;
+        private const int HealRingSegments = 48;
+        private const float HealNeighborRadius = 1.45f; // Covers all 8 neighboring slots in the 3x3 squad
+
         private UnitState state;
         private Vector3 previousPosition;
         private Vector3 currentPosition;
         private double sampleTime;
         private float sampleInterval;
         private MaterialPropertyBlock colors;
+
+        // Animated healing range components
+        private LineRenderer healPerimeterRing;
+        private LineRenderer healWaveRing;
+        private Material healPerimeterMat;
+        private Material healWaveMat;
+        private float healWavePhase;
+        private float healBurstBoost;
+
         public int UnitId => state?.Id ?? 0;
         public UnitState State => state;
+
         public bool TryGetVisibleBounds(out Bounds bounds)
         {
             bounds = default;
             var found = false;
             foreach (var renderer in GetComponentsInChildren<Renderer>())
             {
-                if (!renderer.enabled || !renderer.gameObject.activeInHierarchy) continue;
+                if (!renderer.enabled || !renderer.gameObject.activeInHierarchy || renderer is LineRenderer) continue;
                 if (!found) { bounds = renderer.bounds; found = true; }
                 else bounds.Encapsulate(renderer.bounds);
             }
             return found;
         }
+
         public Vector3 PreviousPosition => previousPosition;
         public Vector3 CurrentPosition => currentPosition;
 
@@ -41,6 +54,99 @@ namespace Team5.Rebuild.Presentation
             sampleInterval = Time.fixedDeltaTime;
             transform.position = currentPosition;
             ApplyAppearance(unit.Role);
+            ConfigureHealingRangeAnimation(unit.Role == UnitRole.Heal);
+        }
+
+        public void TriggerHealBurst()
+        {
+            healWavePhase = 0f;
+            healBurstBoost = 1f;
+        }
+
+        private void ConfigureHealingRangeAnimation(bool isHealer)
+        {
+            if (!isHealer)
+            {
+                if (healPerimeterRing != null) healPerimeterRing.gameObject.SetActive(false);
+                if (healWaveRing != null) healWaveRing.gameObject.SetActive(false);
+                return;
+            }
+
+            if (healPerimeterRing == null)
+            {
+                healPerimeterMat = CreateRingMaterial(new Color(0.25f, 0.95f, 0.50f, 0.45f));
+                healWaveMat = CreateRingMaterial(new Color(0.35f, 1.00f, 0.60f, 0.75f));
+
+                healPerimeterRing = CreateRing("Heal Range Perimeter", healPerimeterMat, 0.035f);
+                healWaveRing = CreateRing("Heal Range Ripple", healWaveMat, 0.055f);
+                SetCirclePositions(healPerimeterRing, HealNeighborRadius);
+            }
+
+            healPerimeterRing.gameObject.SetActive(true);
+            healWaveRing.gameObject.SetActive(true);
+        }
+
+        private LineRenderer CreateRing(string ringName, Material mat, float width)
+        {
+            var go = new GameObject(ringName);
+            go.transform.SetParent(transform, false);
+            go.transform.localPosition = new Vector3(0f, 0.045f, 0f);
+            var lr = go.AddComponent<LineRenderer>();
+            lr.useWorldSpace = false;
+            lr.loop = true;
+            lr.positionCount = HealRingSegments;
+            lr.widthMultiplier = width;
+            lr.sharedMaterial = mat;
+            lr.shadowCastingMode = ShadowCastingMode.Off;
+            lr.receiveShadows = false;
+            return lr;
+        }
+
+        private static void SetCirclePositions(LineRenderer lr, float radius)
+        {
+            var step = 2f * Mathf.PI / HealRingSegments;
+            for (var i = 0; i < HealRingSegments; i++)
+            {
+                var angle = i * step;
+                lr.SetPosition(i, new Vector3(Mathf.Cos(angle) * radius, 0f, Mathf.Sin(angle) * radius));
+            }
+        }
+
+        private static Material CreateRingMaterial(Color color)
+        {
+            var shader = Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default");
+            var mat = new Material(shader) { renderQueue = 3000 };
+            mat.SetColor("_BaseColor", color);
+            mat.color = color;
+            mat.SetFloat("_Surface", 1);
+            mat.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
+            mat.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
+            mat.SetFloat("_ZWrite", 0);
+            mat.SetFloat("_Cull", (float)CullMode.Off);
+            mat.SetOverrideTag("RenderType", "Transparent");
+            mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            return mat;
+        }
+
+        private void UpdateHealingRangeAnimation()
+        {
+            if (state == null || !state.IsAlive || state.Role != UnitRole.Heal || healWaveRing == null) return;
+
+            healBurstBoost = Mathf.MoveTowards(healBurstBoost, 0f, Time.deltaTime * 1.5f);
+            healWavePhase = (healWavePhase + Time.deltaTime / SquadCombatRules.HealInterval) % 1f;
+
+            var radius = Mathf.Lerp(0.25f, HealNeighborRadius, healWavePhase);
+            SetCirclePositions(healWaveRing, radius);
+
+            var waveAlpha = Mathf.Lerp(0.75f + 0.25f * healBurstBoost, 0.0f, healWavePhase * healWavePhase);
+            var waveColor = new Color(0.35f, 1.00f, 0.60f, waveAlpha);
+            healWaveMat.SetColor("_BaseColor", waveColor);
+            healWaveMat.color = waveColor;
+
+            var borderPulse = 0.30f + 0.15f * Mathf.Sin(Time.time * 3.5f) + 0.25f * healBurstBoost;
+            var borderColor = new Color(0.25f, 0.95f, 0.50f, Mathf.Clamp01(borderPulse));
+            healPerimeterMat.SetColor("_BaseColor", borderColor);
+            healPerimeterMat.color = borderColor;
         }
 
         public void ApplyAppearance(UnitRole role)
@@ -117,9 +223,14 @@ namespace Team5.Rebuild.Presentation
 
         private void LateUpdate()
         {
-            // One simulation tick of visual latency; no extrapolation or speed integration.
-            // Use the last sample time, so a paused/ended simulation never oscillates with FixedUpdate.
             Present(sampleInterval > 0 ? (float)((Time.timeAsDouble - sampleTime) / sampleInterval) : 1);
+            UpdateHealingRangeAnimation();
+        }
+
+        private void OnDestroy()
+        {
+            if (healPerimeterMat != null) Destroy(healPerimeterMat);
+            if (healWaveMat != null) Destroy(healWaveMat);
         }
     }
 }

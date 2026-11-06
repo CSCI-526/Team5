@@ -4,7 +4,6 @@ using UnityEngine.Rendering;
 
 namespace Team5.Rebuild.Presentation
 {
-    // Optional read-only observer. No colliders, targeting or combat commands.
     public sealed class TowerRangeView : MonoBehaviour
     {
         private TowerState tower;
@@ -26,7 +25,6 @@ namespace Team5.Rebuild.Presentation
             Refresh();
         }
 
-        // A map preview needs only the authored range configuration, never a running tower.
         public void BindPreview(TowerDefinition definition)
         {
             tower = null;
@@ -42,7 +40,6 @@ namespace Team5.Rebuild.Presentation
                 mesh = new Mesh { name = "Tower Range XZ Quad" };
                 gameObject.AddComponent<MeshFilter>().sharedMesh = mesh;
                 fill = gameObject.AddComponent<MeshRenderer>();
-                // Same alpha values as the original Team5 indicator.
                 fillMaterial = CreateMaterial(new Color(0.25f, 0.55f, 1, 0.15f));
                 borderMaterial = CreateMaterial(new Color(0.25f, 0.55f, 1, 0.7f));
                 fill.sharedMaterial = fillMaterial;
@@ -74,9 +71,22 @@ namespace Team5.Rebuild.Presentation
             var definition = tower != null ? tower.Definition : previewDefinition;
             if (definition == null || fill == null || border == null) return;
             fill.enabled = border.enabled = isActiveAndEnabled && visible && (tower == null || tower.IsAlive);
+
+            // Tint AOE towers orange-red with a subtle pulse
+            if (definition.IsAoe)
+            {
+                var pulse = 0.14f + 0.08f * Mathf.Sin(Time.time * 4f);
+                fillMaterial.SetColor("_BaseColor", new Color(1f, 0.36f, 0.12f, pulse));
+                borderMaterial.SetColor("_BaseColor", new Color(1f, 0.45f, 0.15f, 0.85f));
+            }
+            else
+            {
+                fillMaterial.SetColor("_BaseColor", new Color(0.25f, 0.55f, 1f, 0.15f));
+                borderMaterial.SetColor("_BaseColor", new Color(0.25f, 0.55f, 1f, 0.7f));
+            }
+
             var position = tower != null ? tower.Position : definition.Position;
             var bounds = SquadCombatRules.AreaBounds(position, definition.Area, definition.Range, definition.AttackWidth);
-            // Top of the tower's support surface; a small lift prevents terrain z-fighting.
             transform.SetPositionAndRotation(bounds.center + Vector3.up * 0.035f, Quaternion.identity);
             transform.localScale = Vector3.one;
             if (DisplayBounds != bounds || mesh.vertexCount == 0)

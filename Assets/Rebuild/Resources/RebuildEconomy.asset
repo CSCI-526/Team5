@@ -12,16 +12,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7a63591d082741a8b410729d5fe68f0d, type: 3}
   m_Name: RebuildEconomy
   m_EditorClassIdentifier: Team5.Rebuild.Session::Team5.Rebuild.Session.GameEconomySettings
-  startingGold: 0
+  startingGold: 35
+  baseSummonCost: 30
+  summonCostIncreasePerPull: 15
+  baseTowerBounty: 25
+  aoeTowerBounty: 45
   levelRewards:
   - level: 1
-    gold: 10
-    units:
-    - role: 2
-      count: 1
+    gold: 45
   - level: 2
-    gold: 100
-    units: []
+    gold: 65
   - level: 3
-    gold: 0
-    units: []
+    gold: 90
+  - level: 4
+    gold: 120
+  - level: 5
+    gold: 155
+  - level: 6
+    gold: 195
+  - level: 7
+    gold: 240

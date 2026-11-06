@@ -128239,13 +128239,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Team5.Rebuild.World::Team5.Rebuild.World.BattleTower
   range: 7.5
-  damage: 1
+  damage: 1.5
   attackInterval: 1
   targetRule: 0
   usesMacroFootprint: 1
-  maxHp: 20
+  maxHp: 30
   attackArea: 2
   attackWidth: 0.9
+  isAoe: 0
+  goldBounty: 25
 --- !u!4 &9000011134
 Transform:
   m_ObjectHideFlags: 0
@@ -128383,13 +128385,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Team5.Rebuild.World::Team5.Rebuild.World.BattleTower
   range: 3.5
-  damage: 1
+  damage: 1.5
   attackInterval: 1
   targetRule: 0
   usesMacroFootprint: 1
-  maxHp: 20
+  maxHp: 30
   attackArea: 0
   attackWidth: 0.9
+  isAoe: 0
+  goldBounty: 25
 --- !u!4 &9000011148
 Transform:
   m_ObjectHideFlags: 0
@@ -128527,13 +128531,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Team5.Rebuild.World::Team5.Rebuild.World.BattleTower
   range: 8.25
-  damage: 1
+  damage: 1.5
   attackInterval: 1
   targetRule: 0
   usesMacroFootprint: 1
-  maxHp: 20
+  maxHp: 30
   attackArea: 4
   attackWidth: 0.9
+  isAoe: 0
+  goldBounty: 25
 --- !u!4 &9000011155
 Transform:
   m_ObjectHideFlags: 0
@@ -128671,13 +128677,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Team5.Rebuild.World::Team5.Rebuild.World.BattleTower
   range: 7.5
-  damage: 1
+  damage: 1.5
   attackInterval: 1
   targetRule: 0
   usesMacroFootprint: 1
-  maxHp: 20
+  maxHp: 30
   attackArea: 2
   attackWidth: 0.9
+  isAoe: 0
+  goldBounty: 25
 --- !u!4 &9000011162
 Transform:
   m_ObjectHideFlags: 0
@@ -128815,13 +128823,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Team5.Rebuild.World::Team5.Rebuild.World.BattleTower
   range: 8.25
-  damage: 1
+  damage: 1.5
   attackInterval: 1
   targetRule: 0
   usesMacroFootprint: 1
-  maxHp: 20
+  maxHp: 30
   attackArea: 3
   attackWidth: 0.9
+  isAoe: 0
+  goldBounty: 25
 --- !u!4 &9000011183
 Transform:
   m_ObjectHideFlags: 0
@@ -128959,13 +128969,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Team5.Rebuild.World::Team5.Rebuild.World.BattleTower
   range: 3.5
-  damage: 1
+  damage: 1.5
   attackInterval: 1
   targetRule: 0
   usesMacroFootprint: 1
-  maxHp: 20
+  maxHp: 30
   attackArea: 0
   attackWidth: 0.9
+  isAoe: 0
+  goldBounty: 25
 --- !u!4 &9000011197
 Transform:
   m_ObjectHideFlags: 0

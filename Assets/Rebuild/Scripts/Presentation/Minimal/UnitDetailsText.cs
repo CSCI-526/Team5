@@ -13,10 +13,10 @@ namespace Team5.Rebuild.Presentation
             var text = new StringBuilder();
             text.AppendLine($"Role: {unit.Role.ToString().ToLowerInvariant()} (Lv.{stats.Level} {stats.Rarity})");
             text.AppendLine(FormattableString.Invariant($"HP: {unit.Hp:0.##} / {unit.MaxHp:0.##}"));
-            text.AppendLine(FormattableString.Invariant($"Attack: {stats.Damage:0.##}"));
+            text.AppendLine(FormattableString.Invariant($"Attack: {stats.Damage:0.##} ({stats.TowerDamageMultiplier:0.##}x vs Towers)"));
             text.AppendLine(FormattableString.Invariant($"Defense: {stats.Defense * 100:0.##}% damage reduction"));
             text.AppendLine(FormattableString.Invariant($"Move speed: {unit.Speed:0.##} units/s"));
-            if (unit.Role == UnitRole.Attack || unit.Role == UnitRole.Captain)
+            if (SquadCombatRules.CanAttackTowers(unit.Role))
             {
                 text.AppendLine(FormattableString.Invariant($"Attack range: {stats.Range:0.##}"));
                 text.AppendLine(FormattableString.Invariant($"Attack interval: {stats.AttackInterval:0.##} s"));
