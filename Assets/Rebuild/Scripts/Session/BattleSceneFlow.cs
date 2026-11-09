@@ -104,6 +104,9 @@ namespace Team5.Rebuild.Session
         public static bool IsRunActive => current != null;
         public static int NextBattleLevelNumber => current != null ? current.nextBattleLevelNumber : 1;
         public static int CurrentLevelLivesRemaining => System.Math.Max(0, BattleSession.DefaultLivesPerLevel - (current != null ? current.failedAttempts : 0));
+        // Raised after BeginRun queues the first scene, and once per settled non-test attempt with its final state.
+        public static event System.Action RunStarted;
+        public static event System.Action<BattleOutcome, int> LevelSettled;
 
         public static IReadOnlyList<UnitDefinition> OpenSummonOffer()
         {
@@ -182,6 +185,7 @@ namespace Team5.Rebuild.Session
             LastOutcome = BattleOutcome.Running;
             CompletedLevelNumber = 0;
             flow.QueueScene(test ? TestUpdateScene : BattleScene);
+            RunStarted?.Invoke();
         }
 
         public static void ContinueToUpgrade()
@@ -310,6 +314,12 @@ namespace Team5.Rebuild.Session
         {
             if (settled || loading || outcome == BattleOutcome.Running) return;
             settled = true;
+            ApplySettlement(outcome);
+            if (!testRun) LevelSettled?.Invoke(outcome, CompletedLevelNumber);
+        }
+
+        private void ApplySettlement(BattleOutcome outcome)
+        {
             LastOutcome = outcome;
             LastRewardGold = 0;
             LastStageClearGold = 0;

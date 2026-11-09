@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Team5.Rebuild.Analytics;
 using Team5.Rebuild.Session;
 using Team5.Rebuild.Simulation;
 using TMPro;
@@ -41,6 +42,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         private void Start()
         {
             Preparation = BattleSceneFlow.PrepareSquad(roster);
+            PrepAnalytics.Enter(Preparation);
             screen = new GameObject("Squad Screen", typeof(RectTransform));
             LegacyUiKit.CreateCanvas(screen, 10, new Vector2(1280, 720), 0);
             var root = (RectTransform)screen.transform;
@@ -135,6 +137,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         {
             if (levelPreview != null || claimOverlay != null || BattleSceneFlow.IsOutOfLives || startPending) return;
             levelPreview = LegacyNextLevelPreview.Open(this);
+            if (levelPreview != null) GameAnalytics.Track("map_preview_open");
         }
 
         public void OnNextLevelPreviewClosed()
@@ -277,6 +280,8 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                 return;
             }
             warehouseHint.text = $"Dismissed {LegacyUnitLooks.Name(member.Unit.Role)} Lv.{member.Unit.Level}.";
+            GameAnalytics.Track("unit_dismiss", ("role", member.Unit.Role.ToString()), ("rarity", member.Unit.Rarity.ToString()),
+                ("unit_level", member.Unit.Level));
         }
 
         private void Refresh()

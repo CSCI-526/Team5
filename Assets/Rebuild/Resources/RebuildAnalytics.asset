@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 33bcdca67683b4195a5ff66595dd1153, type: 3}
+  m_Name: RebuildAnalytics
+  m_EditorClassIdentifier: Team5.Rebuild.Analytics::Team5.Rebuild.Analytics.AnalyticsSettings
+  endpointUrl: 
+  enabled: 1
+  sendFromEditor: 0
+  logToConsole: 1
+  buildLabel: beta
+  flushIntervalSeconds: 5
