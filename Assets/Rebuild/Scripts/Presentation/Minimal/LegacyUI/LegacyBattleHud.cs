@@ -1,3 +1,4 @@
+using Team5.Rebuild.Analytics;
 using Team5.Rebuild.Session;
 using Team5.Rebuild.Simulation;
 using TMPro;
@@ -160,23 +161,29 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         {
             if (bound == null || bound.Outcome != BattleOutcome.Running || HasOpenEditor || TutorialOwnsPause) return;
             bound.SetPaused(!bound.IsPaused);
+            GameAnalytics.TrackBattle("pause_toggle", ("paused", bound.IsPaused));
             Refresh();
         }
         // Same method names as old persistent UnityEvents; only the receiver changes.
         public void SetSpeedFromSlider(float value)
         {
             var index = Mathf.RoundToInt(value);
+            var previous = session.PlaybackSpeed;
             session.SetPlaybackSpeed(Mathf.Clamp(index + 1, 1, 3));
+            if (session.PlaybackSpeed != previous)
+                GameAnalytics.TrackBattle("speed_change", ("from", previous), ("to", session.PlaybackSpeed));
         }
         public void OpenSquadEditor()
         {
             if (!CanEditFormation) return;
             editor = LegacyFormationEditor.Open(this, bound); Refresh();
+            GameAnalytics.TrackBattle("formation_open", ("source", "captain_skill"));
         }
         public LegacyFormationEditor OpenSquadEditorInPanel(RectTransform panel)
         {
             if (!CanEditFormation) return null;
             editor = LegacyFormationEditor.Open(this, bound, panel); Refresh();
+            GameAnalytics.TrackBattle("formation_open", ("source", "squad_button"));
             return editor;
         }
         private void EnsureLevelLabel()

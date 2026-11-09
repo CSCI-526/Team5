@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Team5.Rebuild.Analytics;
 using Team5.Rebuild.Session;
 using Team5.Rebuild.Simulation;
 using TMPro;
@@ -183,6 +184,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             GlowWorld(session.Route.Cells[session.Route.Cells.Count - 1].transform);
             Show(TotalSteps, "REACH THE GOAL TO WIN!", "\nGet your Captain to the end of the road to win.", true);
             yield return WaitForNext();
+            if (Running) TutorialAnalytics.Complete();
             Finish();
         }
 
@@ -263,7 +265,11 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             next = false;
         }
         public void Continue() => next = true;
-        public void Skip() => StopTutorial();
+        public void Skip()
+        {
+            if (routine != null) TutorialAnalytics.Skip(CurrentStep);
+            StopTutorial();
+        }
         [ContextMenu("Replay Level 1 Tutorial")]
         public void Replay()
         {
@@ -412,6 +418,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         {
             checkpointStep = step; checkpointHeading = heading; checkpointMessage = message; checkpointResult = formationResult;
             session.CaptureTutorialCheckpoint(wasPaused);
+            TutorialAnalytics.Step(step, TotalSteps, heading);
             CurrentStep = step; next = false; ui.SetActive(true); banner.gameObject.SetActive(true);
             title.text = $"{step}/{TotalSteps} - {heading}"; body.text = message;
             LayoutBanner(!modal);

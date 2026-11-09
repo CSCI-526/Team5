@@ -1,3 +1,4 @@
+using Team5.Rebuild.Analytics;
 using Team5.Rebuild.Session;
 using TMPro;
 using UnityEngine;
@@ -48,6 +49,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         {
             var button = LegacyUiKit.CreateButton(parent, name, position, new Vector2(320, 58), LegacyUiKit.NodeBlueColor, 6);
             LegacyUiKit.CreateText(button.transform, "Label", label, Vector2.zero, new Vector2(310, 54), 21, Color.white, FontStyles.Bold);
+            button.onClick.AddListener(() => GameAnalytics.Track("recovery_choice", ("choice", name.ToLowerInvariant())));
             button.onClick.AddListener(action);
             return button;
         }

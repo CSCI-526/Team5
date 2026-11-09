@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Team5.Rebuild.Analytics;
 using Team5.Rebuild.Presentation.LegacyUI;
 using Team5.Rebuild.Simulation;
 using Team5.Rebuild.Session;
@@ -91,6 +92,7 @@ namespace Team5.Rebuild.Presentation
                 !owner.TryGetView(memberId, out var view) || view == null || view.State == null || !view.State.IsAlive ||
                 !view.TryGetVisibleBounds(out var bounds)) return false;
             EndSquadEdit();
+            var reselected = selected == view.State;
             if (hasCameraSnapshot && focusCamera != camera) CloseImmediately();
             if (!hasCameraSnapshot)
             {
@@ -117,6 +119,9 @@ namespace Team5.Rebuild.Presentation
             if (inspectionSession != null && inspectionSession != owner.Session) inspectionSession.SetUnitInspectionActive(false);
             inspectionSession = owner.Session;
             inspectionSession.SetUnitInspectionActive(true);
+            if (!reselected)
+                GameAnalytics.TrackBattle("unit_inspect", ("role", selected.Role.ToString()), ("rarity", selected.Definition.Rarity.ToString()),
+                    ("unit_level", selected.Definition.Level), ("slot", selected.SlotId));
             return true;
         }
 
@@ -294,6 +299,8 @@ namespace Team5.Rebuild.Presentation
         private void ClickUnitSkill(int index)
         {
             if (selected == null || !selected.IsAlive) return;
+            GameAnalytics.TrackBattle("skill_click", ("role", selected.Role.ToString()), ("skill_index", index),
+                ("assigned", index == 0 && selected.Role == UnitRole.Captain));
             if (index == 0 && selected.Role == UnitRole.Captain)
             {
                 if (battleHud != null && owner != null && battleHud.Session == owner.Session && battleHud.CanEditFormation)

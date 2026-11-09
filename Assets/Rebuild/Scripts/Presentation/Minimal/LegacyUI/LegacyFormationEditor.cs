@@ -1,3 +1,4 @@
+using Team5.Rebuild.Analytics;
 using Team5.Rebuild.Simulation;
 using TMPro;
 using UnityEngine;
@@ -56,14 +57,21 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         }
         public bool ApplyAndResume()
         {
-            if (owner.Session.Simulation != simulation || !simulation.TryApplyFormation(grid.CopySourceSlots()))
-            { error.text = "Formation cannot be applied."; return false; }
+            var sourceSlots = grid.CopySourceSlots();
+            var moved = BattleAnalytics.MovedMembers(simulation, sourceSlots);
+            if (owner.Session.Simulation != simulation || !simulation.TryApplyFormation(sourceSlots))
+            {
+                GameAnalytics.TrackBattle("formation_edit", ("result", "rejected"), ("members_moved", 0));
+                error.text = "Formation cannot be applied."; return false;
+            }
+            GameAnalytics.TrackBattle("formation_edit", ("result", "applied"), ("members_moved", moved));
             simulation.SetPaused(wasPaused);
             gameObject.SetActive(false); Destroy(gameObject); return true;
         }
         public void CancelAndClose()
         {
             if (owner != null && owner.Session.Simulation == simulation) simulation.SetPaused(wasPaused);
+            GameAnalytics.TrackBattle("formation_edit", ("result", "cancel"), ("members_moved", 0));
             gameObject.SetActive(false); Destroy(gameObject);
         }
         // Removing a view must not change the pause or battle state.

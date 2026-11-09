@@ -1,3 +1,4 @@
+using Team5.Rebuild.Analytics;
 using Team5.Rebuild.Session;
 using Team5.Rebuild.Simulation;
 using TMPro;
@@ -36,7 +37,15 @@ namespace Team5.Rebuild.Presentation.LegacyUI
 
             var cancel = LegacyUiKit.CreateButton(host.transform, "Cancel", new Vector2(0, -255), new Vector2(240, 55), LegacyUiKit.PanelLineColor, 6);
             LegacyUiKit.CreateText(cancel.transform, "Label", "CANCEL", Vector2.zero, new Vector2(230, 50), 23, Color.white, FontStyles.Bold);
-            cancel.onClick.AddListener(view.Close);
+            cancel.onClick.AddListener(() =>
+            {
+                GameAnalytics.Track("summon_cancel", ("price", shop.NextPrice), ("gold", BattleSceneFlow.GoldBalance));
+                view.Close();
+            });
+            GameAnalytics.Track("summon_offer", ("price", shop.NextPrice), ("gold", BattleSceneFlow.GoldBalance),
+                ("offer_0", PrepAnalytics.Describe(offer.Count > 0 ? offer[0] : null)),
+                ("offer_1", PrepAnalytics.Describe(offer.Count > 1 ? offer[1] : null)),
+                ("offer_2", PrepAnalytics.Describe(offer.Count > 2 ? offer[2] : null)));
             return view;
         }
 
@@ -55,7 +64,13 @@ namespace Team5.Rebuild.Presentation.LegacyUI
 
             button.onClick.AddListener(() =>
             {
-                if (BattleSceneFlow.TrySummonUnit(index)) Close();
+                var price = shop.NextPrice;
+                var gold = BattleSceneFlow.GoldBalance;
+                if (!BattleSceneFlow.TrySummonUnit(index)) return;
+                GameAnalytics.Track("summon_purchase", ("chosen_index", index), ("role", rolledUnit.Role.ToString()),
+                    ("rarity", rolledUnit.Rarity.ToString()), ("unit_level", rolledUnit.Level), ("price", price),
+                    ("gold_before", gold), ("gold_after", BattleSceneFlow.GoldBalance));
+                Close();
             });
         }
 
