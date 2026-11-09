@@ -4,6 +4,14 @@ The game sends flat JSON events to a Google Apps Script web app. The script appe
 each event to a tab of one Google Sheet, one tab per event name. The event schema
 and hook points are in `Assets/Rebuild/Analytics.md`.
 
+## Live deployment
+
+- Sheet: "Team5 Analytics", owned by mvardhan@usc.edu. Ask for access:
+  https://docs.google.com/spreadsheets/d/1Jz684GuSClN8d1kKQr4n55z5hveZOdn9a-PZaH38yko
+- The web app URL is already set in `RebuildAnalytics.asset`.
+- To change the script without changing the URL, ask the owner to use
+  Deploy > Manage deployments > Edit > New version.
+
 ## Deploy
 
 1. Create a Google Sheet (for example "Team5 Analytics").

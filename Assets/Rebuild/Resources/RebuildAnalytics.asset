@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 33bcdca67683b4195a5ff66595dd1153, type: 3}
   m_Name: RebuildAnalytics
   m_EditorClassIdentifier: Team5.Rebuild.Analytics::Team5.Rebuild.Analytics.AnalyticsSettings
-  endpointUrl: 
+  endpointUrl: https://script.google.com/macros/s/AKfycbyCmNlmRefBpMs2cobuUcgWyy8Xs7tXTmHYCg2y96XkieE33-j5B3RCcQXgyhrLtSIVgg/exec
   enabled: 1
   sendFromEditor: 0
   logToConsole: 1
