@@ -35,11 +35,6 @@ namespace Team5.Rebuild.Presentation
         private RectTransform panel;
         private TMP_Text details, heading, hint;
         private LegacyUnitIconUI icon;
-        private RectTransform unitSkills;
-        private readonly Button[] skillButtons = new Button[3];
-        private readonly TMP_Text[] skillLabels = new TMP_Text[3];
-        private TMP_Text skillFeedback;
-        private LegacyBattleHud battleHud;
         private readonly List<RaycastResult> uiHits = new List<RaycastResult>();
         public UnitState SelectedUnit => selected;
         public TMP_Text DetailsLabel => details;
@@ -110,7 +105,6 @@ namespace Team5.Rebuild.Presentation
             focusOrthoSize = Mathf.Max(1.5f, savedOrthoSize * 0.4f) * 2f;
             restoring = false;
             EnsurePanel();
-            skillFeedback.text = string.Empty;
             uiRoot.SetActive(true);
             details.gameObject.SetActive(true);
             hint.text = "Battle speed: 0.1x  |  Esc / X to close";
@@ -138,10 +132,10 @@ namespace Team5.Rebuild.Presentation
                 savedOrthoSize = camera.orthographicSize; hasCameraSnapshot = true;
             }
             selected = null; selectedView = null; selectedSimulation = owner.Session.Simulation;
-            squadSelected = true; restoring = false; battleHud = hud;
+            squadSelected = true; restoring = false;
             EnsurePanel(); uiRoot.SetActive(true);
             heading.text = "SQUAD 1";
-            details.gameObject.SetActive(false); unitSkills.gameObject.SetActive(false);
+            details.gameObject.SetActive(false);
             hint.text = "Battle paused  |  Esc / X to cancel";
             UnitState captain = null;
             foreach (var unit in selectedSimulation.Units)
@@ -222,12 +216,12 @@ namespace Team5.Rebuild.Presentation
             focusPoint = bounds.center;
             var extent = Vector3.zero;
             for (var x = -1; x <= 1; x += 2)
-            for (var y = -1; y <= 1; y += 2)
-            for (var z = -1; z <= 1; z += 2)
-            {
-                var corner = Quaternion.Inverse(savedRotation) * Vector3.Scale(bounds.extents, new Vector3(x, y, z));
-                extent = Vector3.Max(extent, new Vector3(Mathf.Abs(corner.x), Mathf.Abs(corner.y), Mathf.Abs(corner.z)));
-            }
+                for (var y = -1; y <= 1; y += 2)
+                    for (var z = -1; z <= 1; z += 2)
+                    {
+                        var corner = Quaternion.Inverse(savedRotation) * Vector3.Scale(bounds.extents, new Vector3(x, y, z));
+                        extent = Vector3.Max(extent, new Vector3(Mathf.Abs(corner.x), Mathf.Abs(corner.y), Mathf.Abs(corner.z)));
+                    }
             var halfHeight = Mathf.Max(extent.y / 0.85f, extent.x / (focusCamera.aspect * 0.42f));
             focusOrthoSize = Mathf.Max(2, halfHeight);
             focusDepth = focusCamera.orthographic
@@ -285,29 +279,7 @@ namespace Team5.Rebuild.Presentation
         {
             heading.text = $"{LegacyUnitLooks.Name(selected.Role)}  #{selected.MemberId}";
             details.text = UnitDetailsText.Format(selected);
-            var isCaptain = selected.Role == UnitRole.Captain;
-            unitSkills.gameObject.SetActive(true);
-            details.rectTransform.offsetMin = new Vector2(32, 220);
-            if (battleHud == null) battleHud = FindFirstObjectByType<LegacyBattleHud>();
-            skillLabels[0].text = isCaptain ? "Edit\nFormation" : "Skill 1";
-            skillButtons[0].targetGraphic.color = isCaptain ? new Color(0.56f, 0.42f, 0.20f) : LegacyUiKit.PanelLineColor;
-            skillButtons[0].interactable = selected.IsAlive && (!isCaptain ||
-                (battleHud != null && owner != null && battleHud.Session == owner.Session && battleHud.CanEditFormation));
-            skillButtons[1].interactable = skillButtons[2].interactable = selected.IsAlive;
-        }
-
-        private void ClickUnitSkill(int index)
-        {
-            if (selected == null || !selected.IsAlive) return;
-            GameAnalytics.TrackBattle("skill_click", ("role", selected.Role.ToString()), ("skill_index", index),
-                ("assigned", index == 0 && selected.Role == UnitRole.Captain));
-            if (index == 0 && selected.Role == UnitRole.Captain)
-            {
-                if (battleHud != null && owner != null && battleHud.Session == owner.Session && battleHud.CanEditFormation)
-                { battleHud.OpenSquadEditor(); skillFeedback.text = "Edit Formation"; }
-                return;
-            }
-            skillFeedback.text = $"Skill {index + 1}: not assigned yet";
+            details.rectTransform.offsetMin = new Vector2(32, 60);
         }
 
         public void CloseInspection()
@@ -363,28 +335,6 @@ namespace Team5.Rebuild.Presentation
             details.rectTransform.offsetMin = new Vector2(32, 60);
             details.rectTransform.offsetMax = new Vector2(-28, -135);
             details.lineSpacing = 12;
-            unitSkills = LegacyUiKit.CreateRect(panel, "Unit Skills", Vector2.zero, new Vector2(336, 136));
-            unitSkills.anchorMin = unitSkills.anchorMax = unitSkills.pivot = Vector2.zero;
-            unitSkills.anchoredPosition = new Vector2(32, 80);
-            for (var i = 0; i < skillButtons.Length; i++)
-            {
-                var index = i;
-                var button = LegacyUiKit.CreateButton(unitSkills, "Unit Skill " + (i + 1), Vector2.zero,
-                    new Vector2(96, 96), i == 0 ? new Color(0.56f, 0.42f, 0.20f) : LegacyUiKit.PanelLineColor, 0);
-                var rect = (RectTransform)button.transform;
-                rect.anchorMin = rect.anchorMax = rect.pivot = Vector2.zero;
-                rect.anchoredPosition = new Vector2(i * 112, 36);
-                var label = LegacyUiKit.CreateText(button.transform, "Label", i == 0 ? "Edit\nFormation" : "Skill " + (i + 1),
-                    Vector2.zero, new Vector2(88, 88), 17, LegacyUiKit.TextColor, FontStyles.Bold);
-                label.textWrappingMode = TextWrappingModes.Normal;
-                skillLabels[i] = label;
-                button.onClick.AddListener(() => ClickUnitSkill(index));
-                skillButtons[i] = button;
-            }
-            skillFeedback = LegacyUiKit.CreateText(unitSkills, "Skill Feedback", "", Vector2.zero,
-                new Vector2(336, 28), 15, LegacyUiKit.MutedColor);
-            skillFeedback.rectTransform.anchorMin = skillFeedback.rectTransform.anchorMax = skillFeedback.rectTransform.pivot = Vector2.zero;
-            skillFeedback.rectTransform.anchoredPosition = Vector2.zero;
             hint = LegacyUiKit.CreateText(panel, "Close Hint", "Battle speed: 0.1x  |  Esc / X to close", Vector2.zero,
                 new Vector2(500, 28), 16, LegacyUiKit.MutedColor);
             hint.rectTransform.anchorMin = hint.rectTransform.anchorMax = new Vector2(0.5f, 0);
