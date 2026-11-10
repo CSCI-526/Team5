@@ -2,6 +2,7 @@ using Team5.Rebuild.Simulation;
 using Team5.Rebuild.Presentation.LegacyUI;
 using UnityEngine;
 using UnityEngine.Rendering;
+using TMPro;
 
 namespace Team5.Rebuild.Presentation
 {
@@ -10,6 +11,8 @@ namespace Team5.Rebuild.Presentation
         public const float LookScale = 2f;
         private const int HealRingSegments = 48;
         private const float HealNeighborRadius = 1.45f; // Covers all 8 neighboring slots in the 3x3 squad
+        private const float LevelBadgeWidth = 32f;
+        private const float LevelBadgeToUnitWidth = 0.6f;
 
         private UnitState state;
         private Vector3 previousPosition;
@@ -17,6 +20,62 @@ namespace Team5.Rebuild.Presentation
         private double sampleTime;
         private float sampleInterval;
         private MaterialPropertyBlock colors;
+        private RectTransform levelBadge;
+        private RectTransform levelBadgeLayer;
+
+        public void CreateLevelBadge(RectTransform layer)
+        {
+            if (levelBadge != null) Destroy(levelBadge.gameObject);
+            levelBadgeLayer = layer;
+            var background = LegacyUiKit.CreateImage(layer, "Unit Level " + UnitId, Vector2.zero,
+                new Vector2(LevelBadgeWidth, 17), new Color(0.035f, 0.045f, 0.065f, 0.94f), 3);
+            levelBadge = background.rectTransform;
+            levelBadge.pivot = Vector2.one;
+            var label = LegacyUiKit.CreateText(levelBadge, "Level", $"Lv.{state.Definition.Level}",
+                Vector2.zero, Vector2.zero, 11, Color.white, FontStyles.Bold);
+            LegacyUiKit.Stretch(label.rectTransform);
+            label.rectTransform.offsetMin = new Vector2(2, 1);
+            label.rectTransform.offsetMax = new Vector2(-2, -1);
+            label.enableAutoSizing = true;
+            label.fontSizeMin = 8;
+            label.fontSizeMax = 11;
+            levelBadge.gameObject.SetActive(false);
+        }
+
+        private void UpdateLevelBadge()
+        {
+            if (levelBadge == null || levelBadgeLayer == null) return;
+            var camera = Camera.main;
+            if (state == null || !state.IsAlive || camera == null || !TryGetVisibleBounds(out var bounds))
+            { levelBadge.gameObject.SetActive(false); return; }
+            levelBadge.gameObject.SetActive(true);
+            var right = float.MinValue;
+            var left = float.MaxValue;
+            var top = float.MinValue;
+            for (var z = -1; z <= 1; z += 2)
+            for (var y = -1; y <= 1; y += 2)
+            for (var x = -1; x <= 1; x += 2)
+            {
+                var point = camera.WorldToScreenPoint(bounds.center + Vector3.Scale(bounds.extents, new Vector3(x, y, z)));
+                if (point.z <= 0) { levelBadge.gameObject.SetActive(false); return; }
+                right = Mathf.Max(right, point.x);
+                left = Mathf.Min(left, point.x);
+                top = Mathf.Max(top, point.y);
+            }
+            var center = camera.WorldToViewportPoint(bounds.center);
+            if (center.x < 0 || center.x > 1 || center.y < 0 || center.y > 1)
+            { levelBadge.gameObject.SetActive(false); return; }
+            var canvasScale = levelBadgeLayer.GetComponentInParent<Canvas>().scaleFactor;
+            // Match the projected model width rather than a fixed screen/font size.
+            // Scale the whole badge so text, padding, background and offsets stay proportional.
+            var badgeScale = (right - left) * LevelBadgeToUnitWidth / (LevelBadgeWidth * canvasScale);
+            levelBadge.localScale = Vector3.one * badgeScale;
+            var pixelScale = badgeScale * canvasScale;
+            // Sit just inside the upper-right corner, leaving the health bar above it clear.
+            var screen = new Vector2(right + 3 * pixelScale, top - 2 * pixelScale);
+            if (RectTransformUtility.ScreenPointToLocalPointInRectangle(levelBadgeLayer, screen, null, out var local))
+                levelBadge.anchoredPosition = local;
+        }
 
         // Animated healing range components
         private LineRenderer healPerimeterRing;
@@ -225,10 +284,17 @@ namespace Team5.Rebuild.Presentation
         {
             Present(sampleInterval > 0 ? (float)((Time.timeAsDouble - sampleTime) / sampleInterval) : 1);
             UpdateHealingRangeAnimation();
+            UpdateLevelBadge();
+        }
+
+        private void OnDisable()
+        {
+            if (levelBadge != null) levelBadge.gameObject.SetActive(false);
         }
 
         private void OnDestroy()
         {
+            if (levelBadge != null) Destroy(levelBadge.gameObject);
             if (healPerimeterMat != null) Destroy(healPerimeterMat);
             if (healWaveMat != null) Destroy(healWaveMat);
         }

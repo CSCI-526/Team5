@@ -69,10 +69,18 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             if (model != null)
             {
                 var renderers = model.GetComponentsInChildren<Renderer>();
-                if (renderers.Length > 0)
+                var bounds = default(Bounds);
+                var found = false;
+                foreach (var renderer in renderers)
                 {
-                    var bounds = renderers[0].bounds;
-                    foreach (var renderer in renderers) bounds.Encapsulate(renderer.bounds);
+                    // Healing range rings are effects, not part of the unit's body.
+                    // Match UnitView.TryGetVisibleBounds so badges and HP use the same silhouette.
+                    if (!renderer.enabled || !renderer.gameObject.activeInHierarchy || renderer is LineRenderer) continue;
+                    if (!found) { bounds = renderer.bounds; found = true; }
+                    else bounds.Encapsulate(renderer.bounds);
+                }
+                if (found)
+                {
                     var top = float.MinValue;
                     for (var z = -1; z <= 1; z += 2)
                     for (var y = -1; y <= 1; y += 2)

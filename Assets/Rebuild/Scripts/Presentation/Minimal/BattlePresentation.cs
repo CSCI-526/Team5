@@ -15,6 +15,7 @@ namespace Team5.Rebuild.Presentation
         private readonly List<TowerRangeView> ranges = new List<TowerRangeView>();
         private BattleSimulation simulation;
         private BattleUnitInspection inspection;
+        private RectTransform levelBadgeLayer;
         public BattleSession Session => session;
         public UnitView UnitPrefab => unitPrefab;
         public int ViewCount => views.Count;
@@ -52,6 +53,12 @@ namespace Team5.Rebuild.Presentation
             Unbind();
             ClearViews();
             ClearRanges();
+            if (levelBadgeLayer != null)
+            {
+                levelBadgeLayer.gameObject.SetActive(false);
+                Destroy(levelBadgeLayer.gameObject);
+                levelBadgeLayer = null;
+            }
         }
 
         private void Bind(BattleSimulation next)
@@ -109,6 +116,17 @@ namespace Team5.Rebuild.Presentation
             var view = Instantiate(unitPrefab, transform);
             view.name = $"Unit View {unit.Id}";
             view.Bind(unit);
+            if (levelBadgeLayer == null)
+            {
+                var host = new GameObject("Unit Level Badges", typeof(RectTransform));
+                host.transform.SetParent(transform, false);
+                var canvas = LegacyUI.LegacyUiKit.CreateCanvas(host, 5, new Vector2(1280, 720), 0.5f);
+                // Informational labels must never intercept battlefield clicks or drags.
+                var raycaster = host.GetComponent<UnityEngine.UI.GraphicRaycaster>();
+                raycaster.enabled = false;
+                levelBadgeLayer = (RectTransform)canvas.transform;
+            }
+            view.CreateLevelBadge(levelBadgeLayer);
             views.Add(unit.Id, view);
         }
 
