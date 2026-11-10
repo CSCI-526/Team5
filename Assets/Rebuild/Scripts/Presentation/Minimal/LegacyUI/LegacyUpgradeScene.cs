@@ -27,6 +27,8 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         private Button previewButton;
         private LegacyNextLevelPreview levelPreview;
         private bool startPending;
+        private GameObject dismissOverlay;
+        private int pendingDismissMemberId;
         private readonly Dictionary<int, CanvasGroup> cardGroups = new Dictionary<int, CanvasGroup>();
         private readonly Dictionary<int, TMP_Text> cardStatuses = new Dictionary<int, TMP_Text>();
 
@@ -95,7 +97,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             claimLabel = LegacyUiKit.CreateText(claimButton.transform, "Label", "SUMMON UNIT", Vector2.zero, new Vector2(320, 54), 22, Color.white, FontStyles.Bold);
             claimButton.onClick.AddListener(OpenClaimCards);
 
-            warehouseHint = LegacyUiKit.CreateText(root, "Warehouse Hint", "Drag units to squad  |  Right-click unit to dismiss",
+            warehouseHint = LegacyUiKit.CreateText(root, "Warehouse Hint", "Drag units to squad  |  Click X on a card to dismiss",
                 new Vector2(-165, -115), new Vector2(780, 26), 16, LegacyUiKit.MutedColor);
 
             Grid = LegacyFormationGrid.CreateForPreparation(root, root, Preparation);
@@ -120,13 +122,13 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             if (startGameButton != null && Preparation != null)
                 startGameButton.interactable = CanStartWave && levelPreview == null;
             if (previewButton != null)
-                previewButton.interactable = levelPreview == null && claimOverlay == null && !BattleSceneFlow.IsOutOfLives && !startPending;
+                previewButton.interactable = levelPreview == null && claimOverlay == null && dismissOverlay == null && !BattleSceneFlow.IsOutOfLives && !startPending;
         }
 
         public bool CanStartWave =>
-            Preparation != null && Preparation.CanStart && !BattleSceneFlow.IsOutOfLives && claimOverlay == null && !startPending;
+            Preparation != null && Preparation.CanStart && !BattleSceneFlow.IsOutOfLives && claimOverlay == null && dismissOverlay == null && !startPending;
 
-        public bool IsOverlayOpen => claimOverlay != null || levelPreview != null;
+        public bool IsOverlayOpen => claimOverlay != null || levelPreview != null || dismissOverlay != null;
 
         public TMP_Text SquadCountLabel => countLabel;
 
@@ -135,7 +137,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
 
         public void OpenNextLevelPreview()
         {
-            if (levelPreview != null || claimOverlay != null || BattleSceneFlow.IsOutOfLives || startPending) return;
+            if (IsOverlayOpen || BattleSceneFlow.IsOutOfLives || startPending) return;
             levelPreview = LegacyNextLevelPreview.Open(this);
             if (levelPreview != null) GameAnalytics.Track("map_preview_open");
         }
@@ -151,7 +153,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
 
         public void OpenClaimCards()
         {
-            if (claimOverlay != null || levelPreview != null || BattleSceneFlow.IsOutOfLives) return;
+            if (IsOverlayOpen || BattleSceneFlow.IsOutOfLives) return;
             claimOverlay = LegacyClaimCardOverlay.Open(this);
             RefreshClaimCards();
         }
@@ -162,7 +164,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         {
             var shop = BattleSceneFlow.CardShop;
             if (claimButton == null || shop == null) return;
-            claimButton.interactable = shop.CanClaim && claimOverlay == null && levelPreview == null && !BattleSceneFlow.IsOutOfLives;
+            claimButton.interactable = shop.CanClaim && claimOverlay == null && levelPreview == null && dismissOverlay == null && !BattleSceneFlow.IsOutOfLives;
             claimButton.image.color = claimButton.interactable ? LegacyUiKit.NodeGreenColor : LegacyUiKit.PanelLineColor;
             claimLabel.text = Preparation.CanAddMember ? $"SUMMON UNIT ({shop.NextPrice} GOLD)" : "STORAGE FULL";
             quotaLabel.text = shop.GetBannerSummary();
@@ -242,6 +244,20 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             panel.gameObject.AddComponent<WarehouseUnitCardUI>().Initialize(this, root, member);
             cardGroups[member.MemberId] = cell.gameObject.AddComponent<CanvasGroup>();
             cardStatuses[member.MemberId] = LegacyUnitIntroductionUI.Build(panel, member.Unit);
+            var remove = LegacyUiKit.MakeButton(LegacyUiKit.CreateCircle(panel, "Dismiss Unit", Vector2.zero, 42,
+                new Color(0.72f, 0.18f, 0.22f)));
+            var removeRect = (RectTransform)remove.transform;
+            removeRect.anchorMin = removeRect.anchorMax = new Vector2(1, 1);
+            removeRect.anchoredPosition = new Vector2(-23, -23);
+            // Draw the cross with UI geometry so it does not depend on emoji font support.
+            for (var i = 0; i < 2; i++)
+            {
+                var stroke = LegacyUiKit.CreateImage(remove.transform, "Cross " + i, Vector2.zero,
+                    new Vector2(20, 4), Color.white);
+                stroke.rectTransform.localRotation = Quaternion.Euler(0, 0, i == 0 ? 45 : -45);
+            }
+            remove.interactable = member.Unit.Role != UnitRole.Captain && Preparation.Members.Count > 1;
+            remove.onClick.AddListener(() => TryDismissMember(member.MemberId));
         }
 
         public void StartWave()
@@ -258,6 +274,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
 
         public bool TryPlaceMember(int memberId, PointerEventData data)
         {
+            if (IsOverlayOpen) return false;
             if (Grid.TryPlaceWarehouseMember(memberId, data)) return true;
             warehouseHint.text = Preparation.DeployedCount >= SquadPreparation.MaxDeployed
                 ? "Squad full (6/6). Replace or return a unit."
@@ -267,18 +284,57 @@ namespace Team5.Rebuild.Presentation.LegacyUI
 
         public void TryDismissMember(int memberId)
         {
+            if (IsOverlayOpen || startPending || BattleSceneFlow.IsOutOfLives) return;
             var member = Preparation.FindMember(memberId);
-            if (member == null) return;
-            if (member.Unit.Role == UnitRole.Captain)
+            if (member == null || member.Unit.Role == UnitRole.Captain || Preparation.Members.Count <= 1) return;
+            pendingDismissMemberId = memberId;
+            dismissOverlay = new GameObject("Dismiss Unit Confirmation", typeof(RectTransform));
+            LegacyUiKit.CreateCanvas(dismissOverlay, 600, new Vector2(1280, 720), 0.5f);
+            var backdrop = LegacyUiKit.CreateImage(dismissOverlay.transform, "Input Blocker", Vector2.zero,
+                Vector2.zero, new Color(0, 0, 0, 0.78f));
+            LegacyUiKit.Stretch(backdrop.rectTransform);
+            backdrop.raycastTarget = true;
+            var panel = LegacyUiKit.CreateImage(dismissOverlay.transform, "Panel", Vector2.zero,
+                new Vector2(480, 390), LegacyUiKit.PanelColor, 14).rectTransform;
+            panel.GetComponent<Image>().raycastTarget = true;
+            LegacyUiKit.CreateText(panel, "Title", "DISMISS THIS UNIT?", new Vector2(0, 145),
+                new Vector2(440, 44), 28, Color.white, FontStyles.Bold);
+            LegacyUnitIconUI.Create(panel, new Vector2(0, 75), 150).SetType(member.Unit.Role);
+            LegacyUiKit.CreateText(panel, "Unit Name", $"{LegacyUnitLooks.Name(member.Unit.Role)}  Lv.{member.Unit.Level}",
+                new Vector2(0, 12), new Vector2(440, 34), 24, Color.white, FontStyles.Bold);
+            LegacyUiKit.CreateText(panel, "Rarity", member.Unit.Rarity.ToString().ToUpperInvariant(),
+                new Vector2(0, -24), new Vector2(440, 28), 19, LegacyUnitLooks.RarityColor(member.Unit.Rarity));
+            LegacyUiKit.CreateText(panel, "No Refund", "No Gold will be refunded.", new Vector2(0, -72),
+                new Vector2(440, 26), 17, LegacyUiKit.MutedColor);
+            var cancel = LegacyUiKit.CreateButton(panel, "Cancel", new Vector2(-112, -140),
+                new Vector2(192, 52), LegacyUiKit.PanelLineColor, 6);
+            LegacyUiKit.CreateText(cancel.transform, "Label", "CANCEL", Vector2.zero,
+                new Vector2(184, 48), 21, Color.white, FontStyles.Bold);
+            cancel.onClick.AddListener(CloseDismissConfirmation);
+            var confirm = LegacyUiKit.CreateButton(panel, "Confirm", new Vector2(112, -140),
+                new Vector2(192, 52), new Color(0.72f, 0.18f, 0.22f), 6);
+            LegacyUiKit.CreateText(confirm.transform, "Label", "CONFIRM", Vector2.zero,
+                new Vector2(184, 48), 21, Color.white, FontStyles.Bold);
+            confirm.onClick.AddListener(ConfirmDismissMember);
+        }
+
+        private void CloseDismissConfirmation()
+        {
+            if (dismissOverlay != null)
             {
-                warehouseHint.text = "Cannot dismiss your Captain!";
-                return;
+                dismissOverlay.SetActive(false);
+                Destroy(dismissOverlay);
+                dismissOverlay = null;
             }
-            if (!Preparation.TryDismissMember(memberId))
-            {
-                warehouseHint.text = "Cannot dismiss your last remaining unit!";
-                return;
-            }
+            pendingDismissMemberId = 0;
+        }
+
+        private void ConfirmDismissMember()
+        {
+            if (dismissOverlay == null) return;
+            var member = Preparation.FindMember(pendingDismissMemberId);
+            CloseDismissConfirmation();
+            if (member == null || !Preparation.TryDismissMember(member.MemberId)) return;
             warehouseHint.text = $"Dismissed {LegacyUnitLooks.Name(member.Unit.Role)} Lv.{member.Unit.Level}.";
             GameAnalytics.Track("unit_dismiss", ("role", member.Unit.Role.ToString()), ("rarity", member.Unit.Rarity.ToString()),
                 ("unit_level", member.Unit.Level));
@@ -289,7 +345,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             RefreshWarehouseCards();
             countLabel.text = $"{Preparation.DeployedCount}/{SquadPreparation.MaxDeployed}";
             startGameButton.interactable = CanStartWave && levelPreview == null;
-            warehouseHint.text = "Drag units into squad  |  Right-click unit to dismiss";
+            warehouseHint.text = "Drag units into squad  |  Click X on a card to dismiss";
             foreach (var member in Preparation.Members)
             {
                 var deployed = Preparation.IsDeployed(member.MemberId);
@@ -300,6 +356,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
 
         private void OnDestroy()
         {
+            CloseDismissConfirmation();
             if (levelPreview != null) Destroy(levelPreview.gameObject);
             if (claimOverlay != null) Destroy(claimOverlay.gameObject);
             if (startGameButton != null) startGameButton.onClick.RemoveListener(StartWave);
