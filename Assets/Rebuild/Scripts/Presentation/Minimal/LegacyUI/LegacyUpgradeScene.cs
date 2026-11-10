@@ -29,6 +29,12 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         private bool startPending;
         private GameObject dismissOverlay;
         private GameObject unitIntroductionOverlay;
+        private GameObject summonGuideOverlay;
+        private Canvas summonGuideButtonCanvas;
+        private GraphicRaycaster summonGuideButtonRaycaster;
+        private bool preparationGuidesAttached;
+        private bool IsFirstCampaignPreparation => !BattleSceneFlow.IsTestRun &&
+            BattleSceneFlow.HighestClearedLevel == 1 && BattleSceneFlow.NextBattleLevelNumber == 2;
         private int pendingDismissMemberId;
         private readonly Dictionary<int, CanvasGroup> cardGroups = new Dictionary<int, CanvasGroup>();
         private readonly Dictionary<int, TMP_Text> cardStatuses = new Dictionary<int, TMP_Text>();
@@ -111,25 +117,27 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             Preparation.Changed += Refresh;
             startGameButton.onClick.AddListener(StartWave);
             Refresh();
-            CaptainGuide.Attach(this, root);
-            StartWaveNotice.Attach(this, root);
+            if (IsFirstCampaignPreparation && !Preparation.FirstSummonPromptCompleted)
+                ShowSummonGuide();
+            TryAttachPreparationGuides();
         }
 
         private void Update()
         {
+            TryAttachPreparationGuides();
             RefreshLevelLabel();
             RefreshGoldLabel();
             RefreshClaimCards();
             if (startGameButton != null && Preparation != null)
                 startGameButton.interactable = CanStartWave && levelPreview == null;
             if (previewButton != null)
-                previewButton.interactable = levelPreview == null && claimOverlay == null && dismissOverlay == null && unitIntroductionOverlay == null && !BattleSceneFlow.IsOutOfLives && !startPending;
+                previewButton.interactable = levelPreview == null && claimOverlay == null && dismissOverlay == null && unitIntroductionOverlay == null && summonGuideOverlay == null && !BattleSceneFlow.IsOutOfLives && !startPending;
         }
 
         public bool CanStartWave =>
-            Preparation != null && Preparation.CanStart && !BattleSceneFlow.IsOutOfLives && claimOverlay == null && dismissOverlay == null && unitIntroductionOverlay == null && !startPending;
+            Preparation != null && Preparation.CanStart && !BattleSceneFlow.IsOutOfLives && claimOverlay == null && dismissOverlay == null && unitIntroductionOverlay == null && summonGuideOverlay == null && !startPending;
 
-        public bool IsOverlayOpen => claimOverlay != null || levelPreview != null || dismissOverlay != null || unitIntroductionOverlay != null;
+        public bool IsOverlayOpen => claimOverlay != null || levelPreview != null || dismissOverlay != null || unitIntroductionOverlay != null || summonGuideOverlay != null;
 
         public TMP_Text SquadCountLabel => countLabel;
 
@@ -154,9 +162,78 @@ namespace Team5.Rebuild.Presentation.LegacyUI
 
         public void OpenClaimCards()
         {
-            if (IsOverlayOpen || BattleSceneFlow.IsOutOfLives) return;
+            // The highlighted Summon button is the only permitted action during this prompt.
+            if (BattleSceneFlow.IsOutOfLives || claimOverlay != null || levelPreview != null ||
+                dismissOverlay != null || unitIntroductionOverlay != null) return;
+            if (summonGuideOverlay != null)
+            {
+                Preparation.CompleteFirstSummonPrompt();
+                CloseSummonGuide();
+            }
             claimOverlay = LegacyClaimCardOverlay.Open(this);
             RefreshClaimCards();
+        }
+
+        private void TryAttachPreparationGuides()
+        {
+            if (preparationGuidesAttached || Preparation == null || IsOverlayOpen) return;
+            // Wait until the offer and any new-role introduction have both closed.
+            // Opening Summon is required; purchasing is optional. Cancel also unlocks deployment guidance.
+            if (IsFirstCampaignPreparation && !Preparation.FirstSummonPromptCompleted) return;
+            preparationGuidesAttached = true;
+            CaptainGuide.Attach(this, screenRoot);
+            StartWaveNotice.Attach(this, screenRoot);
+        }
+
+        private void ShowSummonGuide()
+        {
+            summonGuideOverlay = new GameObject("First Summon Guide", typeof(RectTransform));
+            LegacyUiKit.CreateCanvas(summonGuideOverlay, 900, new Vector2(1280, 720), 0.5f);
+            var shade = LegacyUiKit.CreateImage(summonGuideOverlay.transform, "Input Blocker", Vector2.zero,
+                Vector2.zero, new Color(0, 0, 0, 0.78f));
+            LegacyUiKit.Stretch(shade.rectTransform);
+            shade.raycastTarget = true;
+            var banner = LegacyUiKit.CreateImage(summonGuideOverlay.transform, "Tutorial Banner", Vector2.zero,
+                new Vector2(880, 140), new Color(0.08f, 0.11f, 0.17f, 0.96f));
+            banner.raycastTarget = true;
+            banner.rectTransform.anchorMin = banner.rectTransform.anchorMax = new Vector2(0.5f, 1);
+            banner.rectTransform.pivot = new Vector2(0.5f, 1);
+            banner.rectTransform.anchoredPosition = new Vector2(0, -24);
+            var outline = banner.gameObject.AddComponent<Outline>();
+            outline.effectColor = new Color(0.3f, 0.85f, 0.4f, 1);
+            outline.effectDistance = new Vector2(3, -3);
+            LegacyUiKit.CreateText(banner.transform, "Title", "RECRUIT YOUR SQUAD", new Vector2(0, 32),
+                new Vector2(820, 42), 30, new Color(0.35f, 0.95f, 0.45f), FontStyles.Bold);
+            LegacyUiKit.CreateText(banner.transform, "Body", "Click SUMMON UNIT to recruit a new teammate.",
+                new Vector2(0, -22), new Vector2(820, 46), 23, Color.white);
+            // Lift the real button above the dimmer without moving it or copying its listeners.
+            summonGuideButtonCanvas = claimButton.gameObject.AddComponent<Canvas>();
+            summonGuideButtonCanvas.overrideSorting = true;
+            summonGuideButtonCanvas.sortingOrder = 901;
+            summonGuideButtonRaycaster = claimButton.gameObject.AddComponent<GraphicRaycaster>();
+            if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(null);
+        }
+
+        private void CloseSummonGuide()
+        {
+            if (summonGuideOverlay != null)
+            {
+                summonGuideOverlay.SetActive(false);
+                Destroy(summonGuideOverlay);
+                summonGuideOverlay = null;
+            }
+            if (summonGuideButtonRaycaster != null)
+            {
+                summonGuideButtonRaycaster.enabled = false;
+                Destroy(summonGuideButtonRaycaster);
+                summonGuideButtonRaycaster = null;
+            }
+            if (summonGuideButtonCanvas != null)
+            {
+                summonGuideButtonCanvas.overrideSorting = false;
+                Destroy(summonGuideButtonCanvas);
+                summonGuideButtonCanvas = null;
+            }
         }
 
         public void OnClaimCardsClosed() { claimOverlay = null; Refresh(); RefreshClaimCards(); }
@@ -414,6 +491,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
 
         private void OnDestroy()
         {
+            CloseSummonGuide();
             if (unitIntroductionOverlay != null) Destroy(unitIntroductionOverlay);
             CloseDismissConfirmation();
             if (levelPreview != null) Destroy(levelPreview.gameObject);

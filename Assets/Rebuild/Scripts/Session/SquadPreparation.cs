@@ -13,6 +13,8 @@ namespace Team5.Rebuild.Session
         private readonly List<MemberSpawnDefinition> members;
         private readonly HashSet<UnitRole> ownedRoles = new HashSet<UnitRole>();
         public bool HasOwnedRole(UnitRole role) => ownedRoles.Contains(role);
+        public bool FirstSummonPromptCompleted { get; private set; }
+        public void CompleteFirstSummonPrompt() => FirstSummonPromptCompleted = true;
         private readonly int[] memberIds = new int[9];
 
         public bool CanAddMember => members.Count < WarehouseCapacity && !members.Exists(m => m.MemberId == int.MaxValue);

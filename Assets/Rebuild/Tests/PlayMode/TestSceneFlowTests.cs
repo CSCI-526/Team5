@@ -41,6 +41,60 @@ namespace Team5.Rebuild.Tests
         }
 
         [UnityTest]
+        public IEnumerator FirstUpgradeGuidesSummonBeforeDeploymentAndWaitsForIntroduction()
+        {
+            BattleSceneFlow.BeginRun();
+            yield return WaitForScene(BattleSceneFlow.BattleScene);
+            Object.FindFirstObjectByType<BattleSession>().enabled = false;
+            typeof(BattleSceneFlow).GetMethod("Settle", BindingFlags.NonPublic | BindingFlags.Instance)
+                .Invoke(Object.FindFirstObjectByType<BattleSceneFlow>(), new object[] { BattleOutcome.Victory });
+            yield return WaitForScene(BattleSceneFlow.SettlementScene);
+            BattleSceneFlow.ContinueToUpgrade();
+            yield return WaitForScene(BattleSceneFlow.UpgradeScene);
+            var upgrade = Object.FindFirstObjectByType<LegacyUpgradeScene>();
+            Assert.That(GameObject.Find("First Summon Guide"), Is.Not.Null);
+            Assert.That(upgrade.IsOverlayOpen, Is.True);
+            Assert.That(upgrade.ClaimCardButton.interactable, Is.True);
+            Assert.That(upgrade.CanStartWave, Is.False);
+            Assert.That(upgrade.TryPlaceMember(upgrade.Preparation.Members[0].MemberId, null), Is.False);
+            upgrade.OpenNextLevelPreview();
+            Assert.That(Object.FindFirstObjectByType<LegacyNextLevelPreview>(), Is.Null);
+            Assert.That(Object.FindFirstObjectByType<CaptainGuide>(), Is.Null);
+            Assert.That(Object.FindFirstObjectByType<StartWaveNotice>(), Is.Null);
+
+            upgrade.ClaimCardButton.onClick.Invoke();
+            yield return null;
+            Assert.That(GameObject.Find("First Summon Guide"), Is.Null);
+            Assert.That(upgrade.Preparation.FirstSummonPromptCompleted, Is.True);
+            var cancelOffer = Object.FindFirstObjectByType<LegacyClaimCardOverlay>();
+            var goldBeforeCancel = BattleSceneFlow.GoldBalance;
+            var membersBeforeCancel = upgrade.Preparation.Members.Count;
+            cancelOffer.transform.Find("Cancel").GetComponent<Button>().onClick.Invoke();
+            yield return null;
+            Assert.That(Object.FindFirstObjectByType<CaptainGuide>(), Is.Not.Null, "Cancel also starts deployment guidance.");
+            Assert.That(Object.FindFirstObjectByType<StartWaveNotice>(), Is.Not.Null);
+            Assert.That(BattleSceneFlow.GoldBalance, Is.EqualTo(goldBeforeCancel));
+            Assert.That(upgrade.Preparation.Members.Count, Is.EqualTo(membersBeforeCancel));
+
+            upgrade.ClaimCardButton.onClick.Invoke();
+            yield return null;
+            var offer = Object.FindFirstObjectByType<LegacyClaimCardOverlay>();
+            System.Array.Find(offer.GetComponentsInChildren<Button>(), b => b.name == "Summon Option 0").onClick.Invoke();
+            yield return null;
+            var introduction = GameObject.Find("New Unit Introduction");
+            Assert.That(introduction, Is.Not.Null);
+            Assert.That(upgrade.IsOverlayOpen, Is.True);
+            Assert.That(upgrade.CanStartWave, Is.False);
+            introduction.transform.Find("Panel/Got It").GetComponent<Button>().onClick.Invoke();
+            yield return null;
+            Assert.That(upgrade.IsOverlayOpen, Is.False);
+            Assert.That(Object.FindFirstObjectByType<CaptainGuide>(), Is.Not.Null);
+            Assert.That(Object.FindFirstObjectByType<StartWaveNotice>(), Is.Not.Null);
+            Assert.That(Object.FindObjectsByType<CaptainGuide>(FindObjectsSortMode.None).Length, Is.EqualTo(1));
+            Assert.That(Object.FindObjectsByType<StartWaveNotice>(FindObjectsSortMode.None).Length, Is.EqualTo(1));
+        }
+
+        [UnityTest]
         public IEnumerator TestTitlePreparationAndEmptyLevelStaySeparateFromCampaign()
         {
             yield return OpenTestPreparation();
