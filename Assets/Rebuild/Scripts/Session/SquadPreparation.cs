@@ -11,6 +11,10 @@ namespace Team5.Rebuild.Session
         public const int MaxDeployed = 6;
 
         private readonly List<MemberSpawnDefinition> members;
+        private readonly HashSet<UnitRole> ownedRoles = new HashSet<UnitRole>();
+        public bool HasOwnedRole(UnitRole role) => ownedRoles.Contains(role);
+        public bool FirstSummonPromptCompleted { get; private set; }
+        public void CompleteFirstSummonPrompt() => FirstSummonPromptCompleted = true;
         private readonly int[] memberIds = new int[9];
 
         public bool CanAddMember => members.Count < WarehouseCapacity && !members.Exists(m => m.MemberId == int.MaxValue);
@@ -44,6 +48,7 @@ namespace Team5.Rebuild.Session
                     throw new ArgumentException("Warehouse members require unique IDs.");
             if (members.Count > WarehouseCapacity)
                 throw new ArgumentException("Warehouse supports up to twelve members.");
+            foreach (var member in members) ownedRoles.Add(member.Unit.Role);
         }
 
         public bool TryAddSummonedUnit(UnitDefinition unit)
@@ -53,6 +58,7 @@ namespace Team5.Rebuild.Session
             var id = 0;
             foreach (var member in members) id = Math.Max(id, member.MemberId);
             members.Add(new MemberSpawnDefinition(checked(id + 1), 4, unit));
+            ownedRoles.Add(unit.Role);
             Changed?.Invoke();
             return true;
         }

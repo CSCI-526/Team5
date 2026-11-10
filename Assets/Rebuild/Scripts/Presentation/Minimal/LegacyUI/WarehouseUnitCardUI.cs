@@ -4,7 +4,7 @@ using UnityEngine.EventSystems;
 
 namespace Team5.Rebuild.Presentation.LegacyUI
 {
-    public sealed class WarehouseUnitCardUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerClickHandler
+    public sealed class WarehouseUnitCardUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
     {
         private LegacyUpgradeScene owner;
         private RectTransform dragLayer;
@@ -18,17 +18,10 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             this.member = member;
         }
 
-        public void OnPointerClick(PointerEventData data)
-        {
-            if (data.button == PointerEventData.InputButton.Right && owner != null && member != null)
-            {
-                owner.TryDismissMember(member.MemberId);
-            }
-        }
-
         public void OnBeginDrag(PointerEventData data)
         {
-            if (data.button != PointerEventData.InputButton.Left) return;
+            if (data.button != PointerEventData.InputButton.Left || owner == null || owner.IsOverlayOpen ||
+                (data.pointerPress != null && data.pointerPress.GetComponentInParent<UnityEngine.UI.Button>() != null)) return;
             if (ghost != null) Destroy(ghost.gameObject);
             ghost = LegacyUnitIconUI.Create(dragLayer, Vector2.zero, 90);
             ghost.SetType(member.Unit.Role);

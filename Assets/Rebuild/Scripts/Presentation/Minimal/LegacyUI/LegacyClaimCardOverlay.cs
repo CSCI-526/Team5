@@ -66,11 +66,13 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             {
                 var price = shop.NextPrice;
                 var gold = BattleSceneFlow.GoldBalance;
+                var newRole = !owner.Preparation.HasOwnedRole(rolledUnit.Role);
                 if (!BattleSceneFlow.TrySummonUnit(index)) return;
                 GameAnalytics.Track("summon_purchase", ("chosen_index", index), ("role", rolledUnit.Role.ToString()),
                     ("rarity", rolledUnit.Rarity.ToString()), ("unit_level", rolledUnit.Level), ("price", price),
                     ("gold_before", gold), ("gold_after", BattleSceneFlow.GoldBalance));
                 Close();
+                if (newRole && owner != null) owner.ShowUnitIntroduction(rolledUnit);
             });
         }
 
