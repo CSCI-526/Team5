@@ -9,44 +9,54 @@ using UnityEngine.UI;
 
 namespace Team5.Rebuild.Presentation.LegacyUI
 {
-    // Adapted from Team5 HowToPlay's six freeze-frame lessons. Observes simulation
-    // state/events and uses the real formation editor; never writes HP, slots or damage.
     [DisallowMultipleComponent, DefaultExecutionOrder(300)]
     public sealed class LevelOneTutorial : MonoBehaviour
     {
+        private const int FirstFormationStep = 3;
+        private const int FirstFormationResultStep = 4;
+        private const int SpeedStep = 5;
+        private const int SecondFormationStep = 6;
+
+        private static bool hasPlayedTutorial;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics() => hasPlayedTutorial = false;
+
         [SerializeField] private BattleSession session;
+
+        private readonly TutorialCameraController cameraController = new TutorialCameraController();
+        private readonly TutorialHighlightController highlightController = new TutorialHighlightController();
+        private readonly TutorialBannerView bannerView = new TutorialBannerView();
+
         private BattleSimulation simulation;
         private LegacyBattleHud hud;
+        private BattlePresentation presentation;
         private BattleUnitInspection inspection;
         private Coroutine routine;
-        private GameObject ui, blocker;
-        private RectTransform root, banner;
-        private TMP_Text title, body;
-        private Button nextButton;
-        private Camera camera;
-        private Vector3 originalPosition, targetPosition;
-        private Quaternion originalRotation;
-        private float originalOrthoSize, targetOrthoSize;
-        private bool cameraOwned, hasCameraSnapshot, ownsPause, wasPaused, next, firstHit;
-        private BattlePresentation presentation;
-        private Renderer[] glowingRenderers;
-        private MaterialPropertyBlock[] originalGlowProperties;
-        private MaterialPropertyBlock glowProperties;
-        private Image glowingButton;
-        private Color originalButtonColor;
-        private bool blueWorldGlow;
-        private RectTransform squadArrow;
-        private readonly Vector3[] buttonCorners = new Vector3[4];
-        private const int SpeedStep = 6;
-        private bool speedPrompt;
-        private Canvas speedCanvas;
+
+        private bool ownsPause;
+        private bool wasPaused;
+        private bool nextPressed;
+        private bool firstHit;
+        private bool speedPromptActive;
+
+        private int checkpointStep;
+        private int resumeStep;
+        private bool checkpointResult;
+        private bool resumeResult;
+        private string checkpointHeading;
+        private string checkpointMessage;
+
         public int CurrentStep { get; private set; }
-        private int TotalSteps => simulation != null && simulation.Towers.Count > 1 ? 9 : 7;
         public bool IsActive => routine != null;
-        private int checkpointStep, resumeStep;
-        private bool checkpointResult, resumeResult;
-        private string checkpointHeading, checkpointMessage;
-        private void PrepareRewind() { resumeStep = checkpointStep; resumeResult = checkpointResult; }
+        private int TotalSteps => simulation != null && simulation.Towers.Count > 1 ? 8 : 6;
+
+        private void PrepareRewind()
+        {
+            resumeStep = checkpointStep;
+            resumeResult = checkpointResult;
+        }
+
         public void SuspendForDefeat() => StopTutorial();
 
         private void OnEnable()
@@ -58,27 +68,43 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             session.TutorialRewindRequested += PrepareRewind;
             Bind(session.Simulation);
         }
-        private void Start() { if (!BattleSceneFlow.IsPreviewScene(gameObject.scene) && session != null) Bind(session.Simulation); }
+
+        private void Start()
+        {
+            if (!BattleSceneFlow.IsPreviewScene(gameObject.scene) && session != null)
+                Bind(session.Simulation);
+        }
+
         private void Bind(BattleSimulation value)
         {
             if (simulation == value && routine != null) return;
             StopTutorial();
             simulation = value;
             if (value == null || !isActiveAndEnabled) return;
+
+            // Do not run the tutorial again if the player restarted the level or already played the tutorial,
+            // unless they explicitly clicked "Back to Last Hint" (resumeStep > 0).
+            var isRewind = resumeStep > 0;
+            var isRetryAttempt = session.AttemptsRemaining < session.AttemptsPerLevel;
+            if (!isRewind && (hasPlayedTutorial || isRetryAttempt)) return;
+
             routine = StartCoroutine(Run());
         }
+
         private void OnDamaged(DamageEvent value)
         {
-            // The coroutine acquires pause on the next frame, outside the simulation tick.
-            if (Captain() != null && value.UnitId == Captain().Id) firstHit = true;
+            var captain = Captain();
+            if (captain != null && value.UnitId == captain.Id) firstHit = true;
         }
+
         private UnitState Captain()
         {
-            if (simulation != null)
-                foreach (var unit in simulation.Units)
-                    if (unit.Role == UnitRole.Captain && unit.IsAlive) return unit;
+            if (simulation == null) return null;
+            foreach (var unit in simulation.Units)
+                if (unit.Role == UnitRole.Captain && unit.IsAlive) return unit;
             return null;
         }
+
         private bool Running => session != null && session.Simulation == simulation && simulation != null &&
             simulation.Outcome == BattleOutcome.Running && Captain() != null;
 
@@ -86,104 +112,140 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         {
             var startStep = resumeStep;
             var replayResult = resumeResult;
-            resumeStep = 0; resumeResult = false;
+            resumeStep = 0;
+            resumeResult = false;
+
             yield return null;
-            while (simulation != null && simulation.Outcome == BattleOutcome.Running && Captain() == null) yield return null;
+            while (simulation != null && simulation.Outcome == BattleOutcome.Running && Captain() == null)
+                yield return null;
             if (!Running) { routine = null; yield break; }
+
             foreach (var candidate in FindObjectsByType<LegacyBattleHud>(FindObjectsSortMode.None))
                 if (candidate.Session == session) { hud = candidate; break; }
             foreach (var candidate in FindObjectsByType<BattlePresentation>(FindObjectsSortMode.None))
                 if (candidate.Session == session) { presentation = candidate; inspection = candidate.GetComponent<BattleUnitInspection>(); break; }
-            camera = Camera.main;
-            if (hud == null || inspection == null || camera == null) { routine = null; yield break; }
-            originalPosition = camera.transform.position; originalRotation = camera.transform.rotation;
-            originalOrthoSize = camera.orthographicSize; hasCameraSnapshot = true;
-            BuildUi();
+
+            var mainCamera = Camera.main;
+            if (hud == null || inspection == null || mainCamera == null) { routine = null; yield break; }
+
+            hasPlayedTutorial = true;
+            cameraController.CaptureSnapshot(mainCamera);
+            bannerView.EnsureBuilt(transform, Continue, Skip);
+
             simulation.UnitDamaged += OnDamaged;
-            firstHit = startStep >= 3;
+            firstHit = startStep >= FirstFormationStep;
+
             if (startStep == 0) yield return new WaitForSecondsRealtime(0.55f);
             if (!Running) { Finish(); yield break; }
+
             AcquirePause();
             if (startStep > 0) wasPaused = session.CheckpointPausedBeforeHint;
+
             if (startStep <= 1)
             {
-            Focus(Captain().Position, 2);
-            GlowCaptain();
-            Show(1, "YOU ARE THE ATTACKER!", "\nThe gold crown is your Captain. It marches automatically.", true);
-            yield return WaitForNext();
-            if (!Running) { Finish(); yield break; }
+                inspection.CloseImmediately();
+                cameraController.FocusPoint(Captain().Position, 2f);
+                GlowCaptain();
+                Show(1, "YOU ARE THE ATTACKER!", "\nThe gold crown is your Captain. It marches automatically.", true);
+                yield return WaitForNext();
+                if (!Running) { Finish(); yield break; }
             }
 
             var firstTower = simulation.Towers.Count > 0 ? simulation.Towers[0] : null;
             if (startStep <= 2)
             {
-            RestoreCamera();
-            if (firstTower != null)
-            {
-                GlowWorld(session.Towers[0].transform, blue: true);
+                cameraController.RestoreImmediate();
+                if (firstTower != null)
+                    highlightController.GlowWorld(session.Towers[0].transform, keepCrown: false, blue: true);
+                Show(2, "ENEMY TOWERS", "\nBlue strips mark fixed firing lanes.", true);
+                yield return WaitForNext();
+                if (!Running) { Finish(); yield break; }
             }
-            Show(2, "ENEMY TOWERS", "\nBlue strips mark fixed firing lanes.", true);
-            yield return WaitForNext();
-            }
-            if (startStep <= 3)
+
+            if (startStep < FirstFormationStep)
             {
-            Hide(); RestoreCamera(); ReleasePause();
-            while (Running && !firstHit) yield return null;
-            if (!Running) { Finish(); yield break; }
-            AcquirePause();
-            FocusCaptainAndTower(firstTower);
-            GlowCaptain();
-            Show(3, "LIVE STATS", $"\nThe Captain was hit. Click a unit during normal play to inspect its live stats.", true);
-            yield return WaitForNext();
-            if (!Running) { Finish(); yield break; }
+                Hide();
+                cameraController.RestoreImmediate();
+                ReleasePause();
+                while (Running && !firstHit) yield return null;
+                if (!Running) { Finish(); yield break; }
+                AcquirePause();
             }
-            if (startStep <= 5)
+
+            if (startStep <= FirstFormationResultStep)
             {
-                if (startStep == 5 && replayResult)
+                if (startStep == FirstFormationResultStep && replayResult)
                 {
-                    FocusCaptainAndTower(firstTower); GlowCaptain();
-                    Show(5, checkpointHeading, checkpointMessage, true, true);
+                    FocusCaptainAndTower(firstTower);
+                    GlowCaptain();
+                    Show(FirstFormationResultStep, checkpointHeading, checkpointMessage, true, true);
                     yield return WaitForNext();
                 }
-                else yield return GuideFormation(4, firstTower, startStep == 5);
+                else
+                {
+                    yield return GuideFormation(FirstFormationStep, firstTower, startStep == FirstFormationResultStep);
+                }
             }
             if (!Running) { Finish(); yield break; }
+
             if (startStep <= SpeedStep)
             {
                 yield return GuideSpeed();
                 if (!Running) { Finish(); yield break; }
             }
-            Hide(); RestoreCamera(); ReleasePause();
+
+            Hide();
+            cameraController.RestoreImmediate();
+            ReleasePause();
 
             var secondTower = simulation.Towers.Count > 1 ? simulation.Towers[1] : null;
             if (secondTower != null)
             {
-                while (Running && secondTower.IsAlive && !Approaching(Captain(), secondTower)) yield return null;
+                while (Running && secondTower.IsAlive && !Approaching(Captain(), secondTower))
+                    yield return null;
                 if (!Running) { Finish(); yield break; }
+
                 if (secondTower.IsAlive)
                 {
                     AcquirePause();
                     if (OutsideLane(Captain(), secondTower))
                     {
-                        Focus((Captain().Position + secondTower.Position) / 2, Vector3.Distance(Captain().Position, secondTower.Position) / 2 + 2);
-                        GlowWorld(session.Towers[1].transform, blue: true);
-                        Show(7, "AVOID THE TOWER", "\nThis tower fires upward. Your Captain is already outside its firing line.\nDifferent tower directions require different formation positions.", true);
+                        inspection.CloseImmediately();
+                        cameraController.FocusPoint(
+                            (Captain().Position + secondTower.Position) * 0.5f,
+                            Vector3.Distance(Captain().Position, secondTower.Position) * 0.5f + 2f);
+                        highlightController.GlowWorld(session.Towers[1].transform, keepCrown: false, blue: true);
+                        Show(SecondFormationStep, "AVOID THE TOWER",
+                            "\nThis tower fires upward. Your Captain is already outside its firing line.\nDifferent tower directions require different formation positions.",
+                            true);
                         yield return WaitForNext();
                     }
-                    else yield return GuideFormation(7, secondTower);
-                    Hide(); RestoreCamera(); ReleasePause();
+                    else
+                    {
+                        yield return GuideFormation(SecondFormationStep, secondTower);
+                    }
+                    Hide();
+                    cameraController.RestoreImmediate();
+                    ReleasePause();
                 }
             }
+
             var route = session.Route.CaptureTopCenters();
             var length = 0f;
-            for (var i = 1; i < route.Length; i++) length += Vector3.Distance(route[i - 1], route[i]);
-            while (Running && length - Captain().RouteProgress > 6) yield return null;
+            for (var i = 1; i < route.Length; i++)
+                length += Vector3.Distance(route[i - 1], route[i]);
+
+            while (Running && length - Captain().RouteProgress > 6f)
+                yield return null;
             if (!Running) { Finish(); yield break; }
+
             AcquirePause();
-            Focus(route[route.Length - 1], 3);
-            GlowWorld(session.Route.Cells[session.Route.Cells.Count - 1].transform);
+            inspection.CloseImmediately();
+            cameraController.FocusPoint(route[route.Length - 1], 3f);
+            highlightController.GlowWorld(session.Route.Cells[session.Route.Cells.Count - 1].transform);
             Show(TotalSteps, "REACH THE GOAL TO WIN!", "\nGet your Captain to the end of the road to win.", true);
             yield return WaitForNext();
+
             if (Running) TutorialAnalytics.Complete();
             Finish();
         }
@@ -191,57 +253,84 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         private IEnumerator GuideFormation(int step, TowerState tower, bool reopenEditor = false)
         {
             if (!Running) yield break;
-            inspection.CloseImmediately(); RestoreCamera();
-            ClearWorldGlow();
-            Show(step, step == 4 ? "EDIT YOUR FORMATION" : "AVOID THE TOWER",
-                step == 4 ? "\nClick the highlighted squad crown to edit formation."
-                    : "Click the highlighted squad crown.\nMove Captain to the <b>left or right column</b>, outside the vertical firing strip. Choose <b>APPLY & RESUME</b>.", false);
-            GlowButton(hud.SquadButton(0));
+            inspection.CloseImmediately();
+            cameraController.RestoreImmediate();
+            highlightController.ClearWorldGlow();
+
+            var isFirstTower = step == FirstFormationStep;
+            Show(step, isFirstTower ? "EDIT YOUR FORMATION" : "AVOID THE TOWER",
+                isFirstTower
+                    ? "\nClick the highlighted squad crown to edit formation."
+                    : "Click the highlighted squad crown.\nMove Captain to the <b>left or right column</b>, outside the vertical firing strip. Choose <b>APPLY & RESUME</b>.",
+                false);
+            highlightController.GlowButton(hud.SquadButton(0));
             if (reopenEditor) hud.SelectSquad();
+
             var moved = false;
             while (Running && !moved)
             {
                 var originalSlot = Captain().SlotId;
-                while (Running && (hud.FormationEditor == null || !hud.FormationEditor.gameObject.activeSelf)) yield return null;
+                while (Running && (hud.FormationEditor == null || !hud.FormationEditor.gameObject.activeSelf))
+                    yield return null;
                 if (!Running) yield break;
-                ClearButtonGlow();
+
+                highlightController.ClearButtonGlow();
+                bannerView.HideArrow();
                 Show(step + 1, "EDIT YOUR FORMATION",
-                    step == 4 ? "\nDrag your unit <b>down by one cell to avoid attack</b>."
-                        : "Move Captain to the <b>left or right column</b>, outside the vertical firing strip. Choose <b>APPLY & RESUME</b>.", false);
-                while (Running && hud.FormationEditor != null && hud.FormationEditor.gameObject.activeSelf) yield return null;
+                    isFirstTower
+                        ? "\nDrag your unit <b>down by one cell to avoid attack</b>."
+                        : "Move Captain to the <b>left or right column</b>, outside the vertical firing strip. Choose <b>APPLY & RESUME</b>.",
+                    false);
+
+                while (Running && hud.FormationEditor != null && hud.FormationEditor.gameObject.activeSelf)
+                    yield return null;
                 if (!Running) yield break;
-                // Let inspection release its view; the editor restores the tutorial's pause.
+
                 yield return null;
                 moved = Captain().SlotId != originalSlot && (tower == null || OutsideLane(Captain(), tower));
                 if (!moved)
                 {
-                    Show(step, "EDIT YOUR FORMATION", "The Captain is still in the firing lane, or the draft was canceled.\nOpen the squad again, move to a safe row / column, then <b>APPLY & RESUME</b>.", false);
-                    GlowButton(hud.SquadButton(0));
+                    Show(step, "EDIT YOUR FORMATION",
+                        "The Captain is still in the firing lane, or the draft was canceled.\nOpen the squad again, move to a safe row / column, then <b>APPLY & RESUME</b>.",
+                        false);
+                    highlightController.GlowButton(hud.SquadButton(0));
                 }
             }
+
             if (!Running) yield break;
             FocusCaptainAndTower(tower);
             GlowCaptain();
-            Show(step + 1, "POSITIONING AVOIDS DAMAGE", "\nYour Captain moved to a different slot.\n The new position is outside this tower's firing line.", true, true);
+            Show(step + 1, "POSITIONING AVOIDS DAMAGE",
+                "\nYour Captain moved to a different slot.\n The new position is outside this tower's firing line.",
+                true, true);
             yield return WaitForNext();
         }
+
         private IEnumerator GuideSpeed()
         {
             if (!Running || hud.SpeedSlider == null) yield break;
-            inspection.CloseImmediately(); RestoreCamera(); ClearWorldGlow();
+            inspection.CloseImmediately();
+            cameraController.RestoreImmediate();
+            highlightController.ClearWorldGlow();
+
             if (session.PlaybackSpeed < 3)
             {
                 Show(SpeedStep, "SPEED IT UP", "Drag the speed slider at the top right to <b>3x</b>.\nYou can change it any time.", false);
-                speedCanvas = hud.SpeedSlider.GetComponentInParent<Canvas>();
-                GlowImage(hud.SpeedSlider.targetGraphic as Image);
-                speedPrompt = true; hud.TutorialAllowsSpeed = true;
+                highlightController.GlowImage(hud.SpeedSlider.targetGraphic as Image);
+                speedPromptActive = true;
+                hud.TutorialAllowsSpeed = true;
                 while (Running && session.PlaybackSpeed < 3) yield return null;
-                speedPrompt = false; hud.TutorialAllowsSpeed = false; ClearButtonGlow();
+                speedPromptActive = false;
+                hud.TutorialAllowsSpeed = false;
+                highlightController.ClearButtonGlow();
+                bannerView.HideArrow();
                 if (!Running) yield break;
             }
+
             Show(SpeedStep, "NICE!", "\nThe battle now runs 3x faster.\nSlow it down any time with the same slider.", true);
             yield return WaitForNext();
         }
+
         public static bool OutsideLane(UnitState unit, TowerState tower)
         {
             if (unit == null || tower == null) return false;
@@ -249,41 +338,52 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             if (tower.Definition.Area == AttackArea.Square)
                 return !SquadCombatRules.Contains(offset, tower.Definition.Area, tower.Definition.Range, tower.Definition.AttackWidth);
             var direction = SquadCombatRules.Direction(tower.Definition.Area);
-            return Mathf.Abs(Vector3.Dot(offset, new Vector3(-direction.z, 0, direction.x))) > tower.Definition.AttackWidth / 2;
+            return Mathf.Abs(Vector3.Dot(offset, new Vector3(-direction.z, 0f, direction.x))) > tower.Definition.AttackWidth * 0.5f;
         }
+
         private static bool Approaching(UnitState unit, TowerState tower)
         {
             var offset = unit.Position - tower.Position;
             var direction = SquadCombatRules.Direction(tower.Definition.Area);
             var forward = Vector3.Dot(offset, direction);
-            var side = Mathf.Abs(Vector3.Dot(offset, new Vector3(-direction.z, 0, direction.x)));
-            return forward >= 0 && forward <= tower.Definition.Range + 3 && side <= 3;
+            var side = Mathf.Abs(Vector3.Dot(offset, new Vector3(-direction.z, 0f, direction.x)));
+            return forward >= 0f && forward <= tower.Definition.Range + 3f && side <= 3f;
         }
+
         private IEnumerator WaitForNext()
         {
-            while (Running && !next) yield return null;
-            next = false;
+            while (Running && !nextPressed) yield return null;
+            nextPressed = false;
         }
-        public void Continue() => next = true;
+
+        public void Continue() => nextPressed = true;
+
         public void Skip()
         {
             if (routine != null) TutorialAnalytics.Skip(CurrentStep);
             StopTutorial();
         }
+
         [ContextMenu("Replay Level 1 Tutorial")]
         public void Replay()
         {
             if (!Application.isPlaying || session == null) return;
+            hasPlayedTutorial = false;
             StopTutorial();
             simulation = null;
             session.StartBattle();
         }
+
         private void AcquirePause()
         {
             if (ownsPause || simulation == null) return;
-            wasPaused = simulation.IsPaused; simulation.SetPaused(true); ownsPause = true;
-            hud.TutorialOwnsPause = true; inspection.IsInputSuppressed = true;
+            wasPaused = simulation.IsPaused;
+            simulation.SetPaused(true);
+            ownsPause = true;
+            hud.TutorialOwnsPause = true;
+            inspection.IsInputSuppressed = true;
         }
+
         private void ReleasePause()
         {
             if (ownsPause && session != null && session.Simulation == simulation && simulation.Outcome == BattleOutcome.Running)
@@ -292,86 +392,233 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             if (hud != null) hud.TutorialOwnsPause = false;
             if (inspection != null) inspection.IsInputSuppressed = false;
         }
+
         private void Finish()
         {
-            Cleanup(); routine = null;
+            Cleanup();
+            routine = null;
         }
+
         private void StopTutorial()
         {
             if (routine != null) StopCoroutine(routine);
-            routine = null; Cleanup();
+            routine = null;
+            Cleanup();
         }
+
         private void Cleanup()
         {
             if (simulation != null) simulation.UnitDamaged -= OnDamaged;
             if (inspection != null && ownsPause) inspection.CloseImmediately();
-            RestoreCamera(); ReleasePause(); Hide();
-            firstHit = false; next = false; CurrentStep = 0; hasCameraSnapshot = false;
-            speedPrompt = false; if (hud != null) hud.TutorialAllowsSpeed = false;
+            cameraController.RestoreImmediate();
+            cameraController.ResetSnapshot();
+            ReleasePause();
+            Hide();
+            firstHit = false;
+            nextPressed = false;
+            CurrentStep = 0;
+            speedPromptActive = false;
+            if (hud != null) hud.TutorialAllowsSpeed = false;
         }
+
         private void FocusCaptainAndTower(TowerState tower)
         {
             var captain = Captain();
             if (captain == null) return;
-            if (tower == null) { Focus(captain.Position, 2); return; }
             inspection.CloseImmediately();
-            var center = (captain.Position + tower.Position) / 2;
-            var bounds = new Bounds(captain.Position, Vector3.one);
-            if (presentation != null && presentation.TryGetView(captain.Id, out var view) && view.TryGetVisibleBounds(out var visible)) bounds = visible;
-            foreach (var sceneTower in session.Towers)
-                if (sceneTower.RuntimeState == tower)
-                    foreach (var renderer in sceneTower.GetComponentsInChildren<Renderer>()) bounds.Encapsulate(renderer.bounds);
-            var extent = Vector3.zero;
-            for (var x = -1; x <= 1; x += 2)
-            for (var y = -1; y <= 1; y += 2)
-            for (var z = -1; z <= 1; z += 2)
+
+            if (tower == null)
             {
-                var corner = Quaternion.Inverse(originalRotation) * (bounds.center + Vector3.Scale(bounds.extents, new Vector3(x, y, z)) - center);
-                extent = Vector3.Max(extent, new Vector3(Mathf.Abs(corner.x), Mathf.Abs(corner.y), Mathf.Abs(corner.z)));
+                cameraController.FocusPoint(captain.Position, 2f);
+                return;
             }
-            // Frame both complete models around their midpoint, above the tutorial banner.
-            targetOrthoSize = Mathf.Max(2, extent.y / 0.6f, extent.x / (camera.aspect * 0.85f));
-            var tan = Mathf.Tan(camera.fieldOfView * Mathf.Deg2Rad / 2);
-            var distance = Mathf.Max(6, targetOrthoSize / tan + extent.z, camera.nearClipPlane + extent.z + 1);
-            var offset = camera.orthographic ? targetOrthoSize * 0.3f : distance * tan * 0.3f;
-            targetPosition = center - originalRotation * Vector3.forward * distance - originalRotation * Vector3.up * offset;
-            cameraOwned = true;
+
+            var bounds = new Bounds(captain.Position, Vector3.one);
+            if (presentation != null && presentation.TryGetView(captain.Id, out var view) && view.TryGetVisibleBounds(out var visible))
+                bounds = visible;
+
+            foreach (var sceneTower in session.Towers)
+            {
+                if (sceneTower.RuntimeState == tower)
+                {
+                    foreach (var renderer in sceneTower.GetComponentsInChildren<Renderer>())
+                        bounds.Encapsulate(renderer.bounds);
+                }
+            }
+
+            cameraController.FocusMidpointBounds((captain.Position + tower.Position) * 0.5f, bounds);
         }
-        private void Focus(Vector3 point, float radius)
-        {
-            inspection.CloseImmediately();
-            cameraOwned = true;
-            var tan = Mathf.Tan(camera.fieldOfView * Mathf.Deg2Rad / 2);
-            var distance = Mathf.Max(6, radius * 1.2f / tan);
-            targetOrthoSize = radius * 1.2f;
-            var verticalOffset = camera.orthographic ? targetOrthoSize * 0.3f : distance * tan * 0.3f;
-            targetPosition = point - originalRotation * Vector3.forward * distance - originalRotation * Vector3.up * verticalOffset;
-        }
-        private void RestoreCamera()
-        {
-            if (cameraOwned && hasCameraSnapshot && camera != null)
-            { camera.transform.SetPositionAndRotation(originalPosition, originalRotation); camera.orthographicSize = originalOrthoSize; }
-            cameraOwned = false;
-        }
+
         private void GlowCaptain()
         {
             var captain = Captain();
             if (captain != null && presentation != null && presentation.TryGetView(captain.Id, out var view))
-                GlowWorld(view.transform, true);
-            else ClearWorldGlow();
+                highlightController.GlowWorld(view.transform, keepCrown: true);
+            else
+                highlightController.ClearWorldGlow();
         }
-        private static Color GoldPulse => Color.Lerp(new Color(1, 0.64f, 0.08f), new Color(1, 0.94f, 0.48f),
-            (Mathf.Sin(Time.unscaledTime * 4) + 1) / 2);
-        private Color WorldPulse => blueWorldGlow ? Color.Lerp(new Color(0.12f, 0.35f, 0.95f), new Color(0.45f, 0.82f, 1f),
-            (Mathf.Sin(Time.unscaledTime * 4) + 1) / 2) : GoldPulse;
-        private void GlowWorld(Transform target, bool keepCrown = false, bool blue = false)
+
+        private void Show(int step, string heading, string message, bool modal, bool formationResult = false)
+        {
+            checkpointStep = step;
+            checkpointHeading = heading;
+            checkpointMessage = message;
+            checkpointResult = formationResult;
+            session.CaptureTutorialCheckpoint(wasPaused);
+            TutorialAnalytics.Step(step, TotalSteps, heading);
+            CurrentStep = step;
+            nextPressed = false;
+            highlightController.ClearButtonGlow();
+            bannerView.Show(step, TotalSteps, heading, message, modal);
+        }
+
+        private void Hide()
+        {
+            highlightController.ClearWorldGlow();
+            highlightController.ClearButtonGlow();
+            bannerView.Hide();
+        }
+
+        private void LateUpdate()
+        {
+            cameraController.Tick(Time.unscaledDeltaTime);
+            if (!bannerView.IsVisible) return;
+
+            highlightController.TickPulse();
+            var showSquadArrow = CurrentStep == FirstFormationStep && highlightController.GlowingButton != null;
+            var showSpeedArrow = !showSquadArrow && speedPromptActive && hud != null && hud.SpeedSlider != null;
+            bannerView.UpdateArrow(showSquadArrow, showSpeedArrow, highlightController.GlowingButton, hud != null ? hud.SpeedSlider : null);
+        }
+
+        private void OnDisable()
+        {
+            if (session != null)
+            {
+                session.SimulationCreated -= Bind;
+                session.TutorialRewindRequested -= PrepareRewind;
+            }
+            StopTutorial();
+            simulation = null;
+        }
+    }
+
+    /// <summary>
+    /// Handles camera snapshots, framing calculations, and smooth interpolation during tutorial steps.
+    /// </summary>
+    internal sealed class TutorialCameraController
+    {
+        private Camera camera;
+        private Vector3 originalPosition;
+        private Quaternion originalRotation;
+        private float originalOrthoSize;
+        private Vector3 targetPosition;
+        private float targetOrthoSize;
+        private bool cameraOwned;
+        private bool hasSnapshot;
+
+        public void CaptureSnapshot(Camera targetCamera)
+        {
+            camera = targetCamera;
+            originalPosition = camera.transform.position;
+            originalRotation = camera.transform.rotation;
+            originalOrthoSize = camera.orthographicSize;
+            hasSnapshot = true;
+        }
+
+        public void FocusPoint(Vector3 point, float radius)
+        {
+            if (camera == null) return;
+            cameraOwned = true;
+            var tan = Mathf.Tan(camera.fieldOfView * Mathf.Deg2Rad * 0.5f);
+            var distance = Mathf.Max(6f, radius * 1.2f / tan);
+            targetOrthoSize = radius * 1.2f;
+            var verticalOffset = camera.orthographic ? targetOrthoSize * 0.3f : distance * tan * 0.3f;
+            targetPosition = point - originalRotation * Vector3.forward * distance - originalRotation * Vector3.up * verticalOffset;
+        }
+
+        public void FocusMidpointBounds(Vector3 center, Bounds bounds)
+        {
+            if (camera == null) return;
+            var extent = Vector3.zero;
+            for (var x = -1; x <= 1; x += 2)
+                for (var y = -1; y <= 1; y += 2)
+                    for (var z = -1; z <= 1; z += 2)
+                    {
+                        var corner = Quaternion.Inverse(originalRotation) * (bounds.center + Vector3.Scale(bounds.extents, new Vector3(x, y, z)) - center);
+                        extent = Vector3.Max(extent, new Vector3(Mathf.Abs(corner.x), Mathf.Abs(corner.y), Mathf.Abs(corner.z)));
+                    }
+
+            targetOrthoSize = Mathf.Max(2f, extent.y / 0.6f, extent.x / (camera.aspect * 0.85f));
+            var tan = Mathf.Tan(camera.fieldOfView * Mathf.Deg2Rad * 0.5f);
+            var distance = Mathf.Max(6f, targetOrthoSize / tan + extent.z, camera.nearClipPlane + extent.z + 1f);
+            var offset = camera.orthographic ? targetOrthoSize * 0.3f : distance * tan * 0.3f;
+            targetPosition = center - originalRotation * Vector3.forward * distance - originalRotation * Vector3.up * offset;
+            cameraOwned = true;
+        }
+
+        public void Tick(float unscaledDeltaTime)
+        {
+            if (!cameraOwned || camera == null) return;
+            var alpha = 1f - Mathf.Exp(-12f * unscaledDeltaTime);
+            camera.transform.position = Vector3.Lerp(camera.transform.position, targetPosition, alpha);
+            if (camera.orthographic)
+                camera.orthographicSize = Mathf.Lerp(camera.orthographicSize, targetOrthoSize, alpha);
+        }
+
+        public void RestoreImmediate()
+        {
+            if (cameraOwned && hasSnapshot && camera != null)
+            {
+                camera.transform.SetPositionAndRotation(originalPosition, originalRotation);
+                camera.orthographicSize = originalOrthoSize;
+            }
+            cameraOwned = false;
+        }
+
+        public void ResetSnapshot()
+        {
+            hasSnapshot = false;
+            cameraOwned = false;
+            camera = null;
+        }
+    }
+
+    /// <summary>
+    /// Manages gold and blue pulsing highlights on 3D world renderers and UI buttons.
+    /// </summary>
+    internal sealed class TutorialHighlightController
+    {
+        private Renderer[] glowingRenderers;
+        private MaterialPropertyBlock[] originalGlowProperties;
+        private MaterialPropertyBlock glowProperties;
+        private Image glowingButton;
+        private Color originalButtonColor;
+        private bool blueWorldGlow;
+
+        public Image GlowingButton => glowingButton;
+
+        private static Color GoldPulse => Color.Lerp(
+            new Color(1f, 0.64f, 0.08f),
+            new Color(1f, 0.94f, 0.48f),
+            (Mathf.Sin(Time.unscaledTime * 4f) + 1f) * 0.5f);
+
+        private Color WorldPulse => blueWorldGlow
+            ? Color.Lerp(new Color(0.12f, 0.35f, 0.95f), new Color(0.45f, 0.82f, 1f), (Mathf.Sin(Time.unscaledTime * 4f) + 1f) * 0.5f)
+            : GoldPulse;
+
+        public void GlowWorld(Transform target, bool keepCrown = false, bool blue = false)
         {
             ClearWorldGlow();
             if (target == null) return;
             blueWorldGlow = blue;
+
             var renderers = new List<Renderer>();
             foreach (var renderer in target.GetComponentsInChildren<Renderer>())
-                if (!keepCrown || renderer.name == "Body" || renderer.name == "Outline") renderers.Add(renderer);
+            {
+                if (!keepCrown || renderer.name == "Body" || renderer.name == "Outline")
+                    renderers.Add(renderer);
+            }
+
             glowingRenderers = renderers.ToArray();
             originalGlowProperties = new MaterialPropertyBlock[glowingRenderers.Length];
             for (var i = 0; i < glowingRenderers.Length; i++)
@@ -379,9 +626,47 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                 originalGlowProperties[i] = new MaterialPropertyBlock();
                 glowingRenderers[i].GetPropertyBlock(originalGlowProperties[i]);
             }
-            PulseWorld(WorldPulse);
+            ApplyWorldPulse(WorldPulse);
         }
-        private void PulseWorld(Color gold)
+
+        public void ClearWorldGlow()
+        {
+            if (glowingRenderers != null)
+            {
+                for (var i = 0; i < glowingRenderers.Length; i++)
+                {
+                    if (glowingRenderers[i] != null)
+                        glowingRenderers[i].SetPropertyBlock(originalGlowProperties[i]);
+                }
+            }
+            glowingRenderers = null;
+            originalGlowProperties = null;
+        }
+
+        public void GlowButton(Button button) => GlowImage(button != null ? button.targetGraphic as Image : null);
+
+        public void GlowImage(Image image)
+        {
+            ClearButtonGlow();
+            glowingButton = image;
+            if (glowingButton == null) return;
+            originalButtonColor = glowingButton.color;
+            glowingButton.color = GoldPulse;
+        }
+
+        public void ClearButtonGlow()
+        {
+            if (glowingButton != null) glowingButton.color = originalButtonColor;
+            glowingButton = null;
+        }
+
+        public void TickPulse()
+        {
+            ApplyWorldPulse(WorldPulse);
+            if (glowingButton != null) glowingButton.color = GoldPulse;
+        }
+
+        private void ApplyWorldPulse(Color tint)
         {
             if (glowingRenderers == null) return;
             if (glowProperties == null) glowProperties = new MaterialPropertyBlock();
@@ -389,160 +674,172 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             {
                 if (renderer == null) continue;
                 renderer.GetPropertyBlock(glowProperties);
-                glowProperties.SetColor("_BaseColor", gold); glowProperties.SetColor("_Color", gold);
+                glowProperties.SetColor("_BaseColor", tint);
+                glowProperties.SetColor("_Color", tint);
                 renderer.SetPropertyBlock(glowProperties);
             }
         }
-        private void ClearWorldGlow()
+    }
+
+    /// <summary>
+    /// Builds and updates the tutorial banner card, modal blocker, and animated pointer arrow.
+    /// </summary>
+    internal sealed class TutorialBannerView
+    {
+        private readonly Vector3[] buttonCorners = new Vector3[4];
+        private GameObject ui;
+        private GameObject blocker;
+        private RectTransform root;
+        private RectTransform banner;
+        private RectTransform squadArrow;
+        private TMP_Text title;
+        private TMP_Text body;
+        private Button nextButton;
+
+        public bool IsVisible => ui != null && ui.activeSelf;
+
+        public void EnsureBuilt(Transform parent, UnityEngine.Events.UnityAction onContinue, UnityEngine.Events.UnityAction onSkip)
         {
-            if (glowingRenderers != null)
-                for (var i = 0; i < glowingRenderers.Length; i++)
-                    if (glowingRenderers[i] != null) glowingRenderers[i].SetPropertyBlock(originalGlowProperties[i]);
-            glowingRenderers = null; originalGlowProperties = null;
+            if (ui != null) return;
+
+            ui = new GameObject("Level 1 Tutorial", typeof(RectTransform));
+            ui.transform.SetParent(parent, false);
+            LegacyUiKit.CreateCanvas(ui, 900, new Vector2(1280f, 720f), 0.5f);
+            root = (RectTransform)ui.transform;
+
+            var shade = LegacyUiKit.CreateImage(root, "Modal Input Blocker", Vector2.zero, Vector2.zero, new Color(0f, 0f, 0f, 0.08f));
+            LegacyUiKit.Stretch(shade.rectTransform);
+            shade.raycastTarget = true;
+            blocker = shade.gameObject;
+
+            var panel = LegacyUiKit.CreateImage(root, "Tutorial Banner", Vector2.zero, new Vector2(880f, 175f), new Color(0.08f, 0.11f, 0.17f, 0.96f));
+            panel.raycastTarget = true;
+            banner = panel.rectTransform;
+
+            var outline = panel.gameObject.AddComponent<Outline>();
+            outline.effectColor = new Color(0.3f, 0.85f, 0.4f, 1f);
+            outline.effectDistance = new Vector2(3f, -3f);
+
+            title = LegacyUiKit.CreateText(banner, "Title", "", Vector2.zero, Vector2.zero, 30f, new Color(0.35f, 0.95f, 0.45f), FontStyles.Bold);
+            title.enableAutoSizing = true;
+            title.fontSizeMin = 26f;
+            title.fontSizeMax = 30f;
+
+            body = LegacyUiKit.CreateText(banner, "Body", "", Vector2.zero, Vector2.zero, 23f, Color.white);
+            body.textWrappingMode = TextWrappingModes.Normal;
+            body.alignment = TextAlignmentOptions.Center;
+            body.enableAutoSizing = true;
+            body.fontSizeMin = 18f;
+            body.fontSizeMax = 23f;
+
+            var skip = LegacyUiKit.CreateButton(banner, "Skip Tutorial", Vector2.zero, new Vector2(110f, 30f), Color.white, 0f);
+            var skipRect = (RectTransform)skip.transform;
+            skipRect.anchorMin = skipRect.anchorMax = new Vector2(0f, 0f);
+            skipRect.pivot = new Vector2(0f, 0.5f);
+            skipRect.anchoredPosition = new Vector2(24f, 22f);
+            LegacyUiKit.CreateText(skip.transform, "Label", "SKIP", Vector2.zero, new Vector2(100f, 28f), 18f, new Color(0.196f, 0.196f, 0.196f));
+            skip.onClick.AddListener(onSkip);
+
+            nextButton = LegacyUiKit.CreateButton(banner, "Continue", Vector2.zero, new Vector2(144f, 30f), new Color(0.2f, 0.6f, 0.2f), 0f);
+            var nextRect = (RectTransform)nextButton.transform;
+            nextRect.anchorMin = nextRect.anchorMax = new Vector2(1f, 0f);
+            nextRect.pivot = new Vector2(1f, 0.5f);
+            nextRect.anchoredPosition = new Vector2(-24f, 22f);
+            LegacyUiKit.CreateText(nextButton.transform, "Label", "CONTINUE", Vector2.zero, new Vector2(138f, 28f), 18f, Color.white);
+            nextButton.onClick.AddListener(onContinue);
+
+            LayoutBanner(false);
+
+            squadArrow = LegacyUiKit.CreateRect(root, "Team1 Tutorial Arrow", Vector2.zero, new Vector2(84f, 62f));
+            ArrowStroke("Shaft Border", new Vector2(-34f, 0f), new Vector2(42f, 0f), 12f, Color.black);
+            ArrowStroke("Upper Border", new Vector2(-38f, 0f), new Vector2(-10f, 22f), 12f, Color.black);
+            ArrowStroke("Lower Border", new Vector2(-38f, 0f), new Vector2(-10f, -22f), 12f, Color.black);
+            ArrowStroke("Shaft", new Vector2(-34f, 0f), new Vector2(38f, 0f), 6f, Color.white);
+            ArrowStroke("Upper", new Vector2(-37f, 0f), new Vector2(-10f, 22f), 6f, Color.white);
+            ArrowStroke("Lower", new Vector2(-37f, 0f), new Vector2(-10f, -22f), 6f, Color.white);
+            squadArrow.gameObject.SetActive(false);
         }
-        private void GlowButton(Button button) => GlowImage(button != null ? button.targetGraphic as Image : null);
-        private void GlowImage(Image image)
+
+        public void Show(int step, int totalSteps, string heading, string message, bool modal)
         {
-            ClearButtonGlow();
-            glowingButton = image;
-            if (glowingButton == null) return;
-            originalButtonColor = glowingButton.color; glowingButton.color = GoldPulse;
-        }
-        private void ClearButtonGlow()
-        {
-            if (glowingButton != null) glowingButton.color = originalButtonColor;
-            glowingButton = null;
-            if (squadArrow != null) squadArrow.gameObject.SetActive(false);
-        }
-        private void Show(int step, string heading, string message, bool modal, bool formationResult = false)
-        {
-            checkpointStep = step; checkpointHeading = heading; checkpointMessage = message; checkpointResult = formationResult;
-            session.CaptureTutorialCheckpoint(wasPaused);
-            TutorialAnalytics.Step(step, TotalSteps, heading);
-            CurrentStep = step; next = false; ui.SetActive(true); banner.gameObject.SetActive(true);
-            title.text = $"{step}/{TotalSteps} - {heading}"; body.text = message;
+            ui.SetActive(true);
+            banner.gameObject.SetActive(true);
+            title.text = $"{step}/{totalSteps} - {heading}";
+            body.text = message;
             LayoutBanner(!modal);
-            blocker.SetActive(modal); nextButton.gameObject.SetActive(modal);
-            ClearButtonGlow();
+            blocker.SetActive(modal);
+            nextButton.gameObject.SetActive(modal);
+            HideArrow();
         }
-        private void Hide()
+
+        public void Hide()
         {
-            ClearWorldGlow(); ClearButtonGlow();
+            HideArrow();
             if (ui != null) ui.SetActive(false);
         }
-        private void LateUpdate()
+
+        public void HideArrow()
         {
-            if (cameraOwned && camera != null)
+            if (squadArrow != null) squadArrow.gameObject.SetActive(false);
+        }
+
+        public void UpdateArrow(bool showSquadArrow, bool showSpeedArrow, Image glowingButton, Slider speedSlider)
+        {
+            if (squadArrow == null) return;
+            squadArrow.gameObject.SetActive(showSquadArrow || showSpeedArrow);
+
+            if (showSpeedArrow && speedSlider != null)
             {
-                var alpha = 1 - Mathf.Exp(-12 * Time.unscaledDeltaTime);
-                camera.transform.position = Vector3.Lerp(camera.transform.position, targetPosition, alpha);
-                if (camera.orthographic) camera.orthographicSize = Mathf.Lerp(camera.orthographicSize, targetOrthoSize, alpha);
+                ((RectTransform)speedSlider.transform).GetWorldCorners(buttonCorners);
+                var speedCanvas = speedSlider.GetComponentInParent<Canvas>();
+                var eventCamera = speedCanvas != null && speedCanvas.renderMode != RenderMode.ScreenSpaceOverlay ? speedCanvas.worldCamera : null;
+                var screenPoint = RectTransformUtility.WorldToScreenPoint(eventCamera, (buttonCorners[0] + buttonCorners[1]) * 0.5f);
+                if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(root, screenPoint, null, out var left)) return;
+                var scale = Mathf.Lerp(0.8f, 1.15f, (Mathf.Sin(Time.unscaledTime * 4f) + 1f) * 0.5f);
+                squadArrow.localScale = Vector3.one * scale;
+                squadArrow.localRotation = Quaternion.Euler(0f, 0f, 180f);
+                squadArrow.SetAsLastSibling();
+                squadArrow.anchoredPosition = new Vector2(left.x - 12f - 42f * scale, left.y);
             }
-            if (ui == null || !ui.activeSelf) return;
-            var gold = GoldPulse;
-            PulseWorld(WorldPulse);
-            if (glowingButton != null) glowingButton.color = gold;
-            var showArrow = CurrentStep == 4 && glowingButton != null;
-            var showSpeedArrow = !showArrow && speedPrompt && hud != null && hud.SpeedSlider != null;
-            squadArrow.gameObject.SetActive(showArrow || showSpeedArrow);
-            if (showSpeedArrow) PlaceSpeedArrow();
-            else if (showArrow)
+            else if (showSquadArrow && glowingButton != null)
             {
                 squadArrow.localRotation = Quaternion.identity;
                 glowingButton.rectTransform.GetWorldCorners(buttonCorners);
                 var sourceCanvas = glowingButton.GetComponentInParent<Canvas>();
                 var eventCamera = sourceCanvas != null && sourceCanvas.renderMode != RenderMode.ScreenSpaceOverlay ? sourceCanvas.worldCamera : null;
-                var screenPoint = RectTransformUtility.WorldToScreenPoint(eventCamera, (buttonCorners[2] + buttonCorners[3]) / 2);
+                var screenPoint = RectTransformUtility.WorldToScreenPoint(eventCamera, (buttonCorners[2] + buttonCorners[3]) * 0.5f);
                 if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(root, screenPoint, null, out var right)) return;
-                var scale = Mathf.Lerp(0.8f, 1.15f, (Mathf.Sin(Time.unscaledTime * 4) + 1) / 2);
+                var scale = Mathf.Lerp(0.8f, 1.15f, (Mathf.Sin(Time.unscaledTime * 4f) + 1f) * 0.5f);
                 squadArrow.localScale = Vector3.one * scale;
                 squadArrow.SetAsLastSibling();
-                // Keep the left-pointing tip next to the icon while the body grows and shrinks.
-                squadArrow.anchoredPosition = new Vector2(right.x + 12 + 42 * scale, right.y);
+                squadArrow.anchoredPosition = new Vector2(right.x + 12f + 42f * scale, right.y);
             }
         }
-        private void PlaceSpeedArrow()
-        {
-            ((RectTransform)hud.SpeedSlider.transform).GetWorldCorners(buttonCorners);
-            var eventCamera = speedCanvas != null && speedCanvas.renderMode != RenderMode.ScreenSpaceOverlay ? speedCanvas.worldCamera : null;
-            var screenPoint = RectTransformUtility.WorldToScreenPoint(eventCamera, (buttonCorners[0] + buttonCorners[1]) / 2);
-            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(root, screenPoint, null, out var left)) return;
-            var scale = Mathf.Lerp(0.8f, 1.15f, (Mathf.Sin(Time.unscaledTime * 4) + 1) / 2);
-            squadArrow.localScale = Vector3.one * scale;
-            squadArrow.localRotation = Quaternion.Euler(0, 0, 180);
-            squadArrow.SetAsLastSibling();
-            squadArrow.anchoredPosition = new Vector2(left.x - 12 - 42 * scale, left.y);
-        }
-        private void BuildUi()
-        {
-            if (ui != null) return;
-            ui = new GameObject("Level 1 Tutorial", typeof(RectTransform)); ui.transform.SetParent(transform, false);
-            LegacyUiKit.CreateCanvas(ui, 900, new Vector2(1280, 720), 0.5f); root = (RectTransform)ui.transform;
-            var shade = LegacyUiKit.CreateImage(root, "Modal Input Blocker", Vector2.zero, Vector2.zero, new Color(0, 0, 0, 0.08f));
-            LegacyUiKit.Stretch(shade.rectTransform); shade.raycastTarget = true; blocker = shade.gameObject;
-            // Match the original HowToPlay.BuildFreezeFrameUI card and TMP typography.
-            // Both projects use LiberationSans SDF through TMP_Settings.defaultFontAsset.
-            var panel = LegacyUiKit.CreateImage(root, "Tutorial Banner", Vector2.zero, new Vector2(880, 175), new Color(0.08f, 0.11f, 0.17f, 0.96f));
-            panel.raycastTarget = true; banner = panel.rectTransform;
-            var outline = panel.gameObject.AddComponent<Outline>();
-            outline.effectColor = new Color(0.3f, 0.85f, 0.4f, 1);
-            outline.effectDistance = new Vector2(3, -3);
-            title = LegacyUiKit.CreateText(banner, "Title", "", Vector2.zero, Vector2.zero, 30, new Color(0.35f, 0.95f, 0.45f), FontStyles.Bold);
-            title.enableAutoSizing = true; title.fontSizeMin = 26; title.fontSizeMax = 30;
-            body = LegacyUiKit.CreateText(banner, "Body", "", Vector2.zero, Vector2.zero, 23, Color.white);
-            body.textWrappingMode = TextWrappingModes.Normal; body.alignment = TextAlignmentOptions.Center;
-            // Keep every existing message, including its line breaks, visible in the legacy card.
-            body.enableAutoSizing = true; body.fontSizeMin = 18; body.fontSizeMax = 23;
-            var skip = LegacyUiKit.CreateButton(banner, "Skip Tutorial", Vector2.zero, new Vector2(110, 30), Color.white, 0);
-            var skipRect = (RectTransform)skip.transform;
-            skipRect.anchorMin = skipRect.anchorMax = new Vector2(0, 0); skipRect.pivot = new Vector2(0, 0.5f);
-            skipRect.anchoredPosition = new Vector2(24, 22);
-            LegacyUiKit.CreateText(skip.transform, "Label", "SKIP", Vector2.zero, new Vector2(100, 28), 18, new Color(0.196f, 0.196f, 0.196f));
-            skip.onClick.AddListener(Skip);
-            nextButton = LegacyUiKit.CreateButton(banner, "Continue", Vector2.zero, new Vector2(144, 30), new Color(0.2f, 0.6f, 0.2f), 0);
-            var nextRect = (RectTransform)nextButton.transform;
-            nextRect.anchorMin = nextRect.anchorMax = new Vector2(1, 0); nextRect.pivot = new Vector2(1, 0.5f);
-            nextRect.anchoredPosition = new Vector2(-24, 22);
-            LegacyUiKit.CreateText(nextButton.transform, "Label", "CONTINUE", Vector2.zero, new Vector2(138, 28), 18, Color.white);
-            nextButton.onClick.AddListener(Continue);
-            LayoutBanner(false);
-            squadArrow = LegacyUiKit.CreateRect(root, "Team1 Tutorial Arrow", Vector2.zero, new Vector2(84, 62));
-            // Native Image strokes use the same rendering path as the existing working HUD.
-            ArrowStroke("Shaft Border", new Vector2(-34, 0), new Vector2(42, 0), 12, Color.black);
-            ArrowStroke("Upper Border", new Vector2(-38, 0), new Vector2(-10, 22), 12, Color.black);
-            ArrowStroke("Lower Border", new Vector2(-38, 0), new Vector2(-10, -22), 12, Color.black);
-            ArrowStroke("Shaft", new Vector2(-34, 0), new Vector2(38, 0), 6, Color.white);
-            ArrowStroke("Upper", new Vector2(-37, 0), new Vector2(-10, 22), 6, Color.white);
-            ArrowStroke("Lower", new Vector2(-37, 0), new Vector2(-10, -22), 6, Color.white);
-            squadArrow.gameObject.SetActive(false);
-        }
+
         private void LayoutBanner(bool interactive)
         {
-            // The full-width legacy card would cover the embedded formation editor's Apply button.
-            // Use the same visual style on a narrower right-hand card during interactive lessons.
-            banner.anchorMin = banner.anchorMax = new Vector2(interactive ? 0.75f : 0.5f, 0);
-            banner.pivot = new Vector2(0.5f, 0);
-            banner.anchoredPosition = new Vector2(0, 24);
-            banner.sizeDelta = interactive ? new Vector2(560, 230) : new Vector2(880, 175);
-            LayoutBannerText(title.rectTransform, interactive ? 0.72f : 0.68f, 0.96f, 40);
-            LayoutBannerText(body.rectTransform, interactive ? 0.20f : 0.24f, interactive ? 0.72f : 0.68f, 50);
+            banner.anchorMin = banner.anchorMax = new Vector2(interactive ? 0.75f : 0.5f, 0f);
+            banner.pivot = new Vector2(0.5f, 0f);
+            banner.anchoredPosition = new Vector2(0f, 24f);
+            banner.sizeDelta = interactive ? new Vector2(560f, 230f) : new Vector2(880f, 175f);
+            LayoutBannerText(title.rectTransform, interactive ? 0.72f : 0.68f, 0.96f, 40f);
+            LayoutBannerText(body.rectTransform, interactive ? 0.20f : 0.24f, interactive ? 0.72f : 0.68f, 50f);
         }
+
         private static void LayoutBannerText(RectTransform rect, float bottom, float top, float horizontalInset)
         {
-            rect.anchorMin = new Vector2(0, bottom); rect.anchorMax = new Vector2(1, top);
-            rect.pivot = new Vector2(0.5f, 0.5f); rect.anchoredPosition = Vector2.zero;
-            rect.sizeDelta = new Vector2(-horizontalInset, 0);
+            rect.anchorMin = new Vector2(0f, bottom);
+            rect.anchorMax = new Vector2(1f, top);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = Vector2.zero;
+            rect.sizeDelta = new Vector2(-horizontalInset, 0f);
         }
+
         private void ArrowStroke(string name, Vector2 from, Vector2 to, float thickness, Color tint)
         {
             var delta = to - from;
-            var image = LegacyUiKit.CreateImage(squadArrow, name, (from + to) / 2, new Vector2(delta.magnitude, thickness), tint);
-            image.rectTransform.localRotation = Quaternion.Euler(0, 0, Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg);
-        }
-        private void OnDisable()
-        {
-            if (session != null) { session.SimulationCreated -= Bind; session.TutorialRewindRequested -= PrepareRewind; }
-            StopTutorial(); simulation = null;
+            var image = LegacyUiKit.CreateImage(squadArrow, name, (from + to) * 0.5f, new Vector2(delta.magnitude, thickness), tint);
+            image.rectTransform.localRotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg);
         }
     }
 }

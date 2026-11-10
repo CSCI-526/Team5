@@ -117,6 +117,9 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             Preparation.Changed += Refresh;
             startGameButton.onClick.AddListener(StartWave);
             Refresh();
+            CaptainGuide.Attach(this, root);
+            StartWaveNotice.Attach(this, root);
+            StorageFullTutorial.Attach(this, root);
             if (IsFirstCampaignPreparation && !Preparation.FirstSummonPromptCompleted)
                 ShowSummonGuide();
             TryAttachPreparationGuides();
