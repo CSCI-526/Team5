@@ -110,6 +110,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             Refresh();
             CaptainGuide.Attach(this, root);
             StartWaveNotice.Attach(this, root);
+            StorageFullTutorial.Attach(this, root);
         }
 
         private void Update()
