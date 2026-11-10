@@ -91,7 +91,7 @@ namespace Team5.Rebuild.Session
             var eBox = RarityBox("9440D9"); // Epic (Purple)
             var lBox = RarityBox("FFBF26"); // Legendary (Gold)
 
-            return $"Summon Tier {Math.Max(1, HighestStageCleared)}  |  Base Lv.{minLv}-{maxLv} (+Rarity Lv Bonus)  |  {cBox} {c}%  {rBox} {r}%  {eBox} {e}%  {lBox} {l}%";
+            return $"Summon Tier {Math.Max(1, HighestStageCleared)}  |  Base Lv.{minLv}-{maxLv}  |  {cBox} {c}%  {rBox} {r}%  {eBox} {e}%  {lBox} {l}%";
         }
 
         public IReadOnlyList<UnitDefinition> BeginOffer()
