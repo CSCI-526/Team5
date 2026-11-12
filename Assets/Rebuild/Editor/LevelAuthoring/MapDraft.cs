@@ -74,16 +74,17 @@ namespace Team5.Rebuild.Editor.LevelAuthoring
         {
             var tower = prefab != null ? prefab.GetComponent<BattleTower>() : null;
             if (tower == null) throw new ArgumentException("Choose a tower prefab with BattleTower on its root.");
-            var radius = tower.FootprintSize / 2;
+            var footprint = tower.Footprint;
+            var radius = tower.IsWall ? 0 : tower.FootprintSize / 2;
             if (radius == 1 && (((point.x + originX) % 3 + 3) % 3 != 1 || ((point.y + originZ) % 3 + 3) % 3 != 1))
                 throw new ArgumentException("A 3x3 tower must be placed at a macro center (3n+1, 3n+1).");
-            for (var z = -radius; z <= radius; z++)
-                for (var x = -radius; x <= radius; x++)
+            for (var z = -footprint.y / 2; z <= footprint.y / 2; z++)
+                for (var x = -footprint.x / 2; x <= footprint.x / 2; x++)
                 {
                     var p = point + new Vector2Int(x, z);
-                    if (Tile(p) != (int)CellKind.TowerPlatform) throw new ArgumentException("The whole tower footprint needs TowerPlatform tiles.");
-                    if (towers.Any(t => Mathf.Abs(t.cell.x - p.x) <= t.prefab.GetComponent<BattleTower>().FootprintSize / 2 &&
-                                        Mathf.Abs(t.cell.y - p.y) <= t.prefab.GetComponent<BattleTower>().FootprintSize / 2))
+                    if (Tile(p) != (int)(tower.IsWall ? CellKind.Road : CellKind.TowerPlatform)) throw new ArgumentException("The whole footprint needs Road tiles for walls or TowerPlatform tiles for towers.");
+                    if (towers.Any(t => Mathf.Abs(t.cell.x - p.x) <= t.prefab.GetComponent<BattleTower>().Footprint.x / 2 &&
+                                        Mathf.Abs(t.cell.y - p.y) <= t.prefab.GetComponent<BattleTower>().Footprint.y / 2))
                         throw new ArgumentException("Tower footprints overlap.");
                 }
             towers.Add(new MapTowerStamp

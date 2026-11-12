@@ -76,6 +76,8 @@ namespace Team5.Rebuild.Simulation
         public float AttackInterval { get; }
         public TargetRule TargetRule { get; }
         public int FootprintSize { get; }
+        public bool IsWall { get; }
+        public Vector2Int Footprint { get; }
         public float MaxHp { get; }
         public AttackArea Area { get; }
         public float AttackWidth { get; }
@@ -84,10 +86,10 @@ namespace Team5.Rebuild.Simulation
 
         public TowerDefinition(int id, Vector3 position, float range, float damage, float attackInterval, TargetRule targetRule,
             int footprintSize = 1, float maxHp = 20, AttackArea area = AttackArea.Square, float attackWidth = 0.3f,
-            bool isAoe = false, int goldBounty = 20)
+            bool isAoe = false, int goldBounty = 20, bool isWall = false, bool wallAlongZ = false)
         {
             if (!BattleNumbers.Finite(position) || !BattleNumbers.Finite(range) || range < 0 ||
-                !BattleNumbers.Finite(damage) || damage <= 0 || !BattleNumbers.Finite(attackInterval) || attackInterval <= 0)
+                !BattleNumbers.Finite(damage) || (isWall ? damage < 0 : damage <= 0) || !BattleNumbers.Finite(attackInterval) || attackInterval <= 0)
                 throw new ArgumentOutOfRangeException(nameof(range), "Invalid tower configuration.");
             if (!Enum.IsDefined(typeof(TargetRule), targetRule)) throw new ArgumentOutOfRangeException(nameof(targetRule));
             if (footprintSize != 1 && footprintSize != 3) throw new ArgumentOutOfRangeException(nameof(footprintSize));
@@ -96,16 +98,18 @@ namespace Team5.Rebuild.Simulation
 
             Id = id;
             Position = position;
-            Range = range;
-            Damage = damage;
+            Range = isWall ? 0 : range;
+            Damage = isWall ? 0 : damage;
             AttackInterval = attackInterval;
             TargetRule = targetRule;
             FootprintSize = footprintSize;
             MaxHp = maxHp;
             Area = area;
             AttackWidth = attackWidth;
-            IsAoe = isAoe;
-            GoldBounty = Math.Max(0, goldBounty);
+            IsAoe = !isWall && isAoe;
+            IsWall = isWall;
+            Footprint = isWall ? (wallAlongZ ? new Vector2Int(1, 3) : new Vector2Int(3, 1)) : new Vector2Int(footprintSize, footprintSize);
+            GoldBounty = isWall ? 0 : Math.Max(0, goldBounty);
         }
     }
 

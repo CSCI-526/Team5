@@ -86,7 +86,7 @@ namespace Team5.Rebuild.Simulation
                 for (var slot = 0; slot < 9; slot++)
                     foreach (var cell in FormationClearance.SweptCells(definition.Waypoints[i - 1] + SquadCombatRules.Offset(slot),
                         definition.Waypoints[i] + SquadCombatRules.Offset(slot)))
-                        if (!walkable.Contains(cell) || HasTowerFootprint(cell))
+                        if (!walkable.Contains(cell) || HasTowerFootprint(cell, false))
                             throw new ArgumentException($"Formation trajectory blocked at {cell}, slot {slot}, segment {i - 1}.");
         }
 
@@ -141,10 +141,11 @@ namespace Team5.Rebuild.Simulation
             try
             {
                 Spawn();
+                var wallStop = WallStopProgress();
                 foreach (var unit in units)
                 {
                     if (!unit.IsAlive) continue;
-                    Move(unit, deltaTime);
+                    Move(unit, deltaTime, wallStop);
                     if (Outcome != BattleOutcome.Running) return;
                     if (Objective == BattleObjective.DefendGoal && ReachedGoalCount >= definition.GoalLives) break;
                 }
@@ -178,9 +179,9 @@ namespace Team5.Rebuild.Simulation
                     if (spawnedMembers.Contains(member.MemberId) || member.SpawnTime > time + 0.000001) continue;
                     spawnedMembers.Add(member.MemberId);
                     var unit = new UnitState(member.MemberId, member.Unit,
-                        SampleAnchor((float)time * member.Unit.Speed) + SquadCombatRules.Offset(member.SlotId),
+                        SampleAnchor(SpawnProgress(member.Unit.Speed)) + SquadCombatRules.Offset(member.SlotId),
                         1, SquadCombatRules.Slot(member.SlotId), SquadCombatRules.Offset(member.SlotId));
-                    unit.RouteProgress = Mathf.Min((float)time * member.Unit.Speed, RouteLength());
+                    unit.RouteProgress = SpawnProgress(member.Unit.Speed);
                     unit.NextWaypoint = NextWaypoint(unit.RouteProgress);
                     units.Add(unit); SpawnedCount++;
                     UnitSpawned?.Invoke(new UnitSpawnedEvent(unit));
@@ -203,9 +204,75 @@ namespace Team5.Rebuild.Simulation
             }
         }
 
-        private void Move(UnitState unit, float deltaTime)
+        private float SpawnProgress(float speed)
         {
-            var remaining = unit.Speed * deltaTime;
+            // Reinforcements join the existing formation even when a wall has stopped it.
+            foreach (var unit in units) if (unit.IsAlive) return unit.RouteProgress;
+            return Mathf.Min((float)time * speed, Mathf.Min(RouteLength(), WallStopProgress()));
+        }
+
+        private float WallStopProgress()
+        {
+            var stop = float.PositiveInfinity;
+            var members = new List<(float progress, Vector3 offset)>();
+            foreach (var unit in units)
+                if (unit.IsAlive) members.Add((unit.RouteProgress, unit.FormationOffset));
+            // Reserve planned reinforcement slots too, so late spawns cannot appear inside a wall.
+            if (definition.Members != null)
+            {
+                var anchorProgress = members.Count > 0 ? members[0].progress : 0;
+                foreach (var member in definition.Members)
+                    if (!spawnedMembers.Contains(member.MemberId)) members.Add((anchorProgress, SquadCombatRules.Offset(member.SlotId)));
+            }
+            if (members.Count == 0 && definition.Members == null)
+                for (var slot = 0; slot < definition.SquadCapacity; slot++)
+                    members.Add((0, definition.FormationSize == 3 ? SquadCombatRules.Offset(slot) : Vector3.zero));
+            foreach (var wall in towers)
+            {
+                if (!wall.Definition.IsWall || !wall.IsAlive) continue;
+                var distance = 0f;
+                for (var i = 1; i < definition.Waypoints.Count; i++)
+                {
+                    var from = definition.Waypoints[i - 1];
+                    var to = definition.Waypoints[i];
+                    var length = Vector3.Distance(from, to);
+                    if (Mathf.Abs(from.y - wall.Position.y) < 0.1f)
+                    foreach (var member in members)
+                    {
+                        // Ignore completed segments; a wall behind the squad cannot stop it.
+                        if (member.progress >= distance + length) continue;
+                        var start = Mathf.Max(distance, member.progress);
+                        var along = length > 0 ? (start - distance) / length : 0;
+                        var offset = member.offset;
+                        // Include the unit's half-width so its model never intersects the wall.
+                        var size = wall.Definition.Footprint;
+                        var origin = Vector3.Lerp(from, to, along) + offset;
+                        var delta = to + offset - origin;
+                        var enter = 0f;
+                        var exit = 1f;
+                        if (ClipWallAxis(origin.x - wall.Position.x, delta.x, size.x * .5f + .44f, ref enter, ref exit) &&
+                            ClipWallAxis(origin.z - wall.Position.z, delta.z, size.y * .5f + .44f, ref enter, ref exit))
+                            stop = Mathf.Min(stop, start + Mathf.Max(0, enter * (distance + length - start) - 0.001f));
+                    }
+                    distance += length;
+                }
+            }
+            return stop;
+        }
+
+        private static bool ClipWallAxis(float origin, float delta, float halfSize, ref float enter, ref float exit)
+        {
+            if (Mathf.Abs(delta) < 0.000001f) return Mathf.Abs(origin) <= halfSize;
+            var first = (-halfSize - origin) / delta;
+            var last = (halfSize - origin) / delta;
+            enter = Mathf.Max(enter, Mathf.Min(first, last));
+            exit = Mathf.Min(exit, Mathf.Max(first, last));
+            return enter <= exit;
+        }
+
+        private void Move(UnitState unit, float deltaTime, float wallStop)
+        {
+            var remaining = Mathf.Min(unit.Speed * deltaTime, Mathf.Max(0, wallStop - unit.RouteProgress));
             while (remaining > 0 && unit.NextWaypoint < definition.Waypoints.Count)
             {
                 var target = definition.Waypoints[unit.NextWaypoint] + unit.FormationOffset;
@@ -225,7 +292,7 @@ namespace Team5.Rebuild.Simulation
 
         private void Attack(TowerState tower, float deltaTime)
         {
-            if (!tower.IsAlive) { tower.TargetId = null; return; }
+            if (!tower.IsAlive || tower.Definition.IsWall) { tower.TargetId = null; return; }
             tower.CooldownRemaining = Math.Max(0, tower.CooldownRemaining - deltaTime);
             tower.TargetId = null;
             if (tower.CooldownRemaining > 0.000001f) return;
@@ -302,6 +369,14 @@ namespace Team5.Rebuild.Simulation
             });
         }
 
+        private static Vector3 AimPosition(TowerState target, Vector3 from)
+        {
+            if (!target.Definition.IsWall) return target.Position;
+            var size = target.Definition.Footprint;
+            return new Vector3(Mathf.Clamp(from.x, target.Position.x - size.x * .5f, target.Position.x + size.x * .5f),
+                target.Position.y, Mathf.Clamp(from.z, target.Position.z - size.y * .5f, target.Position.z + size.y * .5f));
+        }
+
         private void AttackTower(UnitState unit, float deltaTime)
         {
             if (!unit.IsAlive || !SquadCombatRules.CanAttackTowers(unit.Role)) return;
@@ -312,13 +387,13 @@ namespace Team5.Rebuild.Simulation
             foreach (var tower in towers)
             {
                 if (!tower.IsAlive) continue;
-                var distance = (tower.Position - unit.Position).sqrMagnitude;
+                var distance = (AimPosition(tower, unit.Position) - unit.Position).sqrMagnitude;
                 if (distance > nearest) continue;
                 target = tower; nearest = distance;
             }
             if (target == null) return;
             unit.AttackCooldown = unit.Definition.AttackInterval;
-            var effectiveTowerDamage = unit.Definition.Damage * unit.Definition.TowerDamageMultiplier;
+            var effectiveTowerDamage = unit.Definition.Damage * (target.Definition.IsWall ? 1 : unit.Definition.TowerDamageMultiplier);
             projectiles.Add(new ProjectileState
             {
                 Id = ++projectileSequence,
@@ -341,7 +416,7 @@ namespace Team5.Rebuild.Simulation
                 {
                     tower = towers.Find(value => value.Id == shot.TargetId && value.IsAlive);
                     if (tower == null) { shot.IsActive = false; continue; }
-                    aim = tower.Position;
+                    aim = AimPosition(tower, shot.Position);
                 }
                 else
                 {
@@ -397,9 +472,12 @@ namespace Team5.Rebuild.Simulation
             if (!tower.IsAlive)
             {
                 tower.TargetId = null;
-                TowersDestroyedCount++;
-                TowerBountyGoldEarned += tower.Definition.GoldBounty;
-                TowerDestroyed?.Invoke(new TowerDestroyedEvent(sourceId, tower));
+                if (!tower.Definition.IsWall)
+                {
+                    TowersDestroyedCount++;
+                    TowerBountyGoldEarned += tower.Definition.GoldBounty;
+                    TowerDestroyed?.Invoke(new TowerDestroyedEvent(sourceId, tower));
+                }
                 TowerDied?.Invoke(tower.Id);
             }
         }
@@ -460,13 +538,14 @@ namespace Team5.Rebuild.Simulation
                 if ((walkable != null && !walkable.Contains(cell)) || HasTowerFootprint(cell)) return false;
             return true;
         }
-        private bool HasTowerFootprint(Vector3Int cell)
+        private bool HasTowerFootprint(Vector3Int cell, bool includeWalls = true)
         {
             foreach (var tower in towers)
             {
                 var center = SmallCellOccupancy.PositionToCell(tower.Position);
-                var radius = tower.Definition.FootprintSize / 2;
-                if (center.y == cell.y && Math.Abs(center.x - cell.x) <= radius && Math.Abs(center.z - cell.z) <= radius) return true;
+                if (tower.Definition.IsWall && (!includeWalls || !tower.IsAlive)) continue;
+                var footprint = tower.Definition.Footprint;
+                if (center.y == cell.y && Math.Abs(center.x - cell.x) <= footprint.x / 2 && Math.Abs(center.z - cell.z) <= footprint.y / 2) return true;
             }
             return false;
         }
@@ -476,8 +555,9 @@ namespace Team5.Rebuild.Simulation
             foreach (var tower in towers)
             {
                 var center = SmallCellOccupancy.PositionToCell(tower.Position);
-                var radius = tower.Definition.FootprintSize / 2;
-                if (center.y == cell.y && Math.Abs(center.x - cell.x) <= radius && Math.Abs(center.z - cell.z) <= radius) towerIds.Add(tower.Id);
+                if (tower.Definition.IsWall && !tower.IsAlive) continue;
+                var footprint = tower.Definition.Footprint;
+                if (center.y == cell.y && Math.Abs(center.x - cell.x) <= footprint.x / 2 && Math.Abs(center.z - cell.z) <= footprint.y / 2) towerIds.Add(tower.Id);
             }
             foreach (var unit in units) if (unit.IsAlive && unit.OccupiedCell == cell) unitIds.Add(unit.Id);
             return new SmallCellOccupancy(towerIds, unitIds);

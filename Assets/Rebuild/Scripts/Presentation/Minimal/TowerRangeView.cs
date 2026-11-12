@@ -70,7 +70,7 @@ namespace Team5.Rebuild.Presentation
         {
             var definition = tower != null ? tower.Definition : previewDefinition;
             if (definition == null || fill == null || border == null) return;
-            fill.enabled = border.enabled = isActiveAndEnabled && visible && (tower == null || tower.IsAlive);
+            fill.enabled = border.enabled = isActiveAndEnabled && visible && !definition.IsWall && (tower == null || tower.IsAlive);
 
             // Tint AOE towers orange-red with a subtle pulse
             if (definition.IsAoe)

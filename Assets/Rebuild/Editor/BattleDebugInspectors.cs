@@ -39,9 +39,44 @@ namespace Team5.Rebuild.Editor
         public override bool RequiresConstantRepaint() => Application.isPlaying;
         public override void OnInspectorGUI()
         {
-            DrawDefaultInspector();
-            var state = ((BattleTower)target).RuntimeState;
+            var tower = (BattleTower)target;
+            if (tower.IsWall)
+            {
+                serializedObject.Update();
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("maxHp"), new GUIContent("Wall HP"));
+                serializedObject.ApplyModifiedProperties();
+                EditorGUILayout.HelpBox("3x1 road wall. HP only; no attacks or bounty. Rotate around Y in 90-degree steps to choose its orientation.", MessageType.Info);
+                using (new EditorGUI.DisabledScope(Application.isPlaying || EditorUtility.IsPersistent(tower)))
+                    if (GUILayout.Button("Snap Wall To Road Surface")) SnapWallToRoad(tower);
+            }
+            else DrawDefaultInspector();
+            var state = tower.RuntimeState;
             if (state != null) EditorGUILayout.LabelField($"Cooldown {state.CooldownRemaining:F2} | Target {state.TargetId?.ToString() ?? "-"}");
+        }
+
+        private static void SnapWallToRoad(BattleTower wall)
+        {
+            BattleCell nearest = null;
+            var distance = float.PositiveInfinity;
+            var position = wall.transform.position;
+            foreach (var root in wall.gameObject.scene.GetRootGameObjects())
+                foreach (var cell in root.GetComponentsInChildren<BattleCell>())
+                {
+                    if (cell.Kind != CellKind.Road || Mathf.Abs(cell.transform.position.x - position.x) > .5f ||
+                        Mathf.Abs(cell.transform.position.z - position.z) > .5f) continue;
+                    var gap = Mathf.Abs(cell.TopCenter.y - position.y);
+                    if (gap >= distance) continue;
+                    nearest = cell;
+                    distance = gap;
+                }
+            if (nearest == null)
+            {
+                Debug.LogWarning("No Road cell under this wall. Move the wall over the road first.", wall);
+                return;
+            }
+            Undo.RecordObject(wall.transform, "Snap Wall To Road Surface");
+            wall.transform.position = nearest.TopCenter;
+            PrefabUtility.RecordPrefabInstancePropertyModifications(wall.transform);
         }
     }
 

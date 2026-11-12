@@ -13,6 +13,7 @@ namespace Team5.Rebuild.Presentation
         private BattleSimulation bound;
         private readonly Dictionary<int, Transform> shots = new Dictionary<int, Transform>();
         private readonly Dictionary<Renderer, MaterialPropertyBlock> originalColors = new Dictionary<Renderer, MaterialPropertyBlock>();
+        private readonly Dictionary<Renderer, bool> wallVisibility = new Dictionary<Renderer, bool>();
         private MaterialPropertyBlock color;
         private Material shotMaterial;
         public bool ShowDebugPanel { get; set; }
@@ -69,6 +70,12 @@ namespace Team5.Rebuild.Presentation
                 if (tower == null || tower.RuntimeState == null) continue;
                 foreach (var renderer in tower.GetComponentsInChildren<Renderer>())
                 {
+                    if (tower.IsWall)
+                    {
+                        if (!wallVisibility.ContainsKey(renderer)) wallVisibility.Add(renderer, renderer.enabled);
+                        renderer.enabled = tower.RuntimeState.IsAlive && wallVisibility[renderer];
+                        continue;
+                    }
                     if (!originalColors.ContainsKey(renderer))
                     {
                         var original = new MaterialPropertyBlock();
@@ -91,6 +98,8 @@ namespace Team5.Rebuild.Presentation
             shots.Clear();
             foreach (var pair in originalColors) if (pair.Key != null) pair.Key.SetPropertyBlock(pair.Value);
             originalColors.Clear();
+            foreach (var pair in wallVisibility) if (pair.Key != null) pair.Key.enabled = pair.Value;
+            wallVisibility.Clear();
         }
 
         private void OnDisable()

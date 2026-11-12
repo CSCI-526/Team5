@@ -15,6 +15,7 @@ namespace Team5.Rebuild.Presentation
         private readonly List<TowerRangeView> ranges = new List<TowerRangeView>();
         private BattleSimulation simulation;
         private BattleUnitInspection inspection;
+        private WallOcclusionView wallOcclusion;
         private RectTransform levelBadgeLayer;
         public BattleSession Session => session;
         public UnitView UnitPrefab => unitPrefab;
@@ -38,6 +39,10 @@ namespace Team5.Rebuild.Presentation
                 Debug.LogWarning("BattlePresentation needs a session and UnitView prefab; combat can still run.", this);
                 return;
             }
+            wallOcclusion = GetComponent<WallOcclusionView>();
+            if (wallOcclusion == null) wallOcclusion = gameObject.AddComponent<WallOcclusionView>();
+            wallOcclusion.Bind(this);
+            wallOcclusion.enabled = true;
             session.SimulationCreated += Bind;
             inspection = GetComponent<BattleUnitInspection>();
             if (inspection == null) inspection = gameObject.AddComponent<BattleUnitInspection>();
@@ -48,6 +53,7 @@ namespace Team5.Rebuild.Presentation
 
         private void OnDisable()
         {
+            if (wallOcclusion != null) wallOcclusion.enabled = false;
             if (inspection != null) inspection.enabled = false;
             if (session != null) session.SimulationCreated -= Bind;
             Unbind();

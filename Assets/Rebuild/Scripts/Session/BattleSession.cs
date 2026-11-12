@@ -77,7 +77,27 @@ namespace Team5.Rebuild.Session
         public SceneRoute Route => route;
         // Unity leaves a null list entry when an authored tower is deleted from the Scene.
         // All consumers use the same surviving order so simulation IDs and views stay aligned.
-        public IReadOnlyList<BattleTower> Towers => towers.Where(tower => tower != null).ToArray();
+        private readonly List<BattleTower> sceneWalls = new List<BattleTower>();
+        private bool wallsIndexed;
+        public IReadOnlyList<BattleTower> Towers
+        {
+            get
+            {
+                if (!wallsIndexed) IndexSceneWalls();
+                return towers.Where(tower => tower != null)
+                    .Concat(sceneWalls.Where(wall => wall != null && !towers.Contains(wall))).ToArray();
+            }
+        }
+
+        private void IndexSceneWalls()
+        {
+            sceneWalls.Clear();
+            if (gameObject.scene.IsValid())
+                foreach (var root in gameObject.scene.GetRootGameObjects())
+                    foreach (var enemy in root.GetComponentsInChildren<BattleTower>(true))
+                        if (enemy.IsWall) sceneWalls.Add(enemy);
+            wallsIndexed = true;
+        }
         public BattleSimulation Simulation { get; private set; }
         public bool SquadCombat => squadCombat;
         public int DisplayedLevelNumber => displayedLevelNumber;
@@ -163,9 +183,11 @@ namespace Team5.Rebuild.Session
                 errors.Add("Formation size must be 1 or 3 and match the route's required width.");
             if (formationSize == 3 && unitCount > 9)
                 errors.Add("This prototype supports one squad of up to nine independent members.");
+            // Scene-authored road walls participate even when dropped outside the manual tower list.
+            IndexSceneWalls();
             var seen = new HashSet<BattleTower>();
             var towerFootprints = new HashSet<Vector3Int>();
-            foreach (var tower in towers)
+            foreach (var tower in Towers)
             {
                 if (tower == null) continue;
                 if (!seen.Add(tower)) errors.Add($"Duplicate tower reference: {tower.name}.");
@@ -173,6 +195,7 @@ namespace Team5.Rebuild.Session
                     errors.Add($"{tower.name}: tower must be active in this Scene.");
                 if (!tower.HasValidConfiguration) errors.Add($"{tower.name}: invalid tower stats or position.");
                 tower.CollectFootprintErrors(grid, towerFootprints, errors);
+                if (tower.IsWall) continue;
                 // Support is determined from this same world position; there are no tower slots.
                 var position = tower.transform.position;
                 var supportKey = new Vector3Int(Mathf.RoundToInt(position.x),

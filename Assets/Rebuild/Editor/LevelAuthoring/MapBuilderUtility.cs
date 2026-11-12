@@ -69,6 +69,8 @@ namespace Team5.Rebuild.Editor.LevelAuthoring
                 var tower = go.GetComponent<BattleTower>();
                 if (!string.IsNullOrEmpty(stamp.configuration)) JsonUtility.FromJsonOverwrite(stamp.configuration, tower);
                 var serialized = new SerializedObject(tower);
+                if (tower.IsWall)
+                    serialized.FindProperty("wallAlongZ").boolValue = stamp.prefab.GetComponent<BattleTower>().Footprint.y == 3;
                 serialized.FindProperty("attackArea").enumValueIndex = (int)stamp.area;
                 var isAoeProp = serialized.FindProperty("isAoe");
                 if (isAoeProp != null) isAoeProp.boolValue = stamp.isAoe;
@@ -180,6 +182,8 @@ namespace Team5.Rebuild.Editor.LevelAuthoring
                     var source = PrefabUtility.GetCorrespondingObjectFromSource(tower.gameObject);
                     if (source == null || source.GetComponent<BattleTower>() == null)
                         throw new ArgumentException("Import requires towers created from tower prefabs; custom scene towers are not converted automatically.");
+                    if (tower.IsWall)
+                        source = AssetDatabase.LoadAssetAtPath<GameObject>(Kit + "Towers/Wall_3x1_" + (tower.Footprint.y == 3 ? "Z" : "X") + ".prefab");
                     var serialized = new SerializedObject(tower);
                     result.towers.Add(new MapTowerStamp
                     {

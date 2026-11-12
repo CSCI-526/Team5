@@ -133,6 +133,15 @@ namespace Team5.Rebuild.Editor.LevelAuthoring
                                 towerGoldBounty = 45;
                             }
                         }
+                        using (new EditorGUILayout.HorizontalScope())
+                        {
+                            if (GUILayout.Button("Wall 3x1 (X)"))
+                                towerPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(MapBuilderUtility.Kit + "Towers/Wall_3x1_X.prefab");
+                            if (GUILayout.Button("Wall 1x3 (Z)"))
+                                towerPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(MapBuilderUtility.Kit + "Towers/Wall_3x1_Z.prefab");
+                        }
+                        if (towerPrefab != null && towerPrefab.GetComponent<BattleTower>()?.IsWall == true)
+                            EditorGUILayout.HelpBox("Wall: place on 3 Road cells. HP only; no attacks or gold reward. Destroy it to clear the path.", MessageType.Info);
                         EditorGUILayout.LabelField("Hover: tinted cells show attack coverage. Orange = AOE Tower, Yellow = Single-Target.");
                     }
                     var maxPanelHeight = Mathf.Max(100, position.height - workspaceTop - 128);
@@ -249,16 +258,23 @@ namespace Team5.Rebuild.Editor.LevelAuthoring
                     var rect = new Rect(grid.x + 28 + x * zoom, grid.y + 22 + (draft.length - 1 - z) * zoom, zoom - 1, zoom - 1);
                     var value = draft.Tile(p);
                     EditorGUI.DrawRect(rect, value < 0 ? new Color(.17f, .17f, .18f) : Colors[value]);
-                    if (tool == 8 && preview != null && draft.Inside(hover) && SquadCombatRules.Contains(new Vector3(x - hover.x, 0, z - hover.y), area, preview.Range,
+                    if (tool == 8 && preview != null && !preview.IsWall && draft.Inside(hover) && SquadCombatRules.Contains(new Vector3(x - hover.x, 0, z - hover.y), area, preview.Range,
                         attackWidth))
                     {
                         EditorGUI.DrawRect(rect, towerIsAoe ? new Color(1f, 0.35f, 0.1f, 0.35f) : new Color(1f, .8f, .15f, .23f));
+                    }
+                    foreach (var stamp in draft.towers)
+                    {
+                        var wall = stamp.prefab != null ? stamp.prefab.GetComponent<BattleTower>() : null;
+                        if (wall != null && wall.IsWall && Mathf.Abs(stamp.cell.x - x) <= wall.Footprint.x / 2 &&
+                            Mathf.Abs(stamp.cell.y - z) <= wall.Footprint.y / 2)
+                            EditorGUI.DrawRect(rect, new Color(0.58f, 0.56f, 0.52f, 0.85f));
                     }
                     towerLabels.TryGetValue(p, out var tower);
                     if (routeLabels.TryGetValue(p, out var routeIndex)) GUI.Label(rect, routeIndex.ToString(), EditorStyles.whiteMiniLabel);
                     if (tower != null)
                     {
-                        var symbol = tower.isAoe ? "✹" : tower.area == AttackArea.Square ? "▣" : tower.area == AttackArea.NegativeX ? "←" : tower.area == AttackArea.PositiveX ? "→" : tower.area == AttackArea.PositiveZ ? "↑" : "↓";
+                        var symbol = tower.prefab.GetComponent<BattleTower>().IsWall ? "W" : tower.isAoe ? "✹" : tower.area == AttackArea.Square ? "▣" : tower.area == AttackArea.NegativeX ? "←" : tower.area == AttackArea.PositiveX ? "→" : tower.area == AttackArea.PositiveZ ? "↑" : "↓";
                         GUI.Label(rect, symbol, EditorStyles.whiteBoldLabel);
                     }
                 }
@@ -287,7 +303,7 @@ namespace Team5.Rebuild.Editor.LevelAuthoring
                     {
                         if (tool == 7) draft.AppendRoute(hover);
                         if (tool == 8) draft.PlaceTower(hover, towerPrefab, area, towerIsAoe, towerGoldBounty);
-                        if (tool == 9) draft.towers.RemoveAll(t => Mathf.Abs(t.cell.x - hover.x) <= t.prefab.GetComponent<BattleTower>().FootprintSize / 2 && Mathf.Abs(t.cell.y - hover.y) <= t.prefab.GetComponent<BattleTower>().FootprintSize / 2);
+                        if (tool == 9) draft.towers.RemoveAll(t => Mathf.Abs(t.cell.x - hover.x) <= t.prefab.GetComponent<BattleTower>().Footprint.x / 2 && Mathf.Abs(t.cell.y - hover.y) <= t.prefab.GetComponent<BattleTower>().Footprint.y / 2);
                         Changed();
                     }
                 }
