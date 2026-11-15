@@ -83,11 +83,13 @@ namespace Team5.Rebuild.Simulation
         public float AttackWidth { get; }
         public bool IsAoe { get; }
         public int GoldBounty { get; }
+        public bool IsMinion { get; }
 
         public TowerDefinition(int id, Vector3 position, float range, float damage, float attackInterval, TargetRule targetRule,
             int footprintSize = 1, float maxHp = 20, AttackArea area = AttackArea.Square, float attackWidth = 0.3f,
-            bool isAoe = false, int goldBounty = 20, bool isWall = false, bool wallAlongZ = false)
+            bool isAoe = false, int goldBounty = 20, bool isWall = false, bool wallAlongZ = false, bool isMinion = false)
         {
+            isWall = isWall || isMinion;
             if (!BattleNumbers.Finite(position) || !BattleNumbers.Finite(range) || range < 0 ||
                 !BattleNumbers.Finite(damage) || (isWall ? damage < 0 : damage <= 0) || !BattleNumbers.Finite(attackInterval) || attackInterval <= 0)
                 throw new ArgumentOutOfRangeException(nameof(range), "Invalid tower configuration.");
@@ -98,8 +100,8 @@ namespace Team5.Rebuild.Simulation
 
             Id = id;
             Position = position;
-            Range = isWall ? 0 : range;
-            Damage = isWall ? 0 : damage;
+            Range = isWall && !isMinion ? 0 : range;
+            Damage = isWall && !isMinion ? 0 : damage;
             AttackInterval = attackInterval;
             TargetRule = targetRule;
             FootprintSize = footprintSize;
@@ -108,7 +110,8 @@ namespace Team5.Rebuild.Simulation
             AttackWidth = attackWidth;
             IsAoe = !isWall && isAoe;
             IsWall = isWall;
-            Footprint = isWall ? (wallAlongZ ? new Vector2Int(1, 3) : new Vector2Int(3, 1)) : new Vector2Int(footprintSize, footprintSize);
+            IsMinion = isMinion;
+            Footprint = isMinion ? Vector2Int.one : isWall ? (wallAlongZ ? new Vector2Int(1, 3) : new Vector2Int(3, 1)) : new Vector2Int(footprintSize, footprintSize);
             GoldBounty = isWall ? 0 : Math.Max(0, goldBounty);
         }
     }

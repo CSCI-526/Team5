@@ -292,7 +292,7 @@ namespace Team5.Rebuild.Simulation
 
         private void Attack(TowerState tower, float deltaTime)
         {
-            if (!tower.IsAlive || tower.Definition.IsWall) { tower.TargetId = null; return; }
+            if (!tower.IsAlive || (tower.Definition.IsWall && !tower.Definition.IsMinion)) { tower.TargetId = null; return; }
             tower.CooldownRemaining = Math.Max(0, tower.CooldownRemaining - deltaTime);
             tower.TargetId = null;
             if (tower.CooldownRemaining > 0.000001f) return;
@@ -535,8 +535,20 @@ namespace Team5.Rebuild.Simulation
         private bool CanStand(Vector3 position)
         {
             foreach (var cell in FormationClearance.SweptCells(position, position))
-                if ((walkable != null && !walkable.Contains(cell)) || HasTowerFootprint(cell)) return false;
-            return true;
+                if ((walkable != null && !walkable.Contains(cell)) || HasTowerFootprint(cell, false)) return false;
+            return !TouchesLiveWall(position);
+        }
+        private bool TouchesLiveWall(Vector3 position)
+        {
+            var layer = SmallCellOccupancy.PositionToCell(position).y;
+            foreach (var tower in towers)
+            {
+                if (!tower.Definition.IsWall || !tower.IsAlive || SmallCellOccupancy.PositionToCell(tower.Position).y != layer) continue;
+                var size = tower.Definition.Footprint;
+                if (Mathf.Abs(position.x - tower.Position.x) < size.x * .5f + .44f &&
+                    Mathf.Abs(position.z - tower.Position.z) < size.y * .5f + .44f) return true;
+            }
+            return false;
         }
         private bool HasTowerFootprint(Vector3Int cell, bool includeWalls = true)
         {

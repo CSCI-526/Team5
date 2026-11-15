@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Team5.Rebuild.Session;
+using Team5.Rebuild.Simulation;
 using Team5.Rebuild.World;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -9,10 +10,11 @@ namespace Team5.Rebuild.Presentation.LegacyUI
 {
     public sealed class NextMapData
     {
-        private NextMapData(NextMapRoute route, IReadOnlyList<NextMapTower> towers, Bounds cells, bool hasCells, Vector3 spawn, Vector3 goal)
+        private NextMapData(NextMapRoute route, IReadOnlyList<NextMapTower> towers, IReadOnlyList<MinionPlacement> minions, Bounds cells, bool hasCells, Vector3 spawn, Vector3 goal)
         {
             Route = route;
             Towers = towers;
+            Minions = minions;
             Cells = cells;
             HasCells = hasCells;
             Spawn = spawn;
@@ -21,6 +23,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
 
         public NextMapRoute Route { get; }
         public IReadOnlyList<NextMapTower> Towers { get; }
+        public IReadOnlyList<MinionPlacement> Minions { get; }
         public Bounds Cells { get; }
         public bool HasCells { get; }
         public Vector3 Spawn { get; }
@@ -58,7 +61,8 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                 else if (cell.Kind == CellKind.Goal) { goalSum += cell.TopCenter; goalCount++; }
             }
 
-            var route = new NextMapRoute(CaptureRoute(sceneRoute));
+            var routePoints = CaptureRoute(sceneRoute);
+            var route = new NextMapRoute(routePoints);
             var towers = new List<NextMapTower>();
             var source = session != null ? session.Towers : sceneTowers;
             foreach (var tower in source)
@@ -67,10 +71,17 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                 var hasModel = RendererBounds(tower, out var model);
                 towers.Add(new NextMapTower(tower.CaptureDefinition(towers.Count + 1), model, hasModel));
             }
+            var minions = new List<MinionPlacement>();
+            if (session != null && MinionRules.HasMinions(session.DisplayedLevelNumber))
+            {
+                var definitions = new List<TowerDefinition>();
+                foreach (var tower in towers) definitions.Add(tower.Definition);
+                minions = MinionPlanner.Plan(routePoints, definitions, session.DisplayedLevelNumber);
+            }
 
             var start = route.Count > 0 ? route[0] : Vector3.zero;
             var end = route.Count > 0 ? route[route.Count - 1] : Vector3.zero;
-            return new NextMapData(route, towers, cellBounds, hasCells,
+            return new NextMapData(route, towers, minions, cellBounds, hasCells,
                 spawnCount > 0 ? spawnSum / spawnCount : start,
                 goalCount > 0 ? goalSum / goalCount : end);
         }

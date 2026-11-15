@@ -27,6 +27,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         private MaterialPropertyBlock block;
         private RectTransform lanes;
         private RectTransform road;
+        private RectTransform minions;
         private RectTransform labels;
 
         public void Build(NextMapData data, NextMapProjection projection, IReadOnlyList<TowerRangeView> ranges)
@@ -34,6 +35,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             block = new MaterialPropertyBlock();
             lanes = Layer("Lane Hatching");
             road = Layer("Route");
+            minions = Layer("Minions");
             labels = Layer("Labels");
             foreach (var range in ranges)
             {
@@ -44,6 +46,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             }
             foreach (var tower in data.Towers) Hatch(tower, projection);
             BuildRoute(data.Route, projection);
+            foreach (var minion in data.Minions) Minion(minion, projection);
             Pin("Start Pin", "START", projection.ToPanel(data.Spawn), SpawnColor, Color.white);
             Pin("Goal Pin", "GOAL", projection.ToPanel(data.Goal), GoalColor, GoalInk);
             var order = NextMapRules.RoadOrder(data.Route, data.Towers);
@@ -64,7 +67,24 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             var spawn = LegacyUiKit.CreateImage(parent, "Legend Start", new Vector2(x + 11f, start.y), new Vector2(22f, 14f), SpawnColor, 3);
             x = LegendLabel(parent, "START", spawn.rectTransform, x, start.y);
             var goal = LegacyUiKit.CreateImage(parent, "Legend Goal", new Vector2(x + 11f, start.y), new Vector2(22f, 14f), GoalColor, 3);
-            LegendLabel(parent, "GOAL", goal.rectTransform, x, start.y);
+            x = LegendLabel(parent, "GOAL", goal.rectTransform, x, start.y);
+            var minion = LegacyUiKit.CreateImage(parent, "Legend Minion", new Vector2(x + 11f, start.y), new Vector2(14f, 14f), MinionLook.BodyColor, 3);
+            LegendLabel(parent, "MINION", minion.rectTransform, x, start.y);
+        }
+
+        private void Minion(MinionPlacement placement, NextMapProjection projection)
+        {
+            var size = Mathf.Max(8f, 0.72f * projection.PixelsPerUnit);
+            var stroke = Mathf.Max(2f, 0.08f * projection.PixelsPerUnit);
+            foreach (var cell in placement.Cells)
+            {
+                var guard = LegacyUiKit.CreateImage(minions, "Minion", projection.ToPanel(cell), new Vector2(size, size), MinionLook.BodyColor, 3);
+                for (var stripe = 0; stripe < 2; stripe++)
+                {
+                    var mark = LegacyUiKit.CreateImage(guard.transform, "Mark", Vector2.zero, new Vector2(size * 0.5f, stroke), Color.white);
+                    mark.rectTransform.localRotation = Quaternion.Euler(0f, 0f, stripe == 0 ? 45f : -45f);
+                }
+            }
         }
 
         private static float LegendLabel(Transform parent, string text, RectTransform swatch, float x, float y)

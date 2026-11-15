@@ -20,8 +20,10 @@ namespace Team5.Rebuild.World
         [SerializeField, Min(0)] private int goldBounty = 25;
         [SerializeField] private bool isWall;
         [SerializeField] private bool wallAlongZ;
-        public bool IsWall => isWall;
-        public Vector2Int Footprint => isWall ? WallFootprintForYaw(wallAlongZ, transform.eulerAngles.y) : new Vector2Int(FootprintSize, FootprintSize);
+        [SerializeField] private bool isMinion;
+        public bool IsWall => isWall || isMinion;
+        public bool IsMinion => isMinion;
+        public Vector2Int Footprint => isMinion ? Vector2Int.one : isWall ? WallFootprintForYaw(wallAlongZ, transform.eulerAngles.y) : new Vector2Int(FootprintSize, FootprintSize);
         public static Vector2Int WallFootprintForYaw(bool localAlongZ, float yaw)
         {
             var alongZ = localAlongZ ^ ((Mathf.RoundToInt(yaw / 90f) & 1) != 0);
@@ -29,17 +31,17 @@ namespace Team5.Rebuild.World
         }
 
         public int FootprintSize => usesMacroFootprint ? 3 : 1;
-        public float Range => isWall ? 0 : range;
+        public float Range => IsWall && !isMinion ? 0 : range;
         public float Damage => damage;
         public float AttackInterval => attackInterval;
         public TargetRule TargetRule => targetRule;
-        public bool IsAoe => !isWall && isAoe;
-        public int GoldBounty => isWall ? 0 : goldBounty > 0 ? goldBounty : (isAoe ? 40 : 25);
+        public bool IsAoe => !IsWall && isAoe;
+        public int GoldBounty => IsWall ? 0 : goldBounty > 0 ? goldBounty : (isAoe ? 40 : 25);
         public TowerState RuntimeState { get; private set; }
         public float CurrentCooldown => RuntimeState?.CooldownRemaining ?? 0;
 
         public TowerDefinition CaptureDefinition(int id) =>
-            new TowerDefinition(id, transform.position, Range, isWall ? 0 : damage, attackInterval, targetRule, FootprintSize, maxHp, attackArea, attackWidth, IsAoe, GoldBounty, isWall, Footprint.y == 3);
+            new TowerDefinition(id, transform.position, Range, IsWall && !isMinion ? 0 : damage, attackInterval, targetRule, FootprintSize, maxHp, attackArea, attackWidth, IsAoe, GoldBounty, IsWall, Footprint.y == 3, isMinion);
 
         public void BindRuntimeState(TowerState state) => RuntimeState = state;
 
