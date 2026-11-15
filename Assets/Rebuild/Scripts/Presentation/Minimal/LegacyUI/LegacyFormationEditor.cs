@@ -53,6 +53,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             LegacyUiKit.CreateText(done.transform, "Label", "APPLY & RESUME", Vector2.zero, new Vector2(250, 40), 20, Color.white, FontStyles.Bold);
             done.onClick.AddListener(() => ApplyAndResume());
             error = LegacyUiKit.CreateText(content, "Error", "", new Vector2(0, -136), new Vector2(290, 20), 11, Color.red);
+            FormationChangeBudget.ShowNote(owner, content);
             if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(null);
         }
         public bool ApplyAndResume()
@@ -65,6 +66,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                 error.text = "Formation cannot be applied."; return false;
             }
             GameAnalytics.TrackBattle("formation_edit", ("result", "applied"), ("members_moved", moved));
+            if (moved > 0) FormationChangeBudget.Spend(owner);
             simulation.SetPaused(wasPaused);
             gameObject.SetActive(false); Destroy(gameObject); return true;
         }

@@ -41,8 +41,9 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         public TMP_Text LevelLabel => levelLabel;
         public TMP_Text LivesLabel => livesLabel;
         public LegacyFormationEditor FormationEditor => editor;
+        public FormationChangeBudget FormationBudget { get; private set; }
         public bool CanEditFormation => isActiveAndEnabled && bound != null && bound.Outcome == BattleOutcome.Running &&
-            bound.AliveCount > 0 && bound.PendingSpawnCount == 0 && !HasOpenEditor;
+            bound.AliveCount > 0 && bound.PendingSpawnCount == 0 && !HasOpenEditor && (FormationBudget == null || FormationBudget.HasChangesLeft);
 
         private void OnEnable()
         {
@@ -68,6 +69,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             EnsureLevelLabel();
             EnsurePauseButton();
             EnsureSquadButtons();
+            FormationBudget = FormationChangeBudget.Attach(this, squadButtons[0]);
             var barsRoot = LegacyUiKit.CreateRect(transform, "World Health Bars", Vector2.zero, Vector2.zero);
             LegacyUiKit.Stretch(barsRoot);
             barsRoot.pivot = Vector2.zero;

@@ -200,7 +200,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             lightSource.shadows = LightShadows.None;
             lightObject.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
             var count = data.Towers.Count;
-            facts.text = count + (count == 1 ? " tower" : " towers") + "  |  road " + data.Route.Count + " tiles";
+            facts.text = count + (count == 1 ? " tower" : " towers") + "  |  road " + data.Route.Count + " tiles" + FormationChangeRules.NextLevelFact();
             overlayRoot.gameObject.SetActive(true);
             overlayRoot.gameObject.AddComponent<NextMapOverlay>().Build(data, projection, ranges);
             overlayRoot.gameObject.SetActive(false);
