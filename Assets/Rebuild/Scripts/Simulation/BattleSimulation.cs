@@ -45,6 +45,9 @@ namespace Team5.Rebuild.Simulation
         public event Action<HealEvent> UnitHealed;
         public event Action<int> HealerPulsed;
         public event Action FormationChanged;
+        public event Action<UnitRole, int, Vector3> LegendarySkillUsed;
+        public event Action<int, int> TowerHitBlocked;
+        public IReadOnlyList<MemberSpawnDefinition> PlannedMembers => definition.Members;
 
         public sealed class Checkpoint
         {
@@ -105,10 +108,91 @@ namespace Team5.Rebuild.Simulation
         }
         public UnitState GetMemberAtSlot(int slotId) => units.Find(unit => unit.IsAlive && unit.SlotId == slotId);
 
+        public bool CanUseLegendarySkill(int memberId)
+        {
+            var caster = units.Find(unit => unit.MemberId == memberId);
+            return !stepping && !IsPaused && Outcome == BattleOutcome.Running && caster != null && caster.IsAlive &&
+                caster.Definition.Rarity == UnitRarity.Legendary && LegendarySkillRules.HasActiveSkill(caster.Role) &&
+                caster.SkillCooldownRemaining <= 0.000001f;
+        }
+
+        // All abilities are support-only. This is the authoritative activation path for UI and tests.
+        // Time Lock requires a tower near the clicked ground position; other auras center on the caster.
+        public bool TryUseLegendarySkill(int memberId, Vector3 targetPoint)
+        {
+            if (!CanUseLegendarySkill(memberId) || !BattleNumbers.Finite(targetPoint)) return false;
+            var caster = units.Find(unit => unit.MemberId == memberId);
+            var affected = 0;
+            switch (caster.Role)
+            {
+                case UnitRole.Frostweaver:
+                    foreach (var tower in towers)
+                    {
+                        if (!tower.IsAlive || (tower.Definition.IsWall && !tower.Definition.IsMinion) ||
+                            HorizontalDistanceSquared(tower.Position, targetPoint) > LegendarySkillRules.FreezeRadius * LegendarySkillRules.FreezeRadius) continue;
+                        tower.FrozenRemaining = Mathf.Max(tower.FrozenRemaining, LegendarySkillRules.FreezeTime(caster.Definition.Level));
+                        tower.TargetId = null;
+                        affected++;
+                    }
+                    break;
+                case UnitRole.Warcaller:
+                    foreach (var ally in units)
+                    {
+                        if (!ally.IsAlive || ally.SquadId != caster.SquadId ||
+                            !SquadCombatRules.CanAttackTowers(ally.Role) ||
+                            HorizontalDistanceSquared(ally.Position, caster.Position) > LegendarySkillRules.RallyRadius * LegendarySkillRules.RallyRadius) continue;
+                        ally.DamageBuffRemaining = Mathf.Max(ally.DamageBuffRemaining, LegendarySkillRules.RallyDuration);
+                        ally.DamageBuffMultiplier = Mathf.Max(ally.DamageBuffMultiplier, LegendarySkillRules.RallyMultiplier(caster.Definition.Level));
+                        affected++;
+                    }
+                    break;
+                case UnitRole.Aegis:
+                    foreach (var ally in units)
+                    {
+                        if (!ally.IsAlive || ally.SquadId != caster.SquadId ||
+                            HorizontalDistanceSquared(ally.Position, caster.Position) > LegendarySkillRules.BarrierRadius * LegendarySkillRules.BarrierRadius) continue;
+                        ally.BarrierHits = LegendarySkillRules.BarrierCharges;
+                        ally.BarrierRemaining = LegendarySkillRules.BarrierDuration;
+                        affected++;
+                    }
+                    break;
+            }
+            if (affected == 0) return false; // Invalid target does not waste a skill.
+            caster.SkillCooldownRemaining = LegendarySkillRules.Cooldown(caster.Role);
+            LegendarySkillUsed?.Invoke(caster.Role, caster.MemberId, caster.Role == UnitRole.Frostweaver ? targetPoint : caster.Position);
+            return true;
+        }
+
+        private static float HorizontalDistanceSquared(Vector3 a, Vector3 b)
+        {
+            var x = a.x - b.x;
+            var z = a.z - b.z;
+            return x * x + z * z;
+        }
+
+        private void TickLegendaryEffects(float deltaTime)
+        {
+            foreach (var tower in towers)
+                tower.FrozenRemaining = Mathf.Max(0, tower.FrozenRemaining - deltaTime);
+            foreach (var unit in units)
+            {
+                unit.SkillCooldownRemaining = Mathf.Max(0, unit.SkillCooldownRemaining - deltaTime);
+                unit.DamageBuffRemaining = Mathf.Max(0, unit.DamageBuffRemaining - deltaTime);
+                if (unit.DamageBuffRemaining <= 0) unit.DamageBuffMultiplier = 1f;
+                unit.BarrierRemaining = Mathf.Max(0, unit.BarrierRemaining - deltaTime);
+                if (unit.BarrierRemaining <= 0) unit.BarrierHits = 0;
+            }
+        }
+
         public bool TryApplyFormation(IReadOnlyList<int> sourceSlots)
         {
             if (stepping || !IsPaused || Outcome != BattleOutcome.Running || definition.FormationSize != 3 ||
                 sourceSlots == null || sourceSlots.Count != 9 || PendingSpawnCount != 0) return false;
+            // The Captain owns this skill. Keep legacy Captain-less simulations usable by tests/tools.
+            if (definition.Members != null)
+                foreach (var member in definition.Members)
+                    if (member.Unit.Role == UnitRole.Captain &&
+                        !units.Exists(unit => unit.IsAlive && unit.Role == UnitRole.Captain)) return false;
             var seen = new HashSet<int>();
             var destinations = new int[9];
             for (var destination = 0; destination < 9; destination++)
@@ -141,6 +225,7 @@ namespace Team5.Rebuild.Simulation
             try
             {
                 Spawn();
+                TickLegendaryEffects(deltaTime);
                 var wallStop = WallStopProgress();
                 foreach (var unit in units)
                 {
@@ -293,6 +378,7 @@ namespace Team5.Rebuild.Simulation
         private void Attack(TowerState tower, float deltaTime)
         {
             if (!tower.IsAlive || (tower.Definition.IsWall && !tower.Definition.IsMinion)) { tower.TargetId = null; return; }
+            if (tower.FrozenRemaining > 0) { tower.TargetId = null; return; }
             tower.CooldownRemaining = Math.Max(0, tower.CooldownRemaining - deltaTime);
             tower.TargetId = null;
             if (tower.CooldownRemaining > 0.000001f) return;
@@ -393,7 +479,8 @@ namespace Team5.Rebuild.Simulation
             }
             if (target == null) return;
             unit.AttackCooldown = unit.Definition.AttackInterval;
-            var effectiveTowerDamage = unit.Definition.Damage * (target.Definition.IsWall ? 1 : unit.Definition.TowerDamageMultiplier);
+            var effectiveTowerDamage = unit.Definition.Damage * (target.Definition.IsWall ? 1 : unit.Definition.TowerDamageMultiplier) *
+                (unit.DamageBuffRemaining > 0 ? unit.DamageBuffMultiplier : 1f);
             projectiles.Add(new ProjectileState
             {
                 Id = ++projectileSequence,
@@ -452,6 +539,13 @@ namespace Team5.Rebuild.Simulation
         private void DamageUnit(int sourceId, UnitState unit, float rawDamage)
         {
             if (!unit.IsAlive) return;
+            if (unit.BarrierRemaining > 0 && unit.BarrierHits > 0)
+            {
+                unit.BarrierHits--;
+                if (unit.BarrierHits == 0) unit.BarrierRemaining = 0;
+                TowerHitBlocked?.Invoke(sourceId, unit.Id);
+                return;
+            }
             var applied = Math.Min(unit.Hp, rawDamage * (1 - unit.Definition.Defense));
             unit.Hp = Math.Max(0, unit.Hp - applied);
             if (unit.Hp == 0) { unit.LifeState = UnitLifeState.Dead; KilledCount++; }

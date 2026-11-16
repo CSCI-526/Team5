@@ -337,7 +337,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                     new Vector2(20, 4), Color.white);
                 stroke.rectTransform.localRotation = Quaternion.Euler(0, 0, i == 0 ? 45 : -45);
             }
-            remove.interactable = member.Unit.Role != UnitRole.Captain && Preparation.Members.Count > 1;
+            remove.interactable = member.Unit.Rarity != UnitRarity.Legendary && Preparation.Members.Count > 1;
             remove.onClick.AddListener(() => TryDismissMember(member.MemberId));
         }
 
@@ -367,7 +367,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         {
             if (IsOverlayOpen || startPending || BattleSceneFlow.IsOutOfLives) return;
             var member = Preparation.FindMember(memberId);
-            if (member == null || member.Unit.Role == UnitRole.Captain || Preparation.Members.Count <= 1) return;
+            if (member == null || member.Unit.Rarity == UnitRarity.Legendary || Preparation.Members.Count <= 1) return;
             pendingDismissMemberId = memberId;
             dismissOverlay = new GameObject("Dismiss Unit Confirmation", typeof(RectTransform));
             LegacyUiKit.CreateCanvas(dismissOverlay, 600, new Vector2(1280, 720), 0.5f);
@@ -428,7 +428,10 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                 UnitRole.Sniper => "The longest attack range in the squad, with powerful shots and 1.85x damage against towers. Its low health makes safe positioning essential.",
                 UnitRole.Vanguard => "An armored fighter that combines damage reduction with tower attacks. Useful in positions that need to absorb damage while helping break towers.",
                 UnitRole.Demolisher => "A siege specialist dealing 2.25x damage against towers. Its attacks hit one tower at a time. Keep it protected and within range to make the most of its damage.",
-                UnitRole.Captain => "A durable leader that can attack towers. Use Edit Formation to pause the battle and reposition your squad around enemy firing lanes.",
+                UnitRole.Captain => LegendarySkillRules.Description(UnitRole.Captain, unit.Level),
+                UnitRole.Frostweaver => LegendarySkillRules.Description(UnitRole.Frostweaver, unit.Level),
+                UnitRole.Warcaller => LegendarySkillRules.Description(UnitRole.Warcaller, unit.Level),
+                UnitRole.Aegis => LegendarySkillRules.Description(UnitRole.Aegis, unit.Level),
                 _ => "Arrange this unit in your squad before starting the next battle."
             };
             var text = LegacyUiKit.CreateText(box.transform, "Description", description, Vector2.zero,

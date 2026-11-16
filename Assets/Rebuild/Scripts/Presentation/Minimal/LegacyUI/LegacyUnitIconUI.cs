@@ -27,7 +27,10 @@ namespace Team5.Rebuild.Presentation.LegacyUI
 
             var description = role switch
             {
-                UnitRole.Captain => "Leader / DEF 50%",
+                UnitRole.Captain => "Formation skill / unique",
+                UnitRole.Frostweaver => "Click map: freeze towers",
+                UnitRole.Warcaller => "Boost ally tower damage",
+                UnitRole.Aegis => "Block 2 hits per ally",
                 UnitRole.Tank => "Heavy frontline shield",
                 UnitRole.Heal => "Heals 8 neighbors",
                 UnitRole.Sniper => "Long-range tower hunter",
@@ -40,8 +43,10 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             LegacyUiKit.CreateImage(panel, "Divider", new Vector2(0, -54), new Vector2(160, 2), rarityColor);
 
             var isAttacker = SquadCombatRules.CanAttackTowers(role);
-            var key = isAttacker ? "ATK" : role == UnitRole.Tank ? "DEF" : "HEAL";
-            var value = isAttacker ? $"{stats.Damage:0.##}"
+            var isLegendary = SquadCombatRules.IsLegendaryRole(role);
+            var key = isLegendary ? "SKILL" : isAttacker ? "ATK" : role == UnitRole.Tank ? "DEF" : "HEAL";
+            var value = isLegendary ? "ACTIVE"
+                : isAttacker ? $"{stats.Damage:0.##}"
                 : role == UnitRole.Tank ? $"{stats.Defense * 100:0}%"
                 : $"{stats.HealPerSecond:0.##}/s";
 

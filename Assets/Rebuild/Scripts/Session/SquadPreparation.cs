@@ -12,6 +12,7 @@ namespace Team5.Rebuild.Session
 
         private readonly List<MemberSpawnDefinition> members;
         private readonly HashSet<UnitRole> ownedRoles = new HashSet<UnitRole>();
+        private int lastLegendaryLevelAwardStage;
         public bool HasOwnedRole(UnitRole role) => ownedRoles.Contains(role);
         public bool FirstSummonPromptCompleted { get; private set; }
         public void CompleteFirstSummonPrompt() => FirstSummonPromptCompleted = true;
@@ -21,6 +22,7 @@ namespace Team5.Rebuild.Session
         public SquadRoster Roster { get; }
         public IReadOnlyList<MemberSpawnDefinition> Members => members.AsReadOnly();
         public event Action Changed;
+        private readonly List<int> deploymentOrder = new List<int>();
 
         public int DeployedCount
         {
@@ -48,13 +50,50 @@ namespace Team5.Rebuild.Session
                     throw new ArgumentException("Warehouse members require unique IDs.");
             if (members.Count > WarehouseCapacity)
                 throw new ArgumentException("Warehouse supports up to twelve members.");
-            foreach (var member in members) ownedRoles.Add(member.Unit.Role);
+            foreach (var member in members)
+            {
+                if (member.Unit.Rarity == UnitRarity.Legendary && ownedRoles.Contains(member.Unit.Role))
+                    throw new ArgumentException("Only one copy of each legendary character may be owned.");
+                ownedRoles.Add(member.Unit.Role);
+            }
+        }
+
+        // Campaign owners always have the unique Captain; test fixtures can still use empty/non-Captain squads.
+        public void EnsureStartingCaptain()
+        {
+            if (HasOwnedRole(UnitRole.Captain)) return;
+            if (!CanAddMember) throw new InvalidOperationException("Reserve a warehouse space for the starting Captain.");
+            var id = 0;
+            foreach (var member in members) id = Math.Max(id, member.MemberId);
+            members.Insert(0, new MemberSpawnDefinition(checked(id + 1), 4, SquadCombatRules.Create(UnitRole.Captain)));
+            ownedRoles.Add(UnitRole.Captain);
+            Changed?.Invoke();
+        }
+
+        // Legendary characters grow automatically when campaign progress advances, without duplicates or fusion.
+        public void AdvanceLegendaryLevels(int highestStageCleared)
+        {
+            var newStage = Math.Max(0, highestStageCleared);
+            var levelsEarned = Math.Max(0, newStage - lastLegendaryLevelAwardStage);
+            if (levelsEarned == 0) return;
+            lastLegendaryLevelAwardStage = newStage;
+            var changed = false;
+            for (var i = 0; i < members.Count; i++)
+            {
+                var member = members[i];
+                if (member.Unit.Rarity != UnitRarity.Legendary) continue;
+                members[i] = new MemberSpawnDefinition(member.MemberId, member.SlotId,
+                    SquadCombatRules.Create(member.Unit.Role, UnitRarity.Legendary, checked(member.Unit.Level + levelsEarned)), member.SpawnTime);
+                changed = true;
+            }
+            if (changed) Changed?.Invoke();
         }
 
         public bool TryAddSummonedUnit(UnitDefinition unit)
         {
             if (unit == null || unit.Role == UnitRole.Test) throw new ArgumentException(nameof(unit));
             if (!CanAddMember) return false;
+            if (unit.Rarity == UnitRarity.Legendary && HasOwnedRole(unit.Role)) return false;
             var id = 0;
             foreach (var member in members) id = Math.Max(id, member.MemberId);
             members.Add(new MemberSpawnDefinition(checked(id + 1), 4, unit));
@@ -71,11 +110,12 @@ namespace Team5.Rebuild.Session
         {
             if (members.Count <= 1) return false;
             var member = FindMember(memberId);
-            if (member == null || member.Unit.Role == UnitRole.Captain) return false;
+            if (member == null || member.Unit.Rarity == UnitRarity.Legendary) return false;
 
             var slot = Array.IndexOf(memberIds, memberId);
             if (slot >= 0) memberIds[slot] = 0;
 
+            deploymentOrder.Remove(memberId);
             members.Remove(member);
             Changed?.Invoke();
             return true;
@@ -94,12 +134,35 @@ namespace Team5.Rebuild.Session
 
         public bool TryAssign(int memberId, int slot)
         {
-            if (slot < 0 || slot >= 9 || FindMember(memberId) == null) return false;
+            if (slot < 0 || slot >= 9 || FindMember(memberId) == null)
+                return false;
+
             var previous = Array.IndexOf(memberIds, memberId);
-            if (previous == slot) return true;
-            if (previous < 0 && memberIds[slot] == 0 && DeployedCount >= MaxDeployed) return false;
-            if (previous >= 0) memberIds[previous] = memberIds[slot];
+
+            if (previous == slot)
+                return true;
+
+            if (previous < 0 && memberIds[slot] == 0 &&
+                DeployedCount >= MaxDeployed)
+                return false;
+
+            int displaced = memberIds[slot];
+
+            // A member entering the formation goes to the end
+            // of the deployment order.
+            if (previous < 0)
+            {
+                if (displaced != 0)
+                    deploymentOrder.Remove(displaced);
+
+                deploymentOrder.Add(memberId);
+            }
+
+            if (previous >= 0)
+                memberIds[previous] = displaced;
+
             memberIds[slot] = memberId;
+
             Changed?.Invoke();
             return true;
         }
@@ -112,22 +175,45 @@ namespace Team5.Rebuild.Session
 
         public bool TryRemove(int slot)
         {
-            if (slot < 0 || slot >= 9 || memberIds[slot] == 0) return false;
+            if (slot < 0 || slot >= 9 || memberIds[slot] == 0)
+                return false;
+
+            deploymentOrder.Remove(memberIds[slot]);
             memberIds[slot] = 0;
+
             Changed?.Invoke();
             return true;
         }
 
         public IReadOnlyList<MemberSpawnDefinition> CaptureDeployment()
         {
-            if (!CanStart) throw new InvalidOperationException("Deploy between one and six members before starting.");
+            if (!CanStart)
+                throw new InvalidOperationException(
+                    "Deploy between one and six members before starting.");
+
             var result = new List<MemberSpawnDefinition>();
-            for (var slot = 0; slot < 9; slot++)
+
+            // Preserve the order members were added to the formation.
+            foreach (int memberId in deploymentOrder)
             {
-                var member = FindMember(memberIds[slot]);
-                if (member != null)
-                    result.Add(new MemberSpawnDefinition(member.MemberId, slot, member.Unit, member.SpawnTime));
+                int slot = Array.IndexOf(memberIds, memberId);
+
+                if (slot < 0)
+                    continue;
+
+                var member = FindMember(memberId);
+
+                if (member == null)
+                    continue;
+
+                result.Add(new MemberSpawnDefinition(
+                    member.MemberId,
+                    slot,
+                    member.Unit,
+                    member.SpawnTime
+                ));
             }
+
             return result.AsReadOnly();
         }
     }

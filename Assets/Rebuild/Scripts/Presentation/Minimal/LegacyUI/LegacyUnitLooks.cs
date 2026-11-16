@@ -81,6 +81,9 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             UnitRole.Sniper => new SoldierLook(sniperBody, sniperOutline, OuterSize * 0.95f, InnerSize * 0.95f, SoldierMark.Diamond, Color.white),
             UnitRole.Vanguard => new SoldierLook(vanguardBody, vanguardOutline, TankOuterSize, InnerSize, SoldierMark.Plate, new Color(0.85f, 0.9f, 1f)),
             UnitRole.Demolisher => new SoldierLook(demolisherBody, demolisherOutline, TankOuterSize, InnerSize, SoldierMark.Diamond, new Color(1f, 0.92f, 0.4f)),
+            UnitRole.Frostweaver => new SoldierLook(new Color(.38f, .84f, 1f), new Color(.10f, .26f, .50f), OuterSize, InnerSize, SoldierMark.Diamond, Color.white),
+            UnitRole.Warcaller => new SoldierLook(new Color(1f, .66f, .30f), new Color(.48f, .19f, .11f), OuterSize, InnerSize, SoldierMark.Crown, Color.white),
+            UnitRole.Aegis => new SoldierLook(new Color(.62f, .45f, 1f), new Color(.25f, .12f, .45f), TankOuterSize, TankInnerSize, SoldierMark.Plate, Color.white),
             _ => new SoldierLook(attackBody, attackOutline, OuterSize, InnerSize, SoldierMark.Diamond, Color.Lerp(attackBody, Color.white, DiamondTint))
         };
 
@@ -93,6 +96,9 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             UnitRole.Sniper => "SNIPER",
             UnitRole.Vanguard => "VANGUARD",
             UnitRole.Demolisher => "DEMOLISHER",
+            UnitRole.Frostweaver => "FROSTWEAVER",
+            UnitRole.Warcaller => "WARCALLER",
+            UnitRole.Aegis => "AEGIS",
             _ => string.Empty
         };
 

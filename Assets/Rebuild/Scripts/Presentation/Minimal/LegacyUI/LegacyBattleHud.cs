@@ -42,8 +42,18 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         public TMP_Text LivesLabel => livesLabel;
         public LegacyFormationEditor FormationEditor => editor;
         public FormationChangeBudget FormationBudget { get; private set; }
+        public bool HasLivingCaptain
+        {
+            get
+            {
+                if (bound == null) return false;
+                foreach (var unit in bound.Units)
+                    if (unit.IsAlive && unit.Role == UnitRole.Captain && unit.Definition.Rarity == UnitRarity.Legendary) return true;
+                return false;
+            }
+        }
         public bool CanEditFormation => isActiveAndEnabled && bound != null && bound.Outcome == BattleOutcome.Running &&
-            bound.AliveCount > 0 && bound.PendingSpawnCount == 0 && !HasOpenEditor && (FormationBudget == null || FormationBudget.HasChangesLeft);
+            HasLivingCaptain && bound.PendingSpawnCount == 0 && !HasOpenEditor && (FormationBudget == null || FormationBudget.HasChangesLeft);
 
         private void OnEnable()
         {
@@ -70,6 +80,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             EnsurePauseButton();
             EnsureSquadButtons();
             FormationBudget = FormationChangeBudget.Attach(this, squadButtons[0]);
+            LegendarySkillPanel.Attach(this);
             var barsRoot = LegacyUiKit.CreateRect(transform, "World Health Bars", Vector2.zero, Vector2.zero);
             LegacyUiKit.Stretch(barsRoot);
             barsRoot.pivot = Vector2.zero;

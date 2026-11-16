@@ -10112,7 +10112,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 100148707, guid: 2fbe723b07d64ecb8e0d9c1d122bd713, type: 3}
       propertyPath: maxHp
-      value: 80
+      value: 60
       objectReference: {fileID: 0}
     - target: {fileID: 100148707, guid: 2fbe723b07d64ecb8e0d9c1d122bd713, type: 3}
       propertyPath: damage
@@ -10573,7 +10573,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 100148707, guid: 2fbe723b07d64ecb8e0d9c1d122bd713, type: 3}
       propertyPath: maxHp
-      value: 80
+      value: 60
       objectReference: {fileID: 0}
     - target: {fileID: 100148707, guid: 2fbe723b07d64ecb8e0d9c1d122bd713, type: 3}
       propertyPath: damage
@@ -11402,11 +11402,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1000002, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: maxHp
-      value: 80
+      value: 60
       objectReference: {fileID: 0}
     - target: {fileID: 1000002, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: damage
-      value: 7
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 1000002, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: attackArea
@@ -14190,11 +14190,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1000002, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: maxHp
-      value: 80
+      value: 60
       objectReference: {fileID: 0}
     - target: {fileID: 1000002, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: damage
-      value: 7
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 1000002, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: attackArea
@@ -17321,11 +17321,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1000002, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: maxHp
-      value: 80
+      value: 60
       objectReference: {fileID: 0}
     - target: {fileID: 1000002, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: damage
-      value: 7
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 1000002, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: attackArea
@@ -22374,11 +22374,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1000002, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: maxHp
-      value: 80
+      value: 60
       objectReference: {fileID: 0}
     - target: {fileID: 1000002, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: damage
-      value: 7
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 1000002, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: attackArea
@@ -28540,7 +28540,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 100148707, guid: 2fbe723b07d64ecb8e0d9c1d122bd713, type: 3}
       propertyPath: maxHp
-      value: 80
+      value: 60
       objectReference: {fileID: 0}
     - target: {fileID: 100148707, guid: 2fbe723b07d64ecb8e0d9c1d122bd713, type: 3}
       propertyPath: damage

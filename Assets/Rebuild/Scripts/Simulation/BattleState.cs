@@ -11,6 +11,11 @@ namespace Team5.Rebuild.Simulation
         public UnitRole Role => Definition.Role;
         public int SlotId => FormationSlot.y * 3 + FormationSlot.x;
         public float AttackCooldown { get; internal set; }
+        public float SkillCooldownRemaining { get; internal set; }
+        public float DamageBuffRemaining { get; internal set; }
+        public float DamageBuffMultiplier { get; internal set; } = 1f;
+        public float BarrierRemaining { get; internal set; }
+        public int BarrierHits { get; internal set; }
         public float MaxHp { get; }
         public float Hp { get; internal set; }
         public float Speed { get; }
@@ -46,6 +51,7 @@ namespace Team5.Rebuild.Simulation
         public int Id => Definition.Id;
         public Vector3 Position { get; internal set; }
         public float CooldownRemaining { get; internal set; }
+        public float FrozenRemaining { get; internal set; }
         public int? TargetId { get; internal set; }
         public float Hp { get; internal set; }
         public bool IsAlive => Hp > 0;

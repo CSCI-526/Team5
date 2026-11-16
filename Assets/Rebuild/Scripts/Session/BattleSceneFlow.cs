@@ -207,6 +207,8 @@ namespace Team5.Rebuild.Session
             if (flow.preparation.Roster != roster)
                 throw new System.InvalidOperationException("Preparation and battle must share the same roster.");
 
+            flow.preparation.EnsureStartingCaptain();
+            flow.preparation.AdvanceLegendaryLevels(flow.highestClearedLevel);
             flow.claimCards.SetStageProgress(flow.highestClearedLevel);
             return flow.preparation;
         }

@@ -16,6 +16,10 @@ namespace Team5.Rebuild.Session
             UnitRole.Vanguard,
             UnitRole.Demolisher
         };
+        private static readonly UnitRole[] LegendaryRoles =
+        {
+            UnitRole.Frostweaver, UnitRole.Warcaller, UnitRole.Aegis
+        };
 
         private readonly CampaignWallet wallet;
         private readonly SquadPreparation preparation;
@@ -66,7 +70,7 @@ namespace Team5.Rebuild.Session
         // Frontloads Commons early and keeps high rarities genuinely scarce
         public (int common, int rare, int epic, int legendary) GetRarityWeights()
         {
-            return HighestStageCleared switch
+            var weights = HighestStageCleared switch
             {
                 <= 1 => (90, 10, 0, 0),
                 2 => (80, 20, 0, 0),
@@ -76,6 +80,9 @@ namespace Team5.Rebuild.Session
                 6 => (25, 55, 16, 4),
                 _ => (0, 70, 24, 6)
             };
+            foreach (var role in LegendaryRoles)
+                if (!preparation.HasOwnedRole(role)) return weights;
+            return (weights.Item1, weights.Item2, weights.Item3 + weights.Item4, 0);
         }
 
         private static string RarityBox(string hex) =>
@@ -109,6 +116,7 @@ namespace Team5.Rebuild.Session
         {
             if (!CanClaim || offerIndex < 0 || offerIndex >= currentOffer.Count) return false;
             var chosen = currentOffer[offerIndex];
+            if (chosen.Rarity == UnitRarity.Legendary && preparation.HasOwnedRole(chosen.Role)) return false;
             if (!wallet.TrySpend(NextPrice)) return false;
 
             SummonsCompleted++;
@@ -119,8 +127,27 @@ namespace Team5.Rebuild.Session
 
         private UnitDefinition RollUnit()
         {
-            var role = SummonableRoles[UnityEngine.Random.Range(0, SummonableRoles.Length)];
             var rarity = RollRarity();
+            UnitRole role;
+            if (rarity == UnitRarity.Legendary)
+            {
+                var available = new List<UnitRole>();
+                foreach (var candidate in LegendaryRoles)
+                {
+                    if (preparation.HasOwnedRole(candidate)) continue;
+                    var alreadyOffered = false;
+                    foreach (var item in currentOffer)
+                        if (item.Rarity == UnitRarity.Legendary && item.Role == candidate) alreadyOffered = true;
+                    if (!alreadyOffered) available.Add(candidate);
+                }
+                if (available.Count == 0)
+                {
+                    rarity = UnitRarity.Epic; // No duplicate legends, even within the same 3-card offer.
+                    role = SummonableRoles[UnityEngine.Random.Range(0, SummonableRoles.Length)];
+                }
+                else role = available[UnityEngine.Random.Range(0, available.Count)];
+            }
+            else role = SummonableRoles[UnityEngine.Random.Range(0, SummonableRoles.Length)];
             var (minLv, maxLv) = GetLevelRangeForRarity(rarity);
             var level = UnityEngine.Random.Range(minLv, maxLv + 1);
             return SquadCombatRules.Create(role, rarity, level);

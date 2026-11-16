@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Team5.Rebuild.Simulation
 {
-    public enum UnitRole { Test, Attack, Tank, Heal, Captain, Sniper, Vanguard, Demolisher }
+    public enum UnitRole { Test, Attack, Tank, Heal, Captain, Sniper, Vanguard, Demolisher, Frostweaver, Warcaller, Aegis }
     public enum UnitRarity { Common = 0, Rare = 1, Epic = 2, Legendary = 3 }
     public enum BattleObjective { DefendGoal, ReachGoal }
     public enum AttackArea { Square = 0, PositiveX = 1, NegativeX = 2, PositiveZ = 3, NegativeZ = 4 }
@@ -45,26 +45,32 @@ namespace Team5.Rebuild.Simulation
         // Modular role table including new offensive/hybrid units and tower-breaker multipliers
         private static readonly Dictionary<UnitRole, RoleBaseStats> RoleTable = new Dictionary<UnitRole, RoleBaseStats>
         {
-            { UnitRole.Attack,     new RoleBaseStats(maxHp: 4.5f, damage: 1.6f, range: 2.8f, interval: 0.9f, towerDamageMultiplier: 1.50f) },
-            { UnitRole.Tank,       new RoleBaseStats(maxHp: 9.0f, defense: 0.25f) },
+            { UnitRole.Attack,     new RoleBaseStats(maxHp: 4.5f, damage: 1.4f, range: 2.8f, interval: 0.9f, towerDamageMultiplier: 1.5f) },
+            { UnitRole.Tank,       new RoleBaseStats(maxHp: 11.0f, defense: 0.20f) },
             { UnitRole.Heal,       new RoleBaseStats(maxHp: 3.5f, heal: 0.35f) },
-            { UnitRole.Captain,    new RoleBaseStats(maxHp: 6.5f, damage: 0.8f, range: 2.6f, interval: 1.0f, defense: 0.50f, towerDamageMultiplier: 1.25f) },
-            { UnitRole.Sniper,     new RoleBaseStats(maxHp: 3.2f, damage: 2.4f, range: 4.2f, interval: 1.35f, towerDamageMultiplier: 1.85f) },
-            { UnitRole.Vanguard,   new RoleBaseStats(maxHp: 7.0f, damage: 1.1f, range: 2.2f, interval: 1.05f, defense: 0.20f, towerDamageMultiplier: 1.35f) },
-            { UnitRole.Demolisher, new RoleBaseStats(maxHp: 5.0f, damage: 2.2f, range: 2.5f, interval: 1.15f, defense: 0.10f, towerDamageMultiplier: 2.25f) }
+            { UnitRole.Captain,    new RoleBaseStats(maxHp: 11.0f, defense: 0.10f, range: 2.5f, interval: 1.05f) },
+            { UnitRole.Sniper,     new RoleBaseStats(maxHp: 3.2f, damage: 1.6f, range: 4.5f, interval: 2.5f, towerDamageMultiplier: 1.85f) },
+            { UnitRole.Vanguard,   new RoleBaseStats(maxHp: 7.0f, damage: 1.1f, range: 2.5f, interval: 1.05f, defense: 0.05f, towerDamageMultiplier: 1.35f) },
+            { UnitRole.Demolisher, new RoleBaseStats(maxHp: 5.0f, damage: 1.8f, range: 2.5f, interval: 1.15f, defense: 0.10f, towerDamageMultiplier: 2.25f) },
+            { UnitRole.Frostweaver, new RoleBaseStats(maxHp: 9.0f, defense: 0.10f) },
+            { UnitRole.Warcaller,   new RoleBaseStats(maxHp: 10.0f, defense: 0.10f) },
+            { UnitRole.Aegis,       new RoleBaseStats(maxHp: 11.0f, defense: 0.20f) }
         };
 
+        public static bool IsLegendaryRole(UnitRole role) => role == UnitRole.Captain ||
+            role == UnitRole.Frostweaver || role == UnitRole.Warcaller || role == UnitRole.Aegis;
+
         public static bool CanAttackTowers(UnitRole role) =>
-            role == UnitRole.Attack || role == UnitRole.Captain ||
+            role == UnitRole.Attack ||
             role == UnitRole.Sniper || role == UnitRole.Vanguard || role == UnitRole.Demolisher;
 
-        // Higher rarities are much harder to pull, so their base multiplier is significantly stronger
+        // Legendary value is in its unique active skill, not a huge passive combat stat multiplier.
         public static float RarityMultiplier(UnitRarity rarity) => rarity switch
         {
             UnitRarity.Common => 1.00f,
             UnitRarity.Rare => 1.85f,
-            UnitRarity.Epic => 3.10f,
-            UnitRarity.Legendary => 5.00f,
+            UnitRarity.Epic => 3.00f,
+            UnitRarity.Legendary => 1.50f,
             _ => 1.00f
         };
 
@@ -74,7 +80,7 @@ namespace Team5.Rebuild.Simulation
             UnitRarity.Common => 0.12f,
             UnitRarity.Rare => 0.20f,
             UnitRarity.Epic => 0.30f,
-            UnitRarity.Legendary => 0.45f,
+            UnitRarity.Legendary => 0.18f,
             _ => LevelStatGrowth
         };
 
@@ -89,12 +95,29 @@ namespace Team5.Rebuild.Simulation
             if (!RoleTable.TryGetValue(role, out var baseStats))
                 throw new ArgumentOutOfRangeException(nameof(role), $"No base stats configured for role {role}.");
 
+            if (IsLegendaryRole(role)) rarity = UnitRarity.Legendary;
+            else if (rarity == UnitRarity.Legendary)
+                throw new ArgumentException("Legendary rarity is reserved for the four unique support characters.", nameof(rarity));
+
             var mult = ScaleMultiplier(rarity, level);
             var hp = Mathf.Round(baseStats.MaxHp * mult * 10f) / 10f;
             var dmg = Mathf.Round(baseStats.Damage * mult * 10f) / 10f;
             var heal = baseStats.HealPerSecond > 0f ? Mathf.Round(baseStats.HealPerSecond * mult * 10f) / 10f : 0.2f;
             var def = baseStats.Defense > 0f
-                ? Mathf.Min(0.78f, baseStats.Defense + (int)rarity * 0.06f + (Mathf.Max(1, level) - 1) * 0.025f)
+                ? Mathf.Min(
+                    rarity == UnitRarity.Legendary ? 0.35f : 0.78f,
+
+                    baseStats.Defense +
+
+                    (rarity == UnitRarity.Legendary
+                        ? 0.03f
+                        : (int)rarity * 0.06f) +
+
+                    (Mathf.Max(1, level) - 1) *
+                    (rarity == UnitRarity.Legendary
+                        ? 0.01f
+                        : 0.025f)
+                )
                 : 0f;
 
             return new UnitDefinition(
