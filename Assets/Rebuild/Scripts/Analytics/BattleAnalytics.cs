@@ -150,7 +150,8 @@ namespace Team5.Rebuild.Analytics
                 runsInSession++;
                 runAttempts = runDefeats = 0;
                 runStartedAt = Time.realtimeSinceStartup;
-                GameAnalytics.Track("run_start", ("run_number_in_session", runsInSession));
+                GameAnalytics.Track("run_start", ("run_number_in_session", runsInSession),
+                    ("character_set", CharacterSetSelection.ToValue(CharacterSetSelection.Current)));
             }
             catch (Exception error) { GameAnalytics.Fail(error); }
         }

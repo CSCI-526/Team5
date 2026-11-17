@@ -18,6 +18,10 @@ namespace Team5.Rebuild.Tests
 {
     public sealed class FWUnitVisualPlayModeTests
     {
+        // These scenes are authored for Catgirl; pin that set so the player's stored choice cannot change them.
+        private CharacterSetPrefsScope characterSet;
+        [SetUp] public void PinCatgirlSet() => characterSet = new CharacterSetPrefsScope(CharacterSet.Catgirl);
+        [TearDown] public void RestoreCharacterSet() => characterSet?.Dispose();
         private Scene initialScene;
         [SetUp]
         public void Begin()

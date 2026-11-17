@@ -54,7 +54,7 @@ attempt (0 when no attempt is being tracked).
 | --- | --- | --- |
 | session_start | returning_player, session_count, screen_w, screen_h | Bootstrap |
 | scene_enter | previous_scene, previous_scene_s | Full scene load |
-| run_start | run_number_in_session | `BattleSceneFlow.RunStarted` |
+| run_start | run_number_in_session, character_set (`PaintSquad` or `Catgirl`, the squad look picked on the Choose your squad screen) | `BattleSceneFlow.RunStarted` |
 | prep_enter | gold, warehouse_count, deployed_count, summon_price | LegacyUpgradeScene.Start |
 | summon_offer | price, gold, offer_0, offer_1, offer_2 (`Role/Rarity/LvN`) | LegacyClaimCardOverlay.Open |
 | summon_purchase | chosen_index, role, rarity, unit_level, price, gold_before, gold_after | Summon card click |
@@ -88,7 +88,11 @@ result. `roles` looks like `Attack:2|Tank:1`, `slots` like `0:Captain|4:Tank`.
 is already gone. `destroyed_at_s` is -1 for a tower that survived. The StartGame scene has
 no how-to-play button, so there is no event for it.
 
-Tests: `Tests/EditMode/AnalyticsTests.cs` covers JSON escaping and invariant numbers, the
+`character_set` is a new column for the Apps Script backend, which appends any unknown key as
+a new header column (`Tools/Analytics/AppsScript.gs`), so no backend change or redeploy is needed.
+
+Tests: `Tests/EditMode/CharacterSetSelectionTests.cs` checks the `run_start` payload carries
+`character_set`. `Tests/EditMode/AnalyticsTests.cs` covers JSON escaping and invariant numbers, the
 facade with no sink and with a failing sink, common fields, and trackers on real
 simulations for victory, defeat and abandon. The WebGL page code needs a browser build
 and is not covered by the EditMode tests.

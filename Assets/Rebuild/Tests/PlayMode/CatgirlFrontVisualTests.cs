@@ -3,6 +3,7 @@ using System.Collections;
 using System.IO;
 using System.Linq;
 using NUnit.Framework;
+using Team5.Rebuild.Session;
 using Team5.Rebuild.Presentation;
 using Team5.Rebuild.Simulation;
 using UnityEditor;
@@ -18,6 +19,10 @@ namespace Team5.Rebuild.Tests
 {
     public sealed class CatgirlFrontVisualTests
     {
+        // These scenes are authored for Catgirl; pin that set so the player's stored choice cannot change them.
+        private CharacterSetPrefsScope characterSet;
+        [SetUp] public void PinCatgirlSet() => characterSet = new CharacterSetPrefsScope(CharacterSet.Catgirl);
+        [TearDown] public void RestoreCharacterSet() => characterSet?.Dispose();
         private const string Folder = "Assets/Rebuild/CatgirlFrontTest";
         private const string ScenePath = "Assets/Rebuild/Scenes/CatgirlFrontTest.unity";
         private Scene initialScene;

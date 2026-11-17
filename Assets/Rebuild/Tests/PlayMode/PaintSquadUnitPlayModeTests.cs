@@ -19,6 +19,11 @@ namespace Team5.Rebuild.Tests
         const string Catalog = "Assets/Rebuild/PaintSquad/RoleVisuals/PaintSquadAllRoles.asset";
         const int MemberId = 901;
         private Scene initial, opened;
+        private CharacterSetPrefsScope prefs;
+
+        // The scene is pointed at the Paint Squad catalog below; pin the selection so runtime lookup agrees.
+        [SetUp]
+        public void PinPaintSquad() => prefs = new CharacterSetPrefsScope(CharacterSet.PaintSquad);
 
         [UnityTest]
         public IEnumerator PaintSquadUnitGoesIdleThenRunThenShootsOrDies()
@@ -107,6 +112,7 @@ namespace Team5.Rebuild.Tests
             if (owner != null && owner.Simulation != null) owner.Simulation.SetPaused(true);
             if (initial.IsValid() && initial.isLoaded) SceneManager.SetActiveScene(initial);
             if (opened.IsValid() && opened.isLoaded) yield return SceneManager.UnloadSceneAsync(opened);
+            prefs?.Dispose();
         }
     }
 }

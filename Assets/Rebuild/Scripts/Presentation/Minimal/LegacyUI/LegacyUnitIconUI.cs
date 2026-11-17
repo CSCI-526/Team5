@@ -95,6 +95,8 @@ namespace Team5.Rebuild.Presentation.LegacyUI
     public class LegacyUnitIconUI : MonoBehaviour
     {
         private const float ShadowAlpha = 0.5f;
+        // Portrait edge in world units; the block icon's outline is 0.4 to 0.44, the portrait has transparent margins.
+        public const float PortraitSize = 0.56f;
         private static readonly Vector2 shadowOffset = new Vector2(0.03f, -0.05f);
 
         private RectTransform rect;
@@ -122,8 +124,18 @@ namespace Team5.Rebuild.Presentation.LegacyUI
 
             if (type == UnitRole.Test) return;
 
-            var look = LegacyUnitLooks.For(type);
             var k = pixelsPerUnit;
+            // A character set with rendered role portraits (Paint Squad) shows them; Catgirl has none and
+            // keeps the block icons below unchanged.
+            if (CharacterSetCatalogs.TryGetSelectedPortrait(type, out var portrait))
+            {
+                var picture = LegacyUiKit.CreateImage(transform, "Portrait", Vector2.zero, Vector2.one * PortraitSize * k, Color.white);
+                picture.sprite = portrait;
+                picture.preserveAspect = true;
+                return;
+            }
+
+            var look = LegacyUnitLooks.For(type);
             var outer = Vector2.one * look.OuterSize * k;
             LegacyUiKit.CreateImage(transform, "Shadow", shadowOffset * k, outer, new Color(0f, 0f, 0f, ShadowAlpha));
             LegacyUiKit.CreateImage(transform, "Outline", Vector2.zero, outer, look.Outline);

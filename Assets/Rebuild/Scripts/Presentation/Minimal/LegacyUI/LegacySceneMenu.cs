@@ -9,7 +9,8 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         public void StartGame()
         {
             if (gameObject.scene.path == BattleSceneFlow.TestStartScene) BattleSceneFlow.BeginTestRun();
-            else BattleSceneFlow.BeginRun();
+            // A real run first asks for the squad look; the choice is stored before the run begins.
+            else CharacterSelectScreen.Show(_ => BattleSceneFlow.BeginRun());
         }
         public void GoToStart() => BattleSceneFlow.ReturnToStart();
     }

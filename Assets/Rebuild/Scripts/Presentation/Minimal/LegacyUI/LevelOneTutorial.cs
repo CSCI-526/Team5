@@ -147,10 +147,14 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                 inspection.CloseImmediately();
                 cameraController.FocusPoint(Captain().Position, 2f);
                 GlowCaptain();
-                var usesCharacter = presentation.TryGetView(Captain().Id, out var captainView) && captainView.GetComponent<FWUnitVisual>() != null;
+                var hasView = presentation.TryGetView(Captain().Id, out var captainView);
+                var usesCharacter = hasView && captainView.GetComponent<FWUnitVisual>() != null;
+                var usesPaintSquad = hasView && captainView.GetComponent<PaintSquadUnitAnimation>() != null;
                 Show(1, "YOU ARE THE ATTACKER!", usesCharacter
                     ? "\nThe gold-haired character is your Captain.\nThe platform carries your squad automatically."
-                    : "\nThe gold crown is your Captain. It marches automatically.", true);
+                    : usesPaintSquad
+                        ? "\nThe gold spiked hero is your Captain.\nThe platform carries your squad automatically."
+                        : "\nThe gold crown is your Captain. It marches automatically.", true);
                 yield return WaitForNext();
                 if (!Running) { Finish(); yield break; }
             }

@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 093d013d8f04746d78023afe0956a3fc, type: 3}
+  m_Name: CharacterSetCatalogs
+  m_EditorClassIdentifier: Team5.Rebuild.Presentation::Team5.Rebuild.Presentation.CharacterSetCatalogs
+  entries:
+  - set: 0
+    displayName: Paint Squad
+    tagline: Helmeted paint troopers
+    roleVisuals: {fileID: 11400000, guid: b0fb8a226d5764a608dd63b39f2f440f, type: 2}
+    captainPreview: {fileID: 21300000, guid: 040b5c01bf21a4a65a0335f2a42bfdc8, type: 3}
+    portraits:
+    - role: 1
+      sprite: {fileID: 21300000, guid: 01109ab2f498d44ce8640cf4809bffb4, type: 3}
+    - role: 2
+      sprite: {fileID: 21300000, guid: 72716d86b3eff4c5ebe6efe3778ad9a4, type: 3}
+    - role: 3
+      sprite: {fileID: 21300000, guid: f0b25ed97ac524940a1221f6b3e96676, type: 3}
+    - role: 4
+      sprite: {fileID: 21300000, guid: 80148c0b70f694a27ac4920a2d8af7ac, type: 3}
+    - role: 5
+      sprite: {fileID: 21300000, guid: f4227284360bf482fb90ad8bade963ea, type: 3}
+    - role: 6
+      sprite: {fileID: 21300000, guid: 1492e2ba8970b4cc69a3c3b478455f44, type: 3}
+    - role: 7
+      sprite: {fileID: 21300000, guid: 5acd1a9220d8248f0a1b023eebef65f9, type: 3}
+    - role: 8
+      sprite: {fileID: 21300000, guid: e60cf37eeb2bc451aac8985b35c3a6b2, type: 3}
+    - role: 9
+      sprite: {fileID: 21300000, guid: 3902794dc64b64b65bf6baef281a5a77, type: 3}
+    - role: 10
+      sprite: {fileID: 21300000, guid: fc8b886f612aa426994f8ca14bf1c780, type: 3}
+  - set: 1
+    displayName: Catgirl
+    tagline: The original anime squad
+    roleVisuals: {fileID: 11400000, guid: 3d0abe8e4e047974aa812166b197c809, type: 2}
+    captainPreview: {fileID: 21300000, guid: 825c9ab1e8b9d4c82aace1a20157c3d6, type: 3}
+    portraits: []

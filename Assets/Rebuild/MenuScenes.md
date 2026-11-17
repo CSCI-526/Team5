@@ -4,7 +4,7 @@ UpgradeScene 的 Start Wave 按钮上方显示实时 `LEVEL n` 标签，参考�
 
 场景从旧 Team5 的同名 Scene 直接复制，保留 Canvas、字体、标题、按钮、相机与原始 RectTransform 布局。新项目入口为 Assets/Rebuild/Scenes/StartGame.unity，也是 Build Settings 的首场景。
 
-Start Game → Level1GridBattle（固定一名 Captain，跳过 UpgradeScene） → 战斗胜利或失败 → EndGame → Play Again → StartGame。新一轮重新加载战斗 Scene，生成全新的 Session 与成员状态。连续点击不会创建重复流程对象；结算通过下一帧异步切换场景，不在模拟回调中卸载场景。SquadBattlePrototype 仍作为独立调试场景保留。
+Start Game → Choose your squad (Paint Squad / Catgirl overlay, see PaintSquad.md) → Level1GridBattle（固定一名 Captain，跳过 UpgradeScene） → 战斗胜利或失败 → EndGame → Play Again → StartGame。新一轮重新加载战斗 Scene，生成全新的 Session 与成员状态。连续点击不会创建重复流程对象；结算通过下一帧异步切换场景，不在模拟回调中卸载场景。SquadBattlePrototype 仍作为独立调试场景保留。
 
 LegacySceneMenu 保留原 StartGame / GoToStart 方法名，替换按钮事件接收者。BattleSceneFlow 在 Session 层观察当前 Simulation 的结算事件。Level1 无论从标题进入还是直接在 Editor Play，都会自动绑定唯一流程对象并在胜负后进入 EndGame；SquadBattlePrototype 仍作为独立调试场景停留。单独打开 EndGame 也可返回标题。
 

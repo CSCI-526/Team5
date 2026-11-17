@@ -26,6 +26,7 @@ namespace Team5.Rebuild.Presentation
         [SerializeField] private int testVisualMemberId;
         [SerializeField] private UnitView testUnitPrefab;
         [SerializeField] private List<MemberVisualOverride> additionalTestVisuals = new List<MemberVisualOverride>();
+        private bool runtimeTestVisual;
         private readonly Dictionary<int, UnitView> views = new Dictionary<int, UnitView>();
         private readonly List<TowerRangeView> ranges = new List<TowerRangeView>();
         private BattleSimulation simulation;
@@ -41,9 +42,12 @@ namespace Team5.Rebuild.Presentation
             set { showTowerRanges = value; foreach (var range in ranges) if (range != null) range.SetVisible(value); }
         }
         public bool TryGetView(int unitId, out UnitView view) => views.TryGetValue(unitId, out view);
+        // The selected character set's catalog when this scene uses a selectable catalog, else the serialized one.
+        public UnitRoleVisualSet EffectiveRoleVisuals => CharacterSetCatalogs.Resolve(roleVisuals);
         public void SetTestVisual(int memberId, UnitView prefab)
         {
             useTestUnitVisual = prefab != null;
+            runtimeTestVisual = prefab != null;
             testVisualMemberId = memberId;
             testUnitPrefab = prefab;
             if (simulation == null) return;
@@ -166,9 +170,14 @@ namespace Team5.Rebuild.Presentation
         private void CreateView(UnitState unit)
         {
             if (views.ContainsKey(unit.Id)) return;
-            var prefab = roleVisuals != null && roleVisuals.TryGet(unit.Role, out var rolePrefab) ? rolePrefab : unitPrefab;
-            if (useTestUnitVisual && unit.MemberId == testVisualMemberId && testUnitPrefab != null) prefab = testUnitPrefab;
-            if (useTestUnitVisual)
+            var visuals = EffectiveRoleVisuals;
+            var prefab = visuals != null && visuals.TryGet(unit.Role, out var rolePrefab) ? rolePrefab : unitPrefab;
+            // Scene-authored per-member overrides belong to the scene's own catalog (Level 1 forces the
+            // Catgirl Captain). When the player picked another set they are skipped so that set's look wins;
+            // an explicit runtime SetTestVisual call still applies.
+            var sceneOverrides = useTestUnitVisual && visuals == roleVisuals;
+            if ((sceneOverrides || runtimeTestVisual) && unit.MemberId == testVisualMemberId && testUnitPrefab != null) prefab = testUnitPrefab;
+            if (sceneOverrides)
                 foreach (var entry in additionalTestVisuals)
                     if (entry != null && entry.memberId == unit.MemberId && entry.prefab != null)
                     { prefab = entry.prefab; break; }

@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using NUnit.Framework;
+using Team5.Rebuild.Session;
 using Team5.Rebuild.Presentation;
 using UnityEditor;
 using UnityEngine;
@@ -16,6 +17,10 @@ namespace Team5.Rebuild.Tests
 {
     public sealed class WebSpriteRenderingTests
     {
+        // These scenes are authored for Catgirl; pin that set so the player's stored choice cannot change them.
+        private CharacterSetPrefsScope characterSet;
+        [SetUp] public void PinCatgirlSet() => characterSet = new CharacterSetPrefsScope(CharacterSet.Catgirl);
+        [TearDown] public void RestoreCharacterSet() => characterSet?.Dispose();
         [UnityTest] public IEnumerator MobileWorldZSpritesNeedDepthAndRenderWithCpuDeformation()
         {
             Application.runInBackground=true;Directory.CreateDirectory("Logs/WebSpriteRendering");

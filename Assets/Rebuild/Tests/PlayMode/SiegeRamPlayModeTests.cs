@@ -22,6 +22,10 @@ namespace Team5.Rebuild.Tests
         private Scene initial;private SiegeRamFleet pointerTarget;private bool pointerHeld;private GameObject pointerReceiver;
         private readonly System.Collections.Generic.List<InputDevice> disabledMice=new System.Collections.Generic.List<InputDevice>();
         private const string ScenePath="Assets/Rebuild/Scenes/1.unity";
+        // This scene is authored for Catgirl (the test reads her sprites); pin that set so the stored choice cannot change it.
+        private CharacterSetPrefsScope characterSet;
+        [SetUp] public void PinCatgirlSet() => characterSet = new CharacterSetPrefsScope(Team5.Rebuild.Session.CharacterSet.Catgirl);
+        [TearDown] public void RestoreCharacterSet() => characterSet?.Dispose();
         [SetUp]public void Setup()
         {
             Application.runInBackground=true;
