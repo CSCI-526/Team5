@@ -24,6 +24,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         [SerializeField, Tooltip("Opacity of a lane's diagonal hatching.")] private float hatchAlpha = 0.55f;
         [SerializeField, Tooltip("Height in pixels of the START and GOAL labels above the center of their cells.")] private float labelLift = 39f;
 
+        private readonly List<Rect> badgeRects = new List<Rect>();
         private MaterialPropertyBlock block;
         private RectTransform lanes;
         private RectTransform road;
@@ -32,17 +33,20 @@ namespace Team5.Rebuild.Presentation.LegacyUI
 
         public void Build(NextMapData data, NextMapProjection projection, IReadOnlyList<TowerRangeView> ranges)
         {
+            badgeRects.Clear();
             block = new MaterialPropertyBlock();
             lanes = Layer("Lane Hatching");
             road = Layer("Route");
             minions = Layer("Minions");
             labels = Layer("Labels");
-            foreach (var range in ranges)
+            for (var i = 0; i < ranges.Count; i++)
             {
+                var range = ranges[i];
+                var tint = TowerStyles.ColorFor(data.Towers[i].Definition);
                 var edge = range.GetComponentInChildren<LineRenderer>(true);
                 if (edge != null) edge.widthMultiplier = laneEdgeWidth;
-                Tint(range.GetComponent<MeshRenderer>(), new Color(LaneColor.r, LaneColor.g, LaneColor.b, laneFillAlpha));
-                Tint(edge, new Color(LaneColor.r, LaneColor.g, LaneColor.b, laneEdgeAlpha));
+                Tint(range.GetComponent<MeshRenderer>(), new Color(tint.r, tint.g, tint.b, laneFillAlpha));
+                Tint(edge, new Color(tint.r, tint.g, tint.b, laneEdgeAlpha));
             }
             foreach (var tower in data.Towers) Hatch(tower, projection);
             BuildRoute(data.Route, projection);
@@ -112,11 +116,12 @@ namespace Team5.Rebuild.Presentation.LegacyUI
 
         private void Hatch(NextMapTower tower, NextMapProjection projection)
         {
+            var tint = TowerStyles.ColorFor(tower.Definition);
             var lane = tower.Lane;
             var a = projection.ToPanel(lane.min);
             var b = projection.ToPanel(lane.max);
             var size = new Vector2(Mathf.Abs(b.x - a.x), Mathf.Abs(b.y - a.y));
-            var hatch = LegacyUiKit.CreateImage(lanes, "Lane Hatch", (a + b) / 2f, size, new Color(LaneColor.r, LaneColor.g, LaneColor.b, hatchAlpha));
+            var hatch = LegacyUiKit.CreateImage(lanes, "Lane Hatch", (a + b) / 2f, size, new Color(tint.r, tint.g, tint.b, hatchAlpha));
             hatch.sprite = NextMapShapes.Hatch;
             hatch.type = Image.Type.Tiled;
         }
@@ -174,15 +179,40 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         private void Badge(NextMapTower tower, int number, NextMapProjection projection)
         {
             var definition = tower.Definition;
+            var tint = TowerStyles.ColorFor(definition);
             var square = definition.Area == AttackArea.Square;
-            var text = (square ? "r " : string.Empty) + definition.Range.ToString("0.##", CultureInfo.InvariantCulture);
+            var text = TowerStyles.Name(definition) + " " + (square ? "r " : string.Empty) + definition.Range.ToString("0.##", CultureInfo.InvariantCulture);
             var root = LegacyUiKit.CreateRect(labels, "Tower Badge " + number, projection.ToPanel(tower.BadgeAnchor) + new Vector2(0f, 16f), Vector2.zero);
-            var value = LegacyUiKit.CreateText(root, "Range", text, Vector2.zero, new Vector2(80f, 24f), 14, LegacyUiKit.TextColor, FontStyles.Bold);
+            var value = LegacyUiKit.CreateText(root, "Range", text, Vector2.zero, new Vector2(180f, 24f), 14, LegacyUiKit.TextColor, FontStyles.Bold);
             var width = 54f + value.GetPreferredValues(text).x;
+            var anchor = projection.ToPanel(tower.BadgeAnchor);
+            var desired = anchor + new Vector2(0, 16f);
+            var halfPanel = ((RectTransform)transform).rect.size * .5f;
+            for (var attempt = 0; attempt < 20; attempt++)
+            {
+                var shift = attempt == 0 ? 0 : ((attempt + 1) / 2) * 34 * (attempt % 2 == 1 ? 1 : -1);
+                var at = new Vector2(Mathf.Clamp(desired.x, -halfPanel.x + width / 2 + 6, halfPanel.x - width / 2 - 6),
+                    Mathf.Clamp(desired.y + shift, -halfPanel.y + 20, halfPanel.y - 20));
+                var rect = new Rect(at - new Vector2(width / 2 + 5, 17), new Vector2(width + 10, 34));
+                var collision = false;
+                foreach (var used in badgeRects) if (used.Overlaps(rect)) { collision = true; break; }
+                if (collision && attempt < 19) continue;
+                root.anchoredPosition = at;
+                badgeRects.Add(rect);
+                if ((at - desired).sqrMagnitude > 16)
+                {
+                    var delta = at - anchor;
+                    var leader = LegacyUiKit.CreateImage(labels, "Badge leader", (at + anchor) / 2,
+                        new Vector2(delta.magnitude, 1.5f), tint);
+                    leader.rectTransform.localRotation = Quaternion.Euler(0, 0, Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg);
+                    leader.transform.SetSiblingIndex(0);
+                }
+                break;
+            }
             var left = -width / 2f;
-            LegacyUiKit.CreateImage(root, "Outline", Vector2.zero, new Vector2(width + 4f, 30f), LaneColor, 15);
+            LegacyUiKit.CreateImage(root, "Outline", Vector2.zero, new Vector2(width + 4f, 30f), tint, 15);
             LegacyUiKit.CreateImage(root, "Back", Vector2.zero, new Vector2(width, 26f), LegacyUiKit.PanelColor, 13);
-            LegacyUiKit.CreateCircle(root, "Number Back", new Vector2(left + 13f, 0f), 20f, LaneColor);
+            LegacyUiKit.CreateCircle(root, "Number Back", new Vector2(left + 13f, 0f), 20f, tint);
             LegacyUiKit.CreateText(root, "Number", number.ToString(CultureInfo.InvariantCulture), new Vector2(left + 13f, 0f), new Vector2(20f, 20f), 13, Color.white, FontStyles.Bold);
             var arrow = LegacyUiKit.CreateImage(root, "Direction", new Vector2(left + 34f, 0f), square ? new Vector2(9f, 9f) : new Vector2(11f, 11f), LegacyUiKit.TextColor);
             if (!square)
@@ -192,7 +222,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                 arrow.rectTransform.localRotation = Quaternion.Euler(0f, 0f, Mathf.Atan2(screen.y, screen.x) * Mathf.Rad2Deg);
             }
             value.alignment = TextAlignmentOptions.Left;
-            value.rectTransform.anchoredPosition = new Vector2(left + 44f + 40f, 0f);
+            value.rectTransform.anchoredPosition = new Vector2(left + 44f + 90f, 0f);
             value.transform.SetAsLastSibling();
         }
     }

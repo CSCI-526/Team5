@@ -5,6 +5,7 @@ using UnityEngine;
 
 namespace Team5.Rebuild.Simulation
 {
+    public enum TowerKind { Standard, Laser, Frost, Blast }
     public enum TargetRule { FurthestAlongRoute, Nearest }
     public enum UnitLifeState { Alive, Dead, ReachedGoal }
     public enum BattleOutcome { Running, Victory, Defeat }
@@ -84,11 +85,14 @@ namespace Team5.Rebuild.Simulation
         public bool IsAoe { get; }
         public int GoldBounty { get; }
         public bool IsMinion { get; }
+        public TowerKind Kind { get; }
 
         public TowerDefinition(int id, Vector3 position, float range, float damage, float attackInterval, TargetRule targetRule,
             int footprintSize = 1, float maxHp = 20, AttackArea area = AttackArea.Square, float attackWidth = 0.3f,
-            bool isAoe = false, int goldBounty = 20, bool isWall = false, bool wallAlongZ = false, bool isMinion = false)
+            bool isAoe = false, int goldBounty = 20, bool isWall = false, bool wallAlongZ = false, bool isMinion = false, TowerKind kind = TowerKind.Standard)
         {
+            if (!Enum.IsDefined(typeof(TowerKind), kind)) throw new ArgumentOutOfRangeException(nameof(kind));
+            Kind = kind;
             isWall = isWall || isMinion;
             if (!BattleNumbers.Finite(position) || !BattleNumbers.Finite(range) || range < 0 ||
                 !BattleNumbers.Finite(damage) || (isWall ? damage < 0 : damage <= 0) || !BattleNumbers.Finite(attackInterval) || attackInterval <= 0)

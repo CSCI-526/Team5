@@ -7708,11 +7708,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 100148705, guid: 2fbe723b07d64ecb8e0d9c1d122bd713, type: 3}
       propertyPath: m_Name
-      value: Tower_Attack_1x1_Square
+      value: FROST Tower 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 100148707, guid: 2fbe723b07d64ecb8e0d9c1d122bd713, type: 3}
+      propertyPath: kind
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 100148707, guid: 2fbe723b07d64ecb8e0d9c1d122bd713, type: 3}
       propertyPath: isAoe
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 100148707, guid: 2fbe723b07d64ecb8e0d9c1d122bd713, type: 3}
       propertyPath: maxHp
@@ -14242,7 +14246,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1000000, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: m_Name
-      value: Tower_Attack_1x1
+      value: NORMAL Tower 3
       objectReference: {fileID: 0}
     - target: {fileID: 1000001, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: m_LocalPosition.x
@@ -17008,7 +17012,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 100148705, guid: 2fbe723b07d64ecb8e0d9c1d122bd713, type: 3}
       propertyPath: m_Name
-      value: Tower_Attack_1x1_Square
+      value: BLAST Tower 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 100148707, guid: 2fbe723b07d64ecb8e0d9c1d122bd713, type: 3}
+      propertyPath: kind
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 100148707, guid: 2fbe723b07d64ecb8e0d9c1d122bd713, type: 3}
       propertyPath: isAoe
@@ -19012,7 +19020,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1000000, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: m_Name
-      value: Tower_Attack_1x1
+      value: LASER Tower 2
       objectReference: {fileID: 0}
     - target: {fileID: 1000001, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: m_LocalPosition.x
@@ -19028,19 +19036,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1000001, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 1
+      value: 0.7071068
       objectReference: {fileID: 0}
     - target: {fileID: 1000001, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 1000001, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0
+      value: 0.7071068
       objectReference: {fileID: 0}
     - target: {fileID: 1000001, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 1000001, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -19055,12 +19063,20 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1000002, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
+      propertyPath: kind
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1000002, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: maxHp
       value: 30
       objectReference: {fileID: 0}
     - target: {fileID: 1000002, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
+      propertyPath: range
+      value: 4.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 1000002, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: damage
-      value: 3
+      value: 15
       objectReference: {fileID: 0}
     - target: {fileID: 1000002, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: attackArea
@@ -19069,6 +19085,10 @@ PrefabInstance:
     - target: {fileID: 1000002, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: goldBounty
       value: 30
+      objectReference: {fileID: 0}
+    - target: {fileID: 1000002, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
+      propertyPath: attackInterval
+      value: 3
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -20465,7 +20485,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1000000, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: m_Name
-      value: Tower_Attack_1x1
+      value: SENTRY Tower 5
       objectReference: {fileID: 0}
     - target: {fileID: 1000001, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: m_LocalPosition.x
@@ -20517,7 +20537,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1000002, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: attackArea
-      value: 3
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1000002, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: goldBounty
@@ -23515,7 +23535,10 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 2033248477, guid: 93c0f8edb07c4061af5a109352d24339, type: 3}
       insertIndex: -1
       addedObject: {fileID: 284124231}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 2044225505, guid: 93c0f8edb07c4061af5a109352d24339, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1692221915}
   m_SourcePrefab: {fileID: 100100000, guid: 93c0f8edb07c4061af5a109352d24339, type: 3}
 --- !u!4 &1692221912 stripped
 Transform:
@@ -23527,6 +23550,23 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 2033248477, guid: 93c0f8edb07c4061af5a109352d24339, type: 3}
   m_PrefabInstance: {fileID: 1692221911}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1692221914 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2044225505, guid: 93c0f8edb07c4061af5a109352d24339, type: 3}
+  m_PrefabInstance: {fileID: 1692221911}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1692221915
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1692221914}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9237add79266745a393eb814616ca2ca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Team5.Rebuild.Presentation::Team5.Rebuild.Presentation.TowerSpecialEffects
 --- !u!1001 &1692915025
 PrefabInstance:
   m_ObjectHideFlags: 0

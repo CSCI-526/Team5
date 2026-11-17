@@ -10,6 +10,8 @@ namespace Team5.Rebuild.Simulation
         public UnitDefinition Definition { get; }
         public UnitRole Role => Definition.Role;
         public int SlotId => FormationSlot.y * 3 + FormationSlot.x;
+        public float SlowRemaining { get; internal set; }
+        public float EffectiveSpeed => Speed * (SlowRemaining > 0 ? .75f : 1f);
         public float AttackCooldown { get; internal set; }
         public float SkillCooldownRemaining { get; internal set; }
         public float DamageBuffRemaining { get; internal set; }
@@ -51,6 +53,8 @@ namespace Team5.Rebuild.Simulation
         public int Id => Definition.Id;
         public Vector3 Position { get; internal set; }
         public float CooldownRemaining { get; internal set; }
+        public float LaserChargeRemaining { get; internal set; }
+        public float LaserFlashRemaining { get; internal set; }
         public float FrozenRemaining { get; internal set; }
         public int? TargetId { get; internal set; }
         public float Hp { get; internal set; }
@@ -73,6 +77,7 @@ namespace Team5.Rebuild.Simulation
         public int SquadId { get; internal set; } = 1;
         public Vector3 Position { get; internal set; }
         public bool IsActive { get; internal set; } = true;
+        public TowerKind Kind { get; internal set; }
         internal float Damage, Age, Travel, Range, Width;
         internal Vector3 Origin, Direction;
         internal bool Straight;

@@ -21,6 +21,7 @@ namespace Team5.Rebuild.Presentation
         private void OnEnable()
         {
             session = GetComponent<BattleSession>();
+            if (GetComponent<TowerSpecialEffects>() == null) gameObject.AddComponent<TowerSpecialEffects>();
             color = new MaterialPropertyBlock();
         }
 
@@ -56,7 +57,7 @@ namespace Team5.Rebuild.Presentation
                         shotMaterial = new Material(Shader.Find("Universal Render Pipeline/Unlit")) { color = Color.white };
                     var renderer = model.GetComponent<Renderer>();
                     renderer.sharedMaterial = shotMaterial;
-                    color.SetColor("_BaseColor", shot.TargetKind == ProjectileTargetKind.Tower ? Color.yellow : Color.magenta);
+                    color.SetColor("_BaseColor", shot.TargetKind == ProjectileTargetKind.Tower ? Color.yellow : ShotColor(shot.Kind));
                     renderer.SetPropertyBlock(color);
                     view = model.transform;
                     shots.Add(shot.Id, view);
@@ -91,6 +92,13 @@ namespace Team5.Rebuild.Presentation
                 }
             }
         }
+
+        private static Color ShotColor(TowerKind kind) => kind switch
+        {
+            TowerKind.Frost => new Color(.18f, .78f, 1f),
+            TowerKind.Blast => new Color(1f, .43f, .08f),
+            _ => new Color(1f, .76f, .16f)
+        };
 
         private void ClearVisuals()
         {
