@@ -22,6 +22,8 @@ namespace Team5.Rebuild.World
         [SerializeField] private bool isWoodenGate;
         [SerializeField] private bool wallAlongZ;
         [SerializeField] private bool isMinion;
+        [SerializeField] private TowerKind kind;
+        public TowerKind Kind => kind;
         public bool IsWall => isWall || isMinion;
         public bool IsMinion => isMinion;
         public Vector2Int Footprint => isMinion ? Vector2Int.one : isWall ? WallFootprintForYaw(wallAlongZ, transform.eulerAngles.y) : new Vector2Int(FootprintSize, FootprintSize);
@@ -43,7 +45,7 @@ namespace Team5.Rebuild.World
         public float CurrentCooldown => RuntimeState?.CooldownRemaining ?? 0;
 
         public TowerDefinition CaptureDefinition(int id) =>
-            new TowerDefinition(id, transform.position, Range, IsWall && !isMinion ? 0 : damage, attackInterval, targetRule, FootprintSize, maxHp, attackArea, attackWidth, IsAoe, GoldBounty, IsWall, Footprint.y == 3, isMinion: isMinion, isWoodenGate: IsWoodenGate);
+            new TowerDefinition(id, transform.position, Range, IsWall && !isMinion ? 0 : damage, attackInterval, targetRule, FootprintSize, maxHp, attackArea, attackWidth, IsAoe, GoldBounty, IsWall, Footprint.y == 3, isMinion: isMinion, isWoodenGate: IsWoodenGate, kind: kind);
 
         public void BindRuntimeState(TowerState state) => RuntimeState = state;
 

@@ -5323,6 +5323,7 @@ GameObject:
   - component: {fileID: 777710001}
   - component: {fileID: 2044225506}
   - component: {fileID: 884410001}
+  - component: {fileID: 2044225508}
   m_Layer: 0
   m_Name: BattleSession (Level 1 Captain)
   m_TagString: Untagged
@@ -5359,6 +5360,12 @@ MonoBehaviour:
   members: []
   initialRoster: {fileID: 11400000, guid: c7fea7eb60294bfa83cb342d4b00af06, type: 2}
   useSceneRosterOnly: 1
+  manualSquadMovement: 0
+  continuousSquadMovement: 0
+  compactSquadMovement: 0
+  continuousFormationSpacing: 0.48
+  continuousSoldierRadius: 0.2
+  continuousVisualFootprint: 0.38
   displayedLevelNumber: 1
   attemptsPerLevel: 3
   levelTimeMultiplier: 2
@@ -5378,6 +5385,18 @@ Transform:
   - {fileID: 6964496791}
   m_Father: {fileID: 1499248551}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2044225508
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2044225505}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9237add79266745a393eb814616ca2ca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Team5.Rebuild.Presentation::Team5.Rebuild.Presentation.TowerSpecialEffects
 --- !u!1 &2050328437
 GameObject:
   m_ObjectHideFlags: 0
@@ -66229,6 +66248,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1000001, guid: f17c64aa34e9408cbc60ba73226e9659, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1000001, guid: f17c64aa34e9408cbc60ba73226e9659, type: 3}
       propertyPath: m_LocalRotation.x
       value: 0
       objectReference: {fileID: 0}
@@ -66239,10 +66262,6 @@ PrefabInstance:
     - target: {fileID: 1000001, guid: f17c64aa34e9408cbc60ba73226e9659, type: 3}
       propertyPath: m_LocalRotation.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1000001, guid: f17c64aa34e9408cbc60ba73226e9659, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1000001, guid: f17c64aa34e9408cbc60ba73226e9659, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -66314,13 +66333,13 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 7900499783024486531, guid: 31e536457b18f1947b49df2b2631b66d, type: 3}
-      propertyPath: m_Name
-      value: Level 1 Tower 1 (3x3)
-      objectReference: {fileID: 0}
     - target: {fileID: 2159973352995989666, guid: 31e536457b18f1947b49df2b2631b66d, type: 3}
       propertyPath: m_IsActive
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7900499783024486531, guid: 31e536457b18f1947b49df2b2631b66d, type: 3}
+      propertyPath: m_Name
+      value: NORMAL Tower 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

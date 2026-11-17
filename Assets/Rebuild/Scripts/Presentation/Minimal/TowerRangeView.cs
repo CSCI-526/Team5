@@ -72,18 +72,9 @@ namespace Team5.Rebuild.Presentation
             if (definition == null || fill == null || border == null) return;
             fill.enabled = border.enabled = isActiveAndEnabled && visible && !definition.IsWall && (tower == null || tower.IsAlive);
 
-            // Tint AOE towers orange-red with a subtle pulse
-            if (definition.IsAoe)
-            {
-                var pulse = 0.14f + 0.08f * Mathf.Sin(Time.time * 4f);
-                fillMaterial.SetColor("_BaseColor", new Color(1f, 0.36f, 0.12f, pulse));
-                borderMaterial.SetColor("_BaseColor", new Color(1f, 0.45f, 0.15f, 0.85f));
-            }
-            else
-            {
-                fillMaterial.SetColor("_BaseColor", new Color(0.25f, 0.55f, 1f, 0.15f));
-                borderMaterial.SetColor("_BaseColor", new Color(0.25f, 0.55f, 1f, 0.7f));
-            }
+            var tint = TowerStyles.ColorFor(definition);
+            fillMaterial.SetColor("_BaseColor", new Color(tint.r, tint.g, tint.b, .15f));
+            borderMaterial.SetColor("_BaseColor", new Color(tint.r, tint.g, tint.b, .8f));
 
             var position = tower != null ? tower.Position : definition.Position;
             var bounds = SquadCombatRules.AreaBounds(position, definition.Area, definition.Range, definition.AttackWidth);

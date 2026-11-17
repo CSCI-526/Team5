@@ -3014,7 +3014,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 100148705, guid: 2fbe723b07d64ecb8e0d9c1d122bd713, type: 3}
       propertyPath: m_Name
-      value: Tower_Attack_1x1_Square
+      value: BLAST Tower 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 100148707, guid: 2fbe723b07d64ecb8e0d9c1d122bd713, type: 3}
+      propertyPath: kind
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 100148707, guid: 2fbe723b07d64ecb8e0d9c1d122bd713, type: 3}
       propertyPath: isAoe
@@ -3026,7 +3030,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 100148707, guid: 2fbe723b07d64ecb8e0d9c1d122bd713, type: 3}
       propertyPath: damage
-      value: 7
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 100148707, guid: 2fbe723b07d64ecb8e0d9c1d122bd713, type: 3}
       propertyPath: goldBounty
@@ -5884,6 +5888,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 3686462, guid: 93c0f8edb07c4061af5a109352d24339, type: 3}
+      propertyPath: roleVisuals
+      value: 
+      objectReference: {fileID: 11400000, guid: 3d0abe8e4e047974aa812166b197c809, type: 2}
     - target: {fileID: 845802670, guid: 93c0f8edb07c4061af5a109352d24339, type: 3}
       propertyPath: m_LocalPosition.x
       value: 11.5
@@ -6144,10 +6152,6 @@ PrefabInstance:
       propertyPath: 'towers.Array.data[7]'
       value: 
       objectReference: {fileID: 937914743}
-    - target: {fileID: 3686462, guid: 93c0f8edb07c4061af5a109352d24339, type: 3}
-      propertyPath: roleVisuals
-      value: 
-      objectReference: {fileID: 11400000, guid: 3d0abe8e4e047974aa812166b197c809, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
@@ -7471,7 +7475,10 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 2033248477, guid: 93c0f8edb07c4061af5a109352d24339, type: 3}
       insertIndex: -1
       addedObject: {fileID: 490536084}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 2044225505, guid: 93c0f8edb07c4061af5a109352d24339, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 416068890}
   m_SourcePrefab: {fileID: 100100000, guid: 93c0f8edb07c4061af5a109352d24339, type: 3}
 --- !u!4 &416068887 stripped
 Transform:
@@ -7483,6 +7490,23 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 2033248477, guid: 93c0f8edb07c4061af5a109352d24339, type: 3}
   m_PrefabInstance: {fileID: 416068886}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &416068889 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2044225505, guid: 93c0f8edb07c4061af5a109352d24339, type: 3}
+  m_PrefabInstance: {fileID: 416068886}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &416068890
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 416068889}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9237add79266745a393eb814616ca2ca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Team5.Rebuild.Presentation::Team5.Rebuild.Presentation.TowerSpecialEffects
 --- !u!1001 &418484256
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -10108,11 +10132,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 100148705, guid: 2fbe723b07d64ecb8e0d9c1d122bd713, type: 3}
       propertyPath: m_Name
-      value: Tower_Attack_1x1_Square
+      value: SENTRY Tower 7
       objectReference: {fileID: 0}
     - target: {fileID: 100148707, guid: 2fbe723b07d64ecb8e0d9c1d122bd713, type: 3}
       propertyPath: isAoe
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 100148707, guid: 2fbe723b07d64ecb8e0d9c1d122bd713, type: 3}
       propertyPath: maxHp
@@ -10120,7 +10144,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 100148707, guid: 2fbe723b07d64ecb8e0d9c1d122bd713, type: 3}
       propertyPath: damage
-      value: 7
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 100148707, guid: 2fbe723b07d64ecb8e0d9c1d122bd713, type: 3}
       propertyPath: goldBounty
@@ -10541,19 +10565,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 100148704, guid: 2fbe723b07d64ecb8e0d9c1d122bd713, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 1
+      value: -0.00000004371139
       objectReference: {fileID: 0}
     - target: {fileID: 100148704, guid: 2fbe723b07d64ecb8e0d9c1d122bd713, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 100148704, guid: 2fbe723b07d64ecb8e0d9c1d122bd713, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 100148704, guid: 2fbe723b07d64ecb8e0d9c1d122bd713, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 100148704, guid: 2fbe723b07d64ecb8e0d9c1d122bd713, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -10569,11 +10593,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 100148705, guid: 2fbe723b07d64ecb8e0d9c1d122bd713, type: 3}
       propertyPath: m_Name
-      value: Tower_Attack_1x1_Square
+      value: NORMAL Tower 5
       objectReference: {fileID: 0}
     - target: {fileID: 100148707, guid: 2fbe723b07d64ecb8e0d9c1d122bd713, type: 3}
       propertyPath: isAoe
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 100148707, guid: 2fbe723b07d64ecb8e0d9c1d122bd713, type: 3}
       propertyPath: maxHp
@@ -10581,7 +10605,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 100148707, guid: 2fbe723b07d64ecb8e0d9c1d122bd713, type: 3}
       propertyPath: damage
-      value: 7
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 100148707, guid: 2fbe723b07d64ecb8e0d9c1d122bd713, type: 3}
+      propertyPath: attackArea
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 100148707, guid: 2fbe723b07d64ecb8e0d9c1d122bd713, type: 3}
       propertyPath: goldBounty
@@ -11362,7 +11390,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1000000, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: m_Name
-      value: Tower_Attack_1x1
+      value: LASER Tower 4
       objectReference: {fileID: 0}
     - target: {fileID: 1000001, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: m_LocalPosition.x
@@ -11378,19 +11406,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1000001, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 1
+      value: 0.7071068
       objectReference: {fileID: 0}
     - target: {fileID: 1000001, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 1000001, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0
+      value: -0.7071068
       objectReference: {fileID: 0}
     - target: {fileID: 1000001, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 1000001, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -11405,12 +11433,20 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1000002, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
+      propertyPath: kind
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1000002, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: maxHp
       value: 60
       objectReference: {fileID: 0}
     - target: {fileID: 1000002, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
+      propertyPath: range
+      value: 4.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 1000002, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: damage
-      value: 10
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 1000002, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: attackArea
@@ -11419,6 +11455,10 @@ PrefabInstance:
     - target: {fileID: 1000002, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: goldBounty
       value: 45
+      objectReference: {fileID: 0}
+    - target: {fileID: 1000002, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
+      propertyPath: attackInterval
+      value: 3
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -14150,7 +14190,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1000000, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: m_Name
-      value: Tower_Attack_1x1
+      value: BLAST Tower 8
       objectReference: {fileID: 0}
     - target: {fileID: 1000001, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: m_LocalPosition.x
@@ -14193,16 +14233,24 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1000002, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
+      propertyPath: kind
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 1000002, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
+      propertyPath: isAoe
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1000002, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: maxHp
       value: 60
       objectReference: {fileID: 0}
     - target: {fileID: 1000002, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: damage
-      value: 10
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 1000002, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: attackArea
-      value: 3
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1000002, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: goldBounty
@@ -17281,7 +17329,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1000000, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: m_Name
-      value: Tower_Attack_1x1
+      value: FROST Tower 2
       objectReference: {fileID: 0}
     - target: {fileID: 1000001, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: m_LocalPosition.x
@@ -17324,16 +17372,20 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1000002, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
+      propertyPath: kind
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 1000002, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: maxHp
       value: 60
       objectReference: {fileID: 0}
     - target: {fileID: 1000002, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: damage
-      value: 10
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 1000002, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: attackArea
-      value: 3
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1000002, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: goldBounty
@@ -22334,7 +22386,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1000000, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: m_Name
-      value: Tower_Attack_1x1
+      value: NORMAL Tower 6
       objectReference: {fileID: 0}
     - target: {fileID: 1000001, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: m_LocalPosition.x
@@ -22350,19 +22402,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1000001, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 1
+      value: -0.00000004371139
       objectReference: {fileID: 0}
     - target: {fileID: 1000001, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 1000001, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1000001, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 1000001, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -22382,7 +22434,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1000002, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: damage
-      value: 10
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 1000002, guid: 2be29bd22f1740019e1af80aa474d4c8, type: 3}
       propertyPath: attackArea
@@ -28536,7 +28588,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 100148705, guid: 2fbe723b07d64ecb8e0d9c1d122bd713, type: 3}
       propertyPath: m_Name
-      value: Tower_Attack_1x1_Square
+      value: BLAST Tower 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 100148707, guid: 2fbe723b07d64ecb8e0d9c1d122bd713, type: 3}
+      propertyPath: kind
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 100148707, guid: 2fbe723b07d64ecb8e0d9c1d122bd713, type: 3}
       propertyPath: isAoe
@@ -28548,7 +28604,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 100148707, guid: 2fbe723b07d64ecb8e0d9c1d122bd713, type: 3}
       propertyPath: damage
-      value: 7
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 100148707, guid: 2fbe723b07d64ecb8e0d9c1d122bd713, type: 3}
       propertyPath: goldBounty

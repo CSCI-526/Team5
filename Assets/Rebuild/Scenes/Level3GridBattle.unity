@@ -324,7 +324,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 8000009100, guid: 655022f8f991481a95b2411c1b70a04a, type: 3}
       propertyPath: m_Name
-      value: Level 3 Tower 4 (3x3)
+      value: NORMAL Tower 2
       objectReference: {fileID: 0}
     - target: {fileID: 8000009101, guid: 655022f8f991481a95b2411c1b70a04a, type: 3}
       propertyPath: maxHp
@@ -352,19 +352,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8000009102, guid: 655022f8f991481a95b2411c1b70a04a, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 1
+      value: 0.7071068
       objectReference: {fileID: 0}
     - target: {fileID: 8000009102, guid: 655022f8f991481a95b2411c1b70a04a, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 8000009102, guid: 655022f8f991481a95b2411c1b70a04a, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0
+      value: -0.7071068
       objectReference: {fileID: 0}
     - target: {fileID: 8000009102, guid: 655022f8f991481a95b2411c1b70a04a, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 8000009102, guid: 655022f8f991481a95b2411c1b70a04a, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -377,6 +377,22 @@ PrefabInstance:
     - target: {fileID: 8000009102, guid: 655022f8f991481a95b2411c1b70a04a, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6768889377325170700, guid: 655022f8f991481a95b2411c1b70a04a, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6768889377325170700, guid: 655022f8f991481a95b2411c1b70a04a, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6768889377325170700, guid: 655022f8f991481a95b2411c1b70a04a, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6768889377325170700, guid: 655022f8f991481a95b2411c1b70a04a, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2579,7 +2595,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 8000009100, guid: f4d17470eda143d3a23703f27705aa29, type: 3}
       propertyPath: m_Name
-      value: Level 3 Tower 10 (3x3)
+      value: SENTRY Tower 5
       objectReference: {fileID: 0}
     - target: {fileID: 8000009101, guid: f4d17470eda143d3a23703f27705aa29, type: 3}
       propertyPath: maxHp
@@ -2660,7 +2676,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 8000009100, guid: 64022aaa70cc4654b307c5601f79866c, type: 3}
       propertyPath: m_Name
-      value: Level 3 Tower 5 (3x3)
+      value: NORMAL Tower 3
       objectReference: {fileID: 0}
     - target: {fileID: 8000009101, guid: 64022aaa70cc4654b307c5601f79866c, type: 3}
       propertyPath: maxHp
@@ -3101,7 +3117,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 8000009100, guid: 587a4488504841c286d7d7ee0339fa6c, type: 3}
       propertyPath: m_Name
-      value: Level 3 Tower 8 (3x3)
+      value: NORMAL Tower 4
       objectReference: {fileID: 0}
     - target: {fileID: 8000009101, guid: 587a4488504841c286d7d7ee0339fa6c, type: 3}
       propertyPath: maxHp
@@ -3129,19 +3145,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8000009102, guid: 587a4488504841c286d7d7ee0339fa6c, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 1
+      value: 0.7071068
       objectReference: {fileID: 0}
     - target: {fileID: 8000009102, guid: 587a4488504841c286d7d7ee0339fa6c, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 8000009102, guid: 587a4488504841c286d7d7ee0339fa6c, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0
+      value: 0.7071068
       objectReference: {fileID: 0}
     - target: {fileID: 8000009102, guid: 587a4488504841c286d7d7ee0339fa6c, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 8000009102, guid: 587a4488504841c286d7d7ee0339fa6c, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -3154,6 +3170,22 @@ PrefabInstance:
     - target: {fileID: 8000009102, guid: 587a4488504841c286d7d7ee0339fa6c, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4614762642141710716, guid: 587a4488504841c286d7d7ee0339fa6c, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4614762642141710716, guid: 587a4488504841c286d7d7ee0339fa6c, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4614762642141710716, guid: 587a4488504841c286d7d7ee0339fa6c, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4614762642141710716, guid: 587a4488504841c286d7d7ee0339fa6c, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -3471,7 +3503,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 8000009100, guid: 64022aaa70cc4654b307c5601f79866c, type: 3}
       propertyPath: m_Name
-      value: Level 3 Tower 1 (3x3)
+      value: LASER Tower 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8000009101, guid: 64022aaa70cc4654b307c5601f79866c, type: 3}
+      propertyPath: kind
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8000009101, guid: 64022aaa70cc4654b307c5601f79866c, type: 3}
       propertyPath: maxHp
@@ -3479,11 +3515,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8000009101, guid: 64022aaa70cc4654b307c5601f79866c, type: 3}
       propertyPath: range
-      value: 7.5
+      value: 13.5
       objectReference: {fileID: 0}
     - target: {fileID: 8000009101, guid: 64022aaa70cc4654b307c5601f79866c, type: 3}
       propertyPath: damage
-      value: 1.5
+      value: 7.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 8000009101, guid: 64022aaa70cc4654b307c5601f79866c, type: 3}
+      propertyPath: attackInterval
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 8000009102, guid: 64022aaa70cc4654b307c5601f79866c, type: 3}
       propertyPath: m_LocalPosition.x
@@ -4333,6 +4373,7 @@ GameObject:
   - component: {fileID: 2044225507}
   - component: {fileID: 777710001}
   - component: {fileID: 2044225506}
+  - component: {fileID: 2044225508}
   m_Layer: 0
   m_Name: BattleSession (Level 3 Captain)
   m_TagString: Untagged
@@ -4398,6 +4439,18 @@ Transform:
   - {fileID: 6964496791}
   m_Father: {fileID: 1499248551}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2044225508
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2044225505}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9237add79266745a393eb814616ca2ca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Team5.Rebuild.Presentation::Team5.Rebuild.Presentation.TowerSpecialEffects
 --- !u!1001 &2060994722
 PrefabInstance:
   m_ObjectHideFlags: 0

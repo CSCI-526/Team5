@@ -165,7 +165,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Team5.Rebuild.Presentation::Team5.Rebuild.Presentation.BattlePresentation
   session: {fileID: 2044225506}
   unitPrefab: {fileID: 7082717736601844884, guid: c8da0dedecea54742bbe264ffc94ade5, type: 3}
+  roleVisuals: {fileID: 0}
   showTowerRanges: 1
+  showUnitLevels: 1
+  useTestUnitVisual: 0
+  testVisualMemberId: 0
+  testUnitPrefab: {fileID: 0}
+  additionalTestVisuals: []
 --- !u!1 &176265811
 GameObject:
   m_ObjectHideFlags: 0
@@ -1479,6 +1485,12 @@ MonoBehaviour:
   members: []
   initialRoster: {fileID: 11400000, guid: 57e190ca22f2491db6c91c21a8dcb6a4, type: 2}
   useSceneRosterOnly: 0
+  manualSquadMovement: 0
+  continuousSquadMovement: 0
+  compactSquadMovement: 0
+  continuousFormationSpacing: 0.48
+  continuousSoldierRadius: 0.2
+  continuousVisualFootprint: 0.38
   displayedLevelNumber: 1
   attemptsPerLevel: 3
   levelTimeMultiplier: 1
@@ -2176,6 +2188,13 @@ MonoBehaviour:
   maxHp: 20
   attackArea: 2
   attackWidth: 0.9
+  isAoe: 0
+  goldBounty: 25
+  isWall: 0
+  isWoodenGate: 0
+  wallAlongZ: 0
+  isMinion: 0
+  kind: 0
 --- !u!4 &8000009102
 Transform:
   m_ObjectHideFlags: 0
@@ -2312,14 +2331,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: de3c9afd0f0c78f4193f6ced529d483e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Team5.Rebuild.World::Team5.Rebuild.World.BattleTower
-  range: 8
-  damage: 1
-  attackInterval: 1
+  range: 10.5
+  damage: 5
+  attackInterval: 3
   targetRule: 0
   usesMacroFootprint: 1
   maxHp: 20
   attackArea: 3
   attackWidth: 0.9
+  isAoe: 0
+  goldBounty: 25
+  isWall: 0
+  isWoodenGate: 0
+  wallAlongZ: 0
+  isMinion: 0
+  kind: 1
 --- !u!4 &8000009109
 Transform:
   m_ObjectHideFlags: 0
@@ -80107,11 +80133,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 9000005028}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!1660057539 &9223372036854775807
-SceneRoots:
-  m_ObjectHideFlags: 0
-  m_Roots:
-  - {fileID: 1499248551}
 --- !u!1001 &1600000020000
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -80137,6 +80158,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1000001, guid: f17c64aa34e9408cbc60ba73226e9659, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1000001, guid: f17c64aa34e9408cbc60ba73226e9659, type: 3}
       propertyPath: m_LocalRotation.x
       value: 0
       objectReference: {fileID: 0}
@@ -80147,10 +80172,6 @@ PrefabInstance:
     - target: {fileID: 1000001, guid: f17c64aa34e9408cbc60ba73226e9659, type: 3}
       propertyPath: m_LocalRotation.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1000001, guid: f17c64aa34e9408cbc60ba73226e9659, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1000001, guid: f17c64aa34e9408cbc60ba73226e9659, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -80199,6 +80220,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1000001, guid: f17c64aa34e9408cbc60ba73226e9659, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.707106781
+      objectReference: {fileID: 0}
+    - target: {fileID: 1000001, guid: f17c64aa34e9408cbc60ba73226e9659, type: 3}
       propertyPath: m_LocalRotation.x
       value: 0
       objectReference: {fileID: 0}
@@ -80209,10 +80234,6 @@ PrefabInstance:
     - target: {fileID: 1000001, guid: f17c64aa34e9408cbc60ba73226e9659, type: 3}
       propertyPath: m_LocalRotation.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1000001, guid: f17c64aa34e9408cbc60ba73226e9659, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 0.707106781
       objectReference: {fileID: 0}
     - target: {fileID: 1000001, guid: f17c64aa34e9408cbc60ba73226e9659, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -80236,3 +80257,8 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 1000001, guid: f17c64aa34e9408cbc60ba73226e9659, type: 3}
   m_PrefabInstance: {fileID: 1600000020010}
   m_PrefabAsset: {fileID: 0}
+--- !u!1660057539 &9223372036854775807
+SceneRoots:
+  m_ObjectHideFlags: 0
+  m_Roots:
+  - {fileID: 1499248551}

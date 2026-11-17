@@ -1,5 +1,7 @@
 # Grid Battle Prototype：战斗逻辑 + Minimal Presentation
 
+当前本地塔机制试玩版（五种塔、七关递进、图片开始页）见 [TowerPlaytest.md](TowerPlaytest.md)。下面保留早期原型的阶段说明。
+
 本目录使用 `Team5.Rebuild` 下的独立命名空间与程序集，不依赖其他 Team5 项目的代码或资产。
 
 当前正式流程的战斗入口为 `Assets/Rebuild/Scenes/Level1GridBattle.unity`，菜单 **Team5 > Rebuild > Open Level 1 Grid Battle**。这是旧 Level 1 的方块版，沿用现有 UI；Start Game 直接进入此关，固定一名 Captain，跳过 Upgrade 仓库，说明与验证见 [Level1Migration.md](Level1Migration.md)。

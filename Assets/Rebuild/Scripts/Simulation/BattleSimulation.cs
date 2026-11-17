@@ -91,6 +91,7 @@ namespace Team5.Rebuild.Simulation
         public event Action FormationChanged;
         public event Action<UnitRole, int, Vector3> LegendarySkillUsed;
         public event Action<int, int> TowerHitBlocked;
+        public event Action<Vector3> BlastImpact;
         public IReadOnlyList<MemberSpawnDefinition> PlannedMembers => definition.Members;
 
         public sealed class Checkpoint
@@ -222,6 +223,7 @@ namespace Team5.Rebuild.Simulation
                 tower.FrozenRemaining = Mathf.Max(0, tower.FrozenRemaining - deltaTime);
             foreach (var unit in units)
             {
+                unit.SlowRemaining = Mathf.Max(0, unit.SlowRemaining - deltaTime);
                 unit.SkillCooldownRemaining = Mathf.Max(0, unit.SkillCooldownRemaining - deltaTime);
                 unit.DamageBuffRemaining = Mathf.Max(0, unit.DamageBuffRemaining - deltaTime);
                 if (unit.DamageBuffRemaining <= 0) unit.DamageBuffMultiplier = 1f;
@@ -421,7 +423,7 @@ namespace Team5.Rebuild.Simulation
 
         private void Move(UnitState unit, float deltaTime, float wallStop)
         {
-            var remaining = Mathf.Min(unit.Speed * deltaTime, Mathf.Max(0, wallStop - unit.RouteProgress));
+            var remaining = Mathf.Min(unit.EffectiveSpeed * deltaTime, Mathf.Max(0, wallStop - unit.RouteProgress));
             while (remaining > 0 && unit.NextWaypoint < Waypoints.Count)
             {
                 var target = Waypoints[unit.NextWaypoint] + unit.FormationOffset;
@@ -443,12 +445,30 @@ namespace Team5.Rebuild.Simulation
         {
             if (!tower.IsAlive || (tower.Definition.IsWall && !tower.Definition.IsMinion)) { tower.TargetId = null; return; }
             if (tower.FrozenRemaining > 0) { tower.TargetId = null; return; }
+            tower.LaserFlashRemaining = Mathf.Max(0, tower.LaserFlashRemaining - deltaTime);
+            if (tower.LaserChargeRemaining > 0)
+            {
+                tower.LaserChargeRemaining = Mathf.Max(0, tower.LaserChargeRemaining - deltaTime);
+                if (tower.LaserChargeRemaining <= 0)
+                {
+                    foreach (var victim in units)
+                        if (victim.IsAlive && SquadCombatRules.Contains(victim.Position - tower.Position,
+                            tower.Definition.Area, tower.Definition.Range, tower.Definition.AttackWidth))
+                        {
+                            TowerAttacked?.Invoke(new TowerAttackEvent(tower, victim));
+                            DamageUnit(tower.Id, victim, tower.Definition.Damage);
+                        }
+                    tower.LaserFlashRemaining = .45f;
+                    tower.CooldownRemaining = Mathf.Max(.01f, tower.Definition.AttackInterval - .8f);
+                }
+                return;
+            }
             tower.CooldownRemaining = Math.Max(0, tower.CooldownRemaining - deltaTime);
             tower.TargetId = null;
             if (tower.CooldownRemaining > 0.000001f) return;
 
             // AOE Tower Mode: hits ALL living units inside its coverage area simultaneously
-            if (tower.Definition.IsAoe)
+            if (tower.Definition.IsAoe && tower.Definition.Kind == TowerKind.Standard)
             {
                 var hitAny = false;
                 foreach (var unit in units)
@@ -500,9 +520,15 @@ namespace Team5.Rebuild.Simulation
                 target = unit; bestDistance = distance;
             }
             if (target == null) return;
+            if (tower.Definition.Kind == TowerKind.Laser)
+            {
+                tower.TargetId = target.Id;
+                tower.LaserChargeRemaining = .8f;
+                return;
+            }
             tower.TargetId = target.Id; tower.CooldownRemaining = tower.Definition.AttackInterval;
             TowerAttacked?.Invoke(new TowerAttackEvent(tower, target));
-            if (Objective == BattleObjective.DefendGoal) DamageUnit(tower.Id, target, tower.Definition.Damage);
+            if (Objective == BattleObjective.DefendGoal) HitTowerTarget(tower.Id, target, tower.Definition.Damage, tower.Definition.Kind);
             else projectiles.Add(new ProjectileState
             {
                 Id = ++projectileSequence,
@@ -512,6 +538,7 @@ namespace Team5.Rebuild.Simulation
                 Position = tower.Position,
                 Origin = tower.Position,
                 Damage = tower.Definition.Damage,
+                Kind = tower.Definition.Kind,
                 Straight = tower.Definition.Area != AttackArea.Square,
                 Direction = SquadCombatRules.Direction(tower.Definition.Area),
                 Range = tower.Definition.Range,
@@ -596,10 +623,29 @@ namespace Team5.Rebuild.Simulation
                 {
                     shot.IsActive = false;
                     if (tower != null) DamageTower(shot.SourceId, tower, shot.Damage, shot.DamageType);
-                    else if (member != null) DamageUnit(shot.SourceId, member, shot.Damage);
+                    else if (member != null) HitTowerTarget(shot.SourceId, member, shot.Damage, shot.Kind);
                 }
                 shot.Age += deltaTime;
                 if (shot.Age >= 5 || (shot.Straight && shot.Travel >= shot.Range)) shot.IsActive = false;
+            }
+        }
+
+        private void HitTowerTarget(int sourceId, UnitState target, float damage, TowerKind kind)
+        {
+            if (kind == TowerKind.Blast)
+            {
+                var center = target.Position;
+                foreach (var unit in units)
+                    if (unit.IsAlive && Mathf.Abs(unit.Position.x - center.x) <= 1.0001f && Mathf.Abs(unit.Position.z - center.z) <= 1.0001f &&
+                        Mathf.Abs(unit.Position.y - center.y) < .5f)
+                        DamageUnit(sourceId, unit, damage);
+                BlastImpact?.Invoke(center);
+            }
+            else
+            {
+                var blocked = target.BarrierRemaining > 0 && target.BarrierHits > 0;
+                DamageUnit(sourceId, target, damage);
+                if (kind == TowerKind.Frost && target.IsAlive && !blocked) target.SlowRemaining = 2f;
             }
         }
 
