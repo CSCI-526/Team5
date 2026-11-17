@@ -51,7 +51,8 @@ namespace Team5.Rebuild.Presentation
                     model.name = $"Projectile View {shot.Id}";
                     model.transform.SetParent(transform, false);
                     model.transform.localScale = Vector3.one * 0.18f;
-                    Destroy(model.GetComponent<Collider>());
+                    // Keep the concrete primitive collider type reachable in stripped Web builds.
+                    Destroy(model.GetComponent<SphereCollider>());
                     if (shotMaterial == null)
                         shotMaterial = new Material(Shader.Find("Universal Render Pipeline/Unlit")) { color = Color.white };
                     var renderer = model.GetComponent<Renderer>();

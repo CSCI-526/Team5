@@ -13,7 +13,7 @@ using UnityEngine.UI;
 namespace Team5.Rebuild.Presentation
 {
     [DisallowMultipleComponent,DefaultExecutionOrder(900)]
-    public sealed class SiegeRamFleet : MonoBehaviour
+    public sealed partial class SiegeRamFleet : MonoBehaviour
     {
         [SerializeField]private BattlePresentation owner;
         [SerializeField]private Sprite icon;
@@ -45,7 +45,8 @@ namespace Team5.Rebuild.Presentation
         public IReadOnlyList<Vector3> Draft=>draft;
         public Button VehicleButton(int index)=>buttons[index];
         public SpriteRenderer VehicleRenderer(int id)=>views.TryGetValue(id,out var view)?view.Body:null;
-        public Vector3 SpawnPosition=>session!=null&&session.Route.Cells.Count>0?session.Route.Cells[0].TopCenter:Vector3.zero;
+        public Vector3 SpawnPosition=>supportSpawnCenter!=null?supportSpawnCenter.TopCenter:
+            session!=null&&session.Route.Cells.Count>0?session.Route.Cells[0].TopCenter:Vector3.zero;
 
         private void OnEnable()
         {
@@ -86,15 +87,16 @@ namespace Team5.Rebuild.Presentation
         }
         private void RefreshQuantity()
         {
+            foreach(var button in buttons)if(button!=null)button.gameObject.SetActive(IsUnlocked);
             if(quantityLabel!=null)quantityLabel.text="x"+remainingQuantity;
-            if(ramIcon!=null)ramIcon.color=remainingQuantity>0?Color.white:new Color(.25f,.25f,.25f,1);
-            if(buttons[0]!=null)buttons[0].interactable=remainingQuantity>0&&!IsPlanning&&simulation!=null&&simulation.Outcome==BattleOutcome.Running&&(hud==null||!hud.TutorialOwnsPause);
+            if(ramIcon!=null)ramIcon.color=RamIconColor();
+            if(buttons[0]!=null)buttons[0].interactable=IsUnlocked&&remainingQuantity>0&&!IsPlanning&&simulation!=null&&simulation.Outcome==BattleOutcome.Running&&(hud==null||!hud.TutorialOwnsPause);
         }
         private void OnSimulation(BattleSimulation next)
         {
             CancelPlanning();foreach(var view in views.Values)if(view!=null)Destroy(view.gameObject);
             views.Clear();vehicles.Clear();attackCooldowns.Clear();simulation=next;sampledTime=next?.ElapsedTime??0;
-            remainingQuantity=Mathf.Max(0,initialQuantity);RefreshQuantity();
+            ResetGateGuide();remainingQuantity=Mathf.Max(0,initialQuantity);RefreshQuantity();
         }
         private void Update()
         {
@@ -105,6 +107,7 @@ namespace Team5.Rebuild.Presentation
             if(simulation!=session.Simulation)OnSimulation(session.Simulation);
             if(simulation==null)return;
             var delta=(float)(simulation.ElapsedTime-sampledTime);sampledTime=simulation.ElapsedTime;
+            UpdateGateGuide(delta);
             if(!IsPlanning&&simulation.Outcome==BattleOutcome.Running&&delta>0)
                 AdvanceVehicles(delta);
             if(IsPlanning)
@@ -150,7 +153,7 @@ namespace Team5.Rebuild.Presentation
         {
             foreach(var cell in session.Grid.SceneCells)
             {
-                if(cell.Kind!=CellKind.Spawn||SmallCellOccupancy.PositionToCell(point).y!=cell.Occupancy.y)continue;
+                if(!IsSupportSpawn(cell)||SmallCellOccupancy.PositionToCell(point).y!=cell.Occupancy.y)continue;
                 var x=Mathf.Max(Mathf.Abs(point.x-cell.TopCenter.x)-.5f,0);
                 var z=Mathf.Max(Mathf.Abs(point.z-cell.TopCenter.z)-.5f,0);
                 if(x*x+z*z<=bodyRadius*bodyRadius)return true;
@@ -159,12 +162,13 @@ namespace Team5.Rebuild.Presentation
         }
         public bool TrySummon()
         {
-            if(IsPlanning||session==null||simulation==null||simulation.Outcome!=BattleOutcome.Running||vehiclePrefab==null)return false;
+            if(!IsUnlocked||IsPlanning||session==null||simulation==null||simulation.Outcome!=BattleOutcome.Running||vehiclePrefab==null)return false;
             if(remainingQuantity<=0){Say("No siege rams remaining.");return false;}
             if(simulation.PendingSpawnCount>0){Say("Wait for the squad to deploy.");return false;}
             if(hud!=null&&hud.TutorialOwnsPause){Say("Finish the current guide first.");return false;}
             if(SpawnOccupied()){Say("Spawn occupied. Move units away first.");return false;}
             if(!IsPassable(SpawnPosition)){Say("Spawn is blocked.");return false;}
+            ClearGateGuide();
             var vehicle=new SiegeRamMotion(nextId++,SpawnPosition,moveSpeed);vehicles.Add(vehicle);
             var view=Instantiate(vehiclePrefab,transform);view.name="Siege Ram "+vehicle.Id;view.Initialize();view.Present(vehicle,Camera.main);views.Add(vehicle.Id,view);
             remainingQuantity--;RefreshQuantity();
@@ -200,6 +204,7 @@ namespace Team5.Rebuild.Presentation
         }
         private void BeginPlanning(SiegeRamMotion vehicle,bool newSummon=true)
         {
+            ClearGateGuide();
             inspection=owner.GetComponent<BattleUnitInspection>();inspection?.CloseImmediately();
             SquadRouteInput.ForSession(session)?.Cancel();
             planningSimulation=simulation;wasPaused=simulation.IsPaused;oldTimeScale=Time.timeScale;
@@ -211,7 +216,7 @@ namespace Team5.Rebuild.Presentation
             foreach(var renderer in Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None))
             {
                 if(renderer==protectedView.Body||renderer==protectedView.RouteLine)continue;
-                var cell=renderer.GetComponentInParent<BattleCell>();if(cell!=null&&cell.Kind==CellKind.Spawn)continue;
+                var cell=renderer.GetComponentInParent<BattleCell>();if(cell!=null&&IsSupportSpawn(cell))continue;
                 if(renderer is SpriteRenderer sprite){spriteColors[sprite]=sprite.color;continue;}
                 var saved=new MaterialPropertyBlock();renderer.GetPropertyBlock(saved);var dim=new MaterialPropertyBlock();renderer.GetPropertyBlock(dim);
                 var color=saved.HasColor("_BaseColor")?saved.GetColor("_BaseColor"):
@@ -226,7 +231,10 @@ namespace Team5.Rebuild.Presentation
             }
             overlay=new GameObject("Siege Ram Route Planning",typeof(RectTransform));LegacyUiKit.CreateCanvas(overlay,2100,new Vector2(1280,720),.5f);
             var blocker=LegacyUiKit.CreateImage(overlay.transform,"Block other interactions",Vector2.zero,Vector2.zero,Color.clear);LegacyUiKit.Stretch(blocker.rectTransform);blocker.raycastTarget=true;
-            hint=LegacyUiKit.CreateText(overlay.transform,"Instructions","Drag to the next 3x3 center, then in 3-cell steps. Release to move.  |  Esc: cancel",new Vector2(0,310),new Vector2(1220,65),19,LegacyUiKit.HighlightColor,FontStyles.Bold);
+            var instructions=session.DisplayedLevelNumber==3
+                ? "Drag the siege ram to the right with the mouse to draw a path and break through the wooden gate."
+                : "Drag to the next 3x3 center, then in 3-cell steps. Release to move.  |  Esc: cancel";
+            hint=LegacyUiKit.CreateText(overlay.transform,"Instructions",instructions,new Vector2(0,310),new Vector2(1220,65),19,LegacyUiKit.HighlightColor,FontStyles.Bold);
             if(EventSystem.current!=null)EventSystem.current.SetSelectedGameObject(null);
             ApplyDimming();
         }
@@ -269,7 +277,9 @@ namespace Team5.Rebuild.Presentation
             if(!IsPlanning||!dragging)return false;
             float Snap(float n)=>Mathf.Sign(n)*Mathf.Floor((Mathf.Abs(n)+.001f)/SiegeRamMotion.RouteStep)*SiegeRamMotion.RouteStep;
             validCursor=true;
-            var start=draft[0];var fromStart=cursor-start;fromStart.y=0;
+            var start=draft[0];
+            if(session.DisplayedLevelNumber==3)cursor=new Vector3(Mathf.Max(cursor.x,start.x),start.y,start.z);
+            var fromStart=cursor-start;fromStart.y=0;
             // Returning to the starting block erases the alignment connector as well.
             if(draft.Count>1&&Mathf.Floor((cursor.x+.5f)/3)==Mathf.Floor((start.x+.5f)/3)&&
                 Mathf.Floor((cursor.z+.5f)/3)==Mathf.Floor((start.z+.5f)/3))draft.RemoveRange(1,draft.Count-1);
@@ -304,9 +314,15 @@ namespace Team5.Rebuild.Presentation
         public bool FinishDrag()
         {
             if(!IsPlanning||!dragging)return false;dragging=false;
+            if(session.DisplayedLevelNumber==3)
+                for(var i=1;i<draft.Count;i++)
+                    if(draft[i].x<=draft[i-1].x+.001f||Mathf.Abs(draft[i].z-draft[i-1].z)>.001f)
+                    {Say("Draw a straight path to the right.");return false;}
             if(!validCursor||!planningVehicle.TrySetRoute(draft,IsRoutePassable,true))
-            {Say("Draw a clear route to the next 3x3 center, then use 3-cell steps.");return false;}
-            EndPlanning();return true;
+            {Say(session.DisplayedLevelNumber==3?"Draw a clear path to the right in 3-cell steps.":"Draw a clear route to the next 3x3 center, then use 3-cell steps.");return false;}
+            EndPlanning();
+            if(session.DisplayedLevelNumber==3)ShowGateGuide(replanReminder:true);
+            return true;
         }
         private void ReadPlanningInput()
         {
@@ -354,6 +370,7 @@ namespace Team5.Rebuild.Presentation
         }
         private void OnDisable()
         {
+            ClearGateGuide();
             CancelPlanning();if(session!=null)session.SimulationCreated-=OnSimulation;
             foreach(var view in views.Values)if(view!=null)Destroy(view.gameObject);views.Clear();vehicles.Clear();attackCooldowns.Clear();
             foreach(var button in buttons)if(button!=null)Destroy(button.gameObject);if(toast!=null)Destroy(toast.gameObject);

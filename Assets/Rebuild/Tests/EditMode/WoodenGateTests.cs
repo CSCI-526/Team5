@@ -28,18 +28,28 @@ namespace Team5.Rebuild.Tests
         [TestCase(UnitRole.Sniper)]
         [TestCase(UnitRole.Vanguard)]
         [TestCase(UnitRole.Demolisher)]
-        public void NormalAndExplosiveAttacksDestroyGateAndClearItsBlock(UnitRole role)
+        public void OnlySiegeRamCanDamageGateAndClearItsBlock(UnitRole role)
         {
             var gate = new TowerDefinition(1, new Vector3(5, .25f, 0), 0, 0, 1, TargetRule.Nearest,
                 maxHp: 4, isWall: true, wallAlongZ: true, isWoodenGate: true);
             var sim = new BattleSimulation(new BattleDefinition(new[] { new Vector3(0, .25f, 0), new Vector3(12, .25f, 0) },
                 new[] { gate }, new[] { new MemberSpawnDefinition(1, 4, SquadCombatRules.Create(role)) }));
-            for (var i = 0; i < 2000 && sim.Outcome == BattleOutcome.Running; i++)
+            var hits=0;sim.TowerDamaged+=_=>hits++;
+            for (var i = 0; i < 2000; i++)
             {
                 var wasAlive = sim.Towers[0].IsAlive;
                 sim.Step(.02f);
                 if (wasAlive) Assert.That(sim.Units[0].RouteProgress, Is.LessThanOrEqualTo(4.06f));
             }
+            Assert.That(sim.Towers[0].Hp, Is.EqualTo(4),"Normal and explosive soldier attacks cannot damage wooden gates.");
+            Assert.That(hits,Is.Zero);Assert.That(sim.Projectiles,Is.Empty,"Soldiers must not waste shots on immune gates.");
+            Assert.That(sim.Outcome,Is.EqualTo(BattleOutcome.Running));
+            Assert.That(sim.GetCellOccupancy(new Vector3Int(5,0,0)).TowerIds,Does.Contain(1));
+            Assert.That(sim.TryRamWoodenGate(-1,gate.Position,.42f,2),Is.True);
+            Assert.That(sim.Towers[0].Hp,Is.EqualTo(2));
+            Assert.That(sim.TryRamWoodenGate(-1,gate.Position,.42f,2),Is.True);
+            Assert.That(hits,Is.EqualTo(2));
+            for(var i=0;i<2000&&sim.Outcome==BattleOutcome.Running;i++)sim.Step(.02f);
             Assert.That(sim.Towers[0].Hp, Is.Zero);
             Assert.That(sim.Outcome, Is.EqualTo(BattleOutcome.Victory));
             Assert.That(sim.TowerBountyGoldEarned, Is.Zero);
@@ -49,7 +59,7 @@ namespace Team5.Rebuild.Tests
 
         [TestCase("X", 3, 1)]
         [TestCase("Z", 1, 3)]
-        public void PrefabIsDistinctTimberModelWithNormalDamageEnabled(string axis, int width, int depth)
+        public void PrefabIsDistinctTimberModelAndNotAnExplosiveStoneWall(string axis, int width, int depth)
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(MapBuilderUtility.Kit + "Towers/WoodenGate_3x1_" + axis + ".prefab");
             Assert.That(prefab, Is.Not.Null);

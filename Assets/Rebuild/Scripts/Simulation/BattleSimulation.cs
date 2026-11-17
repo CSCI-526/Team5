@@ -537,6 +537,7 @@ namespace Team5.Rebuild.Simulation
             foreach (var tower in towers)
             {
                 if (!tower.IsAlive) continue;
+                if (tower.Definition.IsWoodenGate) continue;
                 if (tower.Definition.RequiresExplosiveDamage && unit.Definition.DamageType != AttackDamageType.Explosive) continue;
                 var distance = (AimPosition(tower, unit.Position) - unit.Position).sqrMagnitude;
                 if (distance > nearest) continue;
@@ -631,15 +632,16 @@ namespace Team5.Rebuild.Simulation
                 var dx = Mathf.Max(Mathf.Abs(contactProbe.x - tower.Position.x) - size.x * .5f, 0);
                 var dz = Mathf.Max(Mathf.Abs(contactProbe.z - tower.Position.z) - size.y * .5f, 0);
                 if (dx * dx + dz * dz > radius * radius) continue;
-                DamageTower(sourceId, tower, damage, AttackDamageType.Normal);
+                DamageTower(sourceId, tower, damage, AttackDamageType.Normal, siegeRamContact: true);
                 return true;
             }
             return false;
         }
 
-        private void DamageTower(int sourceId, TowerState tower, float rawDamage, AttackDamageType damageType)
+        private void DamageTower(int sourceId, TowerState tower, float rawDamage, AttackDamageType damageType, bool siegeRamContact = false)
         {
             if (!tower.IsAlive) return;
+            if (tower.Definition.IsWoodenGate && !siegeRamContact) return;
             if (tower.Definition.RequiresExplosiveDamage && damageType != AttackDamageType.Explosive) return;
             var applied = Math.Min(tower.Hp, rawDamage);
             tower.Hp = Math.Max(0, tower.Hp - applied);

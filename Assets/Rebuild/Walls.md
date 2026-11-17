@@ -1,7 +1,7 @@
 # Destructible road walls
 
 Wooden gates are separate `WoodenGate_3x1_X.prefab` / `WoodenGate_3x1_Z.prefab` assets. They share wall HP,
-movement blocking, camera occlusion, destruction and checkpoint handling, but accept Normal and Explosive damage.
+movement blocking, camera occlusion, destruction and checkpoint handling, but only accept siege ram contact damage. Soldier attacks (including Explosive) cannot target or damage wooden gates.
 Stone wall prefabs still require Explosive damage. Use **Place wooden gate** in Map Builder, or place the prefab
 on three clear Road cells. Existing scenes and stone wall prefabs are not replaced.
 

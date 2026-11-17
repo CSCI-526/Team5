@@ -1,4 +1,5 @@
 using System.Linq;
+using Team5.Rebuild.Session;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
@@ -9,6 +10,21 @@ namespace Team5.Rebuild.Editor
     public static class WebGLBuild
     {
         public const string OutputPath = "docs/beta";
+
+        [MenuItem("Team5/Rebuild/Build WebGL Gold (campaign only, docs/gold)")]
+        public static void BuildGold()
+        {
+            var scenes = new[] { BattleSceneFlow.StartScene }
+                .Concat(Enumerable.Range(1, BattleSceneFlow.TotalCampaignLevels).Select(BattleSceneFlow.SceneForLevel))
+                .Concat(new[] { BattleSceneFlow.UpgradeScene, BattleSceneFlow.SettlementScene, BattleSceneFlow.EndScene }).ToArray();
+            var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
+            {
+                scenes = scenes, locationPathName = "docs/gold", target = BuildTarget.WebGL, options = BuildOptions.None
+            });
+            var summary = report.summary;
+            Debug.Log($"Gold WebGL campaign build {summary.result}: {summary.totalErrors} errors, {summary.totalSize / (1024 * 1024)} MB, {summary.totalTime}");
+            if (Application.isBatchMode) EditorApplication.Exit(summary.result == BuildResult.Succeeded ? 0 : 1);
+        }
 
         [MenuItem("Team5/Rebuild/Build WebGL Beta (docs/beta)")]
         public static void BuildBeta()

@@ -981,6 +981,7 @@ GameObject:
   - component: {fileID: 845802670}
   - component: {fileID: 845802672}
   - component: {fileID: 845802671}
+  - component: {fileID: 845802673}
   m_Layer: 0
   m_Name: Battle Camera (Perspective 16x9)
   m_TagString: MainCamera
@@ -1098,6 +1099,21 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
+--- !u!114 &845802673
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 845802669}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 74ce1246c5fa32749be6dce0ebcaddbc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Team5.Rebuild.Presentation::Team5.Rebuild.Presentation.Level3SquadCamera
+  owner: {fileID: 3686462}
+  zoomFactor: 1.6
+  followSharpness: 6
 --- !u!1 &1034538723
 GameObject:
   m_ObjectHideFlags: 0

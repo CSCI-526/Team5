@@ -26,6 +26,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         private Image rim;
         private Image fill;
         private TMP_Text number;
+        private TMP_Text defeatedLabel;
         private int shown = int.MinValue;
 
         public static FormationChangeBadge Attach(FormationChangeBudget budget, LegacyBattleHud hud, Button squadButton)
@@ -53,14 +54,23 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             fill = LegacyUiKit.CreateCircle(chip, "Fill", Vector2.zero, chipDiameter - 2f * rimWidth, ChipColor);
             number = LegacyUiKit.CreateText(chip, "Count", string.Empty, Vector2.zero, Vector2.one * chipDiameter, numberSize, ChipInk, FontStyles.Bold);
             if (font != null) number.font = font;
+            defeatedLabel=LegacyUiKit.CreateText(transform,"Captain Defeated","CAPTAIN DEFEATED",Vector2.zero,
+                new Vector2(170,40)*scale,16*scale,new Color(1f,.35f,.3f),FontStyles.Bold);
+            defeatedLabel.rectTransform.anchorMin=defeatedLabel.rectTransform.anchorMax=new Vector2(1,.5f);
+            defeatedLabel.rectTransform.pivot=new Vector2(0,.5f);
+            defeatedLabel.rectTransform.anchoredPosition=new Vector2(12,0)*scale;
+            defeatedLabel.alignment=TextAlignmentOptions.MidlineLeft;
+            if(font!=null)defeatedLabel.font=font;
+            defeatedLabel.gameObject.SetActive(false);
             Render(FormationChangeRules.Unlimited);
         }
 
         private void LateUpdate()
         {
             if (budget == null) return;
-            var remaining = budget.IsLimited ? budget.Remaining : FormationChangeRules.Unlimited;
+            var remaining = budget.Remaining;
             if (remaining != shown) Render(remaining);
+            defeatedLabel.gameObject.SetActive(budget.CaptainDefeated);
         }
 
         private void Render(int remaining)

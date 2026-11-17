@@ -16,8 +16,23 @@ namespace Team5.Rebuild.Presentation.LegacyUI
 
         public int Allowed => session != null ? FormationChangeRules.AllowedChanges(session.DisplayedLevelNumber) : FormationChangeRules.Unlimited;
         public bool IsLimited => Allowed != FormationChangeRules.Unlimited;
-        public int Remaining => IsLimited ? Mathf.Max(0, Allowed - used) : FormationChangeRules.Unlimited;
-        public bool HasChangesLeft => !IsLimited || used < Allowed;
+        public bool CaptainDefeated
+        {
+            get
+            {
+                if(tracked==null)return false;
+                var defeated=false;
+                foreach(var unit in tracked.Units)
+                {
+                    if(unit.Role!=UnitRole.Captain)continue;
+                    if(unit.IsAlive)return false;
+                    if(unit.LifeState==UnitLifeState.Dead)defeated=true;
+                }
+                return defeated;
+            }
+        }
+        public int Remaining => CaptainDefeated ? 0 : IsLimited ? Mathf.Max(0, Allowed - used) : FormationChangeRules.Unlimited;
+        public bool HasChangesLeft => !CaptainDefeated && (!IsLimited || used < Allowed);
 
         public static FormationChangeBudget Attach(LegacyBattleHud hud, Button squadButton)
         {

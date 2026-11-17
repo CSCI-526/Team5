@@ -107,7 +107,7 @@ namespace Team5.Rebuild.Editor.LevelAuthoring
                         wallOrientation = GUILayout.Toolbar(wallOrientation, new[] { "Horizontal wall (3 x 1 / X)", "Vertical wall (1 x 3 / Z)" });
                         wallPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(MapBuilderUtility.Kit +
                             "Towers/" + (tool == 11 ? "WoodenGate_3x1_" : "Wall_3x1_") + (wallOrientation == 0 ? "X" : "Z") + ".prefab");
-                        EditorGUILayout.HelpBox((tool == 11 ? "Wooden gate: normal and explosive attacks can destroy it. Place its center on 3 clear Road cells." : "Stone wall: only EXPLOSIVE damage can destroy it. Place its center on 3 clear Road cells.") + " Use Remove tower/wall to erase.", MessageType.Info);
+                        EditorGUILayout.HelpBox((tool == 11 ? "Wooden gate: only siege ram contact can damage it. Place its center on 3 clear Road cells." : "Stone wall: only EXPLOSIVE damage can destroy it. Place its center on 3 clear Road cells.") + " Use Remove tower/wall to erase.", MessageType.Info);
                     }
                     if (tool == 8)
                     {

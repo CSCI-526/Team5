@@ -50,3 +50,29 @@ Sprite 使用 SpriteRenderer.color 变暗，避免属性块破坏现有 GPU Spri
 结果：`Logs/SiegeRamEditMode.xml`、`Logs/SiegeRamPlayMode.xml`。预览：`Logs/SiegeRam/NormalSlots.png`、`Planning.png`、`AfterMove.png`。UI 预览通过测试中的临时相机模式渲染，渲染后恢复；不修改游戏 Camera 配置。
 
 `Logs/SiegeRam/DeliveryChecks.json` 记录了场景序列化检查：所有原场景记录保留，已有记录只增加组件挂接，新增记录为该组件和引用包装。未执行 Git Commit / Push / Pull / Merge。
+
+## Level3 木门引导
+
+`Level3GridBattle` 使用独立的新增红色起点（中心 `(7, 10)`）。小队沿原路线前进，所有存活成员在木门前停止至少 0.4 战斗秒后，显示左侧三个支援格和简短提示。普通暂停、检查人物、石墙阻挡或单纯靠近木门不会解锁。
+
+点击破城车图标后从新增起点召唤，沿用 Scene 1 的库存、暂停规划、起点保护、三格路线、木门接触伤害与点击车辆重新规划。新增起点以外的 Spawn 不影响该车的占用检查，也不会在规划时保持明亮。木门摧毁后，小队自动继续原有路线。重新开始战斗时，支援入口重新锁定，库存重置。
+
+配置位于 Level3 的 `Minimal Presentation (Runtime Unit Views)` → `Siege Ram Fleet`：`Support Spawn Center` 指定起点中心格，`Unlock After Wooden Gate Stop` 启用挡门引导。两项均保留默认值时，Scene 1 行为不变。
+
+本次 Level3 接入已在 Unity 6000.3.22f1 实际编译并通过 **3/3 Play Mode 测试**：新增 Level3 完整挡停→提示→独立起点召唤→规划穿门→接触破门→小队恢复→重开重置流程，以及 Scene 1 原有两项破城车回归。Level3 测试仅在内存中使用单个 Captain 并关闭敌塔射程，以隔离破门机制，不保存这些测试配置；没有验证关卡整体难度和平衡。提示与规划阶段已实际渲染检查，未操控桌面 GUI。结果及预览位于 `Logs/Level3SiegeRam/FinalPlayMode.xml`、`GateGuide.png`、`Planning.png`、`GateDestroyed.png`。原场景记录检查证明，已有对象仅新增组件挂接，玩家编辑的地图、木门、路线与战斗参数保留。
+
+木门伤害规则：只有 `TryRamWoodenGate` 通过距离、暂停状态和木门类型检查后的破城车接触可以扣血。普通和爆破类士兵均不会选木门为攻击目标；伤害结算也拒绝所有非破城车来源。石墙、普通敌塔和 Minion 的伤害规则保持原样。
+
+木门仅受破城车伤害的规则已验证：Unity 6000.3.22f1 编译正常，Edit Mode 34/34、Play Mode 3/3 通过。覆盖普通/爆破士兵免伤、破城车扣血和清除阻挡、Minion 与石墙回归、Level3 挡门引导及 Scene1 破城车流程。结果：`Logs/GateRamOnly/EditMode.xml` 与 `Logs/GateRamOnly/PlayMode.xml`。
+
+### 挡门提示的帧率修复
+
+原版本错误地在没有 FixedUpdate 的画面帧（模拟时间差为 0）清空挡停计时，导致正常高帧率下无法累计到 0.4 战斗秒。现在无模拟推进的帧保留计时，实际暂停、重新移动、离开木门或战斗结束才重置。回归场景改为六种职业的六人小队，并在每次战斗推进之间插入两帧纯画面更新；旧版本已在此测试中复现不解锁（`Logs/GateGuideCadence/BeforeFix.xml`）。
+
+修复后 Unity 编译与 Play Mode 3/3 通过（`Logs/GateGuideCadence/AfterFix.xml`），六人编队在含空白模拟帧的条件下正常解锁按钮和提示，并完成召唤、破门及恢复移动；Scene1 两项原有回归也通过。实际渲染已确认提示和按钮可见。
+
+挡门提示显示期间，破城车图标以约 1 秒为周期平滑明暗闪烁，透明度保持在 35%～100%，数量角标保持清晰。闪烁使用真实时间，暂停不会停止；成功召唤并进入规划后立即停止，库存归零仍使用原有变暗效果。未成功的召唤不会关闭提示和闪烁，Scene1 无挡门提示时不会闪烁。
+
+Level3 每次确认有效破城车路线、退出规划模式后，立即显示底部提示：`If your path doesn't reach the wooden gate, click the siege ram to draw a new one.` 提示不暂停或阻止交互，8 秒后自动隐藏；提前点击车体重新规划时立即隐藏，不重新触发召唤图标闪烁。取消规划或提交无效路线不显示这条提示。
+
+Level3 破城车路线仅允许向右（世界 +X，对应当前镜头的屏幕右侧）水平延伸，不能向左或上下移动，也不能拐弯。鼠标上下偏移会投影到车体所在的水平路线；向起点拖回可缩短或清除当前草稿。首次对齐 3×3 区域中心及后续三格步长继续生效，重新规划也遵循同一方向限制。路线确认时再次校验所有路段必须向右。Scene1 仍支持原有四向直线和 90° 转弯，地图和起点不变。

@@ -40,6 +40,7 @@ namespace Team5.Rebuild.Presentation
         public TMP_Text DetailsLabel => details;
         public RectTransform Panel => panel;
         public bool IsSquadSelected => squadSelected;
+        public bool OwnsCamera => hasCameraSnapshot;
         public bool IsInputSuppressed { get; set; }
         public UnitView HighlightedCaptain => highlightedCaptain;
 

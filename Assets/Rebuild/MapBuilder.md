@@ -21,8 +21,8 @@ They disappear when destroyed without a gold reward. Use
 generate/save a new level using the usual buttons.
 
 **Place wooden gate** places an independent timber gate with posts, planks, rails, diagonal braces and iron hinges.
-It offers the same X/Z orientations and three-Road-cell footprint as a wall, but both Normal and Explosive attacks
-can destroy it. Gates only have HP, block movement until destroyed, and give no gold reward. Existing stone walls
+It offers the same X/Z orientations and three-Road-cell footprint as a wall, but only siege ram contact
+can damage it. Normal and Explosive soldier attacks cannot target or damage gates. Gates only have HP, block movement until destroyed, and give no gold reward. Existing stone walls
 still require Explosive damage. Read/apply/generate preserve the distinction between gates and stone walls.
 
 **Read layout from active scene** reads a single flat layer, its route, prefab tower settings and original grid origin.
@@ -60,3 +60,17 @@ migration. New levels run independently until explicitly connected to a game flo
 ## Resize the workspace
 
 The grid viewport and footer use explicit separate rectangles. Use the **Bottom panel height** slider above the grid for direct sizing (smaller values give the grid more space), or drag the horizontal handle between the grid and action buttons to change the split between the grid and information panel; drag downward for more grid space. Double-click the handle to reset. Zoom changes individual cell size independently. The panel split is window state and does not modify the map draft or scene.
+
+## Level3 原有塔的兼容替换
+
+Level3GridBattle 中 6 个无法被 Read layout 导入的自定义塔根对象，已改用现有 Tower_NegativeX、Tower_NegativeZ、Tower_PositiveZ、Tower_Square Prefab 的实例。名称、顺序、位置、朝向、大小、HP、伤害、射程、攻击间隔、攻击类型和金币奖励保留。引用已更新，地形、路线、UI、人物外观及战斗设置不变；这次没有为 Level3 增加铁轨或平台。
+
+工具：Team5 → Rebuild → Level 3 → Replace towers for Map Builder compatibility。首次完整备份为 `Logs/Level3MapCompatibility/Before.unity`，替换清单在同目录 `Replacements.txt`。实际 Map Builder 读取、预览校验和原场景无改动往返应用均通过；保存后重新打开再验证通过，Edit Mode 地图应用回归 8/8 通过。
+
+使用时先退出 Play Mode，打开 Level3GridBattle 并设为活动场景，然后在 Map Builder 点击 Read layout from active scene。
+
+## 新塔外观与地图编辑兼容
+
+Map Maker 的五种 3×3 塔 Prefab（NegativeX、PositiveX、NegativeZ、PositiveZ、Square）现已在原 BattleTower 根节点下引用现有 DirectionalTower_Visual / SquareTower_Visual，旧 Tower Mesh 方块子对象保持禁用。原 Prefab GUID、BattleTower 组件和战斗数值不变，Level3 的六个实例因此保持地图编辑兼容并显示新外观；新生成的地图也使用相同外观，不再回到方块。
+
+工具：Team5 → Rebuild → Map Builder → Use new 3x3 tower visuals。原 Prefab 备份在 `Logs/MapMakerTowerVisuals/Before`；实际 Level3 渲染在 `Level3.png`。新模型存在、方块隐藏、炮口方向及 Read/Validate/Apply 回归 8/8 通过。
