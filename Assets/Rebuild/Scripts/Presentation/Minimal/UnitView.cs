@@ -19,6 +19,23 @@ namespace Team5.Rebuild.Presentation
         private Vector3 currentPosition;
         private double sampleTime;
         private float sampleInterval;
+        private Vector3 previousAnchor, currentAnchor, platformSlot;
+        private SquadPlatformView platform;
+        public bool IsRidingPlatform => platform != null && platform.IsPlatformMode;
+        public bool IsPlatformRepositioning => IsRidingPlatform && (platformSlot - state.FormationOffset).sqrMagnitude > .00001f;
+        public Vector3 PlatformRelativeOffset => platformSlot;
+        private float RenderAlpha => sampleInterval > 0 ? Mathf.Clamp01((float)((Time.timeAsDouble - sampleTime) / sampleInterval)) : 1;
+        public Vector3 InterpolatedAnchor => Vector3.Lerp(previousAnchor, currentAnchor, RenderAlpha);
+        public void SetPlatform(SquadPlatformView value)
+        { platform = value; platformSlot = state.FormationOffset; }
+        internal void AdvancePlatformReposition(float deltaTime)
+        {
+            if (IsRidingPlatform)
+            {
+                platformSlot = Vector3.MoveTowards(platformSlot, state.FormationOffset, 4 * Mathf.Max(0, deltaTime));
+                if ((platformSlot - state.FormationOffset).sqrMagnitude <= .00001f) platformSlot = state.FormationOffset;
+            }
+        }
         private MaterialPropertyBlock colors;
         private RectTransform levelBadge;
         private RectTransform levelBadgeLayer;
@@ -109,6 +126,7 @@ namespace Team5.Rebuild.Presentation
             state = unit;
             if (colors == null) colors = new MaterialPropertyBlock();
             previousPosition = currentPosition = unit.Position;
+            previousAnchor = currentAnchor = unit.AnchorPosition;
             sampleTime = Time.timeAsDouble;
             sampleInterval = Time.fixedDeltaTime;
             transform.position = currentPosition;
@@ -269,6 +287,7 @@ namespace Team5.Rebuild.Presentation
         {
             if (state == null) return;
             previousPosition = currentPosition = state.Position;
+            previousAnchor = currentAnchor = state.AnchorPosition;
             transform.position = currentPosition;
             sampleTime = Time.timeAsDouble;
         }
@@ -277,17 +296,22 @@ namespace Team5.Rebuild.Presentation
         {
             previousPosition = currentPosition;
             currentPosition = state.Position;
+            previousAnchor = currentAnchor; currentAnchor = state.AnchorPosition;
             sampleTime = Time.timeAsDouble;
             sampleInterval = Time.fixedDeltaTime;
         }
 
         public void Present(float alpha)
         {
-            transform.position = Vector3.Lerp(previousPosition, currentPosition, Mathf.Clamp01(alpha));
+            transform.position = IsRidingPlatform
+                ? platform.RenderAnchor + platformSlot + Vector3.up * SquadPlatformView.DeckHeight
+                : Vector3.Lerp(previousPosition, currentPosition, Mathf.Clamp01(alpha));
         }
 
         private void LateUpdate()
         {
+            if (IsRidingPlatform)
+                AdvancePlatformReposition(Time.unscaledDeltaTime * platform.PlaybackSpeed);
             Present(sampleInterval > 0 ? (float)((Time.timeAsDouble - sampleTime) / sampleInterval) : 1);
             UpdateHealingRangeAnimation();
             UpdateLevelBadge();

@@ -173,6 +173,8 @@ namespace Team5.Rebuild.Presentation
             var view = Instantiate(prefab, transform);
             view.name = $"Unit View {unit.Id}";
             view.Bind(unit);
+            var platform = GetComponent<SquadPlatformView>();
+            if (platform != null && platform.IsPlatformMode) view.SetPlatform(platform);
             if (session.ContinuousSquadMovement) view.SetFormationDisplaySpacing(session.ContinuousFormationSpacing);
             var animatedCharacter = view.GetComponent<HaonUnitAnimation>();
             if (animatedCharacter != null) animatedCharacter.Bind(view, session);

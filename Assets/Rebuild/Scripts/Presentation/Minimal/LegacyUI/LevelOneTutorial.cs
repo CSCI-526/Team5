@@ -299,6 +299,10 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             }
 
             if (!Running) yield break;
+            var platform = presentation.GetComponent<SquadPlatformView>();
+            if (platform != null && platform.IsPlatformMode)
+                yield return platform.CompleteTutorialReposition();
+            if (!Running) yield break;
             FocusCaptainAndTower(tower);
             GlowCaptain();
             Show(step + 1, "POSITIONING AVOIDS DAMAGE",

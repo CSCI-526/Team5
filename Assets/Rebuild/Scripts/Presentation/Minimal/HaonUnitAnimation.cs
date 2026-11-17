@@ -140,6 +140,14 @@ namespace Team5.Rebuild.Presentation
                     sampledAnchor = actual;
                     sampledTime = simulation.ElapsedTime;
                 }
+                if (view.IsRidingPlatform)
+                {
+                    moving = view.IsPlatformRepositioning;
+                    var localDirection = view.State.FormationOffset - view.PlatformRelativeOffset;
+                    localDirection.y = 0;
+                    if (moving && localDirection.sqrMagnitude > .00000001f)
+                        desiredRotation = Quaternion.LookRotation(localDirection) * Quaternion.Euler(0, facingYawOffset, 0);
+                }
                 characterAnimator.SetBool("IsMoving", moving);
                 if (moving)
                     modelRoot.rotation = Quaternion.Slerp(modelRoot.rotation, desiredRotation, 1 - Mathf.Exp(-14 * Time.unscaledDeltaTime));

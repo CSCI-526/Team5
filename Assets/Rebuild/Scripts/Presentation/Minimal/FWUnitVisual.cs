@@ -179,6 +179,8 @@ namespace Team5.Rebuild.Presentation
                 wasFormationAdjusting = simulation.IsFormationAdjusting;
                 formationFacingPending = false;
             }
+            if (view.IsRidingPlatform)
+            { moving = view.IsPlatformRepositioning; direction = view.State.FormationOffset - view.PlatformRelativeOffset; }
             SetLocomotion(direction, moving, paused, Camera.main, session.EffectivePlaybackSpeed);
         }
 
