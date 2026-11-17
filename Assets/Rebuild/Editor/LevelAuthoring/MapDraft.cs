@@ -16,11 +16,14 @@ namespace Team5.Rebuild.Editor.LevelAuthoring
         public bool isAoe;
         public int goldBounty = 25;
         public string configuration;
+        public BattleTower source;
     }
 
     public sealed class MapDraft : ScriptableObject
     {
         public int width = 24, length = 18, originX, originZ, layer, levelNumber = 1;
+        public Team5.Rebuild.Session.BattleSession sourceSession;
+        public int sourceSceneHandle;
         public int[] tiles = Array.Empty<int>();
         public List<Vector2Int> route = new List<Vector2Int>();
         public List<MapTowerStamp> towers = new List<MapTowerStamp>();
@@ -32,7 +35,7 @@ namespace Team5.Rebuild.Editor.LevelAuthoring
         {
             if (x < 3 || z < 3 || x > 96 || z > 96) throw new ArgumentException("Width and length must be between 3 and 96.");
             width = x; length = z; originX = originZ = layer = 0;
-            tiles = Enumerable.Repeat(-1, x * z).ToArray(); route.Clear(); towers.Clear();
+            tiles = Enumerable.Repeat(-1, x * z).ToArray(); route.Clear(); towers.Clear(); sourceSession = null; sourceSceneHandle = 0;
         }
 
         public void Paint(Vector2Int p, int kind, int size)
@@ -92,8 +95,8 @@ namespace Team5.Rebuild.Editor.LevelAuthoring
                 cell = point,
                 prefab = prefab,
                 area = area,
-                isAoe = isAoe,
-                goldBounty = goldBounty > 0 ? goldBounty : (isAoe ? 40 : 25)
+                isAoe = !tower.IsWall && isAoe,
+                goldBounty = tower.IsWall ? 0 : goldBounty > 0 ? goldBounty : (isAoe ? 40 : 25)
             });
         }
     }

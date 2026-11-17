@@ -1,11 +1,16 @@
 # Destructible road walls
 
+Wooden gates are separate `WoodenGate_3x1_X.prefab` / `WoodenGate_3x1_Z.prefab` assets. They share wall HP,
+movement blocking, camera occlusion, destruction and checkpoint handling, but accept Normal and Explosive damage.
+Stone wall prefabs still require Explosive damage. Use **Place wooden gate** in Map Builder, or place the prefab
+on three clear Road cells. Existing scenes and stone wall prefabs are not replaced.
+
 - Prefabs: `Prefabs/LevelBuilding/Towers/Wall_3x1_X.prefab` and `Wall_3x1_Z.prefab`.
 - Walls use dedicated warm-gray stone and lighter capstone materials.
 - The static brick models occupy three small cells along X or Z, one cell deep. Default HP is 20; select the root and change **Wall HP**.
 - In **Team5 > Rebuild > Map Builder (2D Grid)**, select **Place tower**, then **Wall 3x1 (X)** or **Wall 1x3 (Z)**. Place the center on three clear, equal-height **Road** cells. Save/generate as usual; the tool registers the wall in the battle session.
 - For direct Scene authoring, drag in the prefab, align its root to integer X/Z and the road top Y, The battle session automatically includes Scene walls; manual registration in **BattleSession > Towers** is optional. Either prefab can be rotated around world Y in 90-degree steps. Keep world scale at (1,1,1) and avoid tilting. World footprint and Map Builder import follow the rotated direction.
-- Walls reuse the enemy health/target pipeline but never attack, have no attack range or gold bounty, and do not count as destroyed towers. Attack-capable units target them automatically; Tank/Heal cannot damage them.
+- Walls reuse the enemy health/target pipeline but never attack, have no attack range or gold bounty, and do not count as destroyed towers. Only `AttackDamageType.Explosive` attacks can target/damage them. Normal attacks are ignored both during targeting and at impact. The existing Demolisher role uses Explosive damage; other roles use Normal damage. Future units can set `UnitDefinition.damageType` explicitly. Projectiles retain their damage type in flight and across checkpoints.
 - A live wall stops the formation before its models intersect the footprint. At zero HP its renderers and HP bar disappear and its occupancy clears; the squad resumes on the following tick. Restart/checkpoint restoration restores wall HP, occupancy and visuals. Static Scene objects are retained so restoration works.
 - Existing scenes are unchanged; place the prefab in levels where a wall is wanted.
 

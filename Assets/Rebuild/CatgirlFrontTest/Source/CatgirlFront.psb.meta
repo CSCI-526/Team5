@@ -1,0 +1,934 @@
+fileFormatVersion: 2
+guid: 1bfc8dd6c0553df4fa984406c79f8ff8
+ScriptedImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 2
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+  script: {fileID: 11500000, guid: b2a9591990af98743ba3ff7cf1000886, type: 3}
+  textureImporterSettings:
+    alphaSource: 1
+    mipMapMode: 0
+    enableMipMap: 1
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+    convertToNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+    swizzle: 50462976
+    isReadable: 0
+    streamingMipmaps: 0
+    streamingMipmapsPriority: 0
+    vTOnly: 0
+    ignoreMipmapLimit: 0
+    nPOTScale: 1
+    sRGBTexture: 1
+    spriteMode: 2
+    spriteExtrude: 1
+    spriteMeshType: 1
+    alignment: 0
+    spritePivot: {x: 0.5, y: 0.5}
+    spritePixelsToUnits: 100
+    spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+    spriteGenerateFallbackPhysicsShape: 0
+    generateCubemap: 6
+    cubemapConvolution: 0
+    seamlessCubemap: 0
+    alphaIsTransparency: 1
+    spriteTessellationDetail: -1
+    textureType: 8
+    textureShape: 1
+    singleChannelComponent: 0
+    flipbookRows: 0
+    flipbookColumns: 0
+    ignorePngGamma: 0
+    cookieMode: 0
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 0
+    wrapV: 0
+    wrapW: 0
+    normalMap: 0
+    textureFormat: 0
+    maxTextureSize: 0
+    lightmap: 0
+    compressionQuality: 0
+    linearTexture: 0
+    grayScaleToAlpha: 0
+    rGBM: 0
+    cubemapConvolutionSteps: 0
+    cubemapConvolutionExponent: 0
+    maxTextureSizeSet: 0
+    compressionQualitySet: 0
+    textureFormatSet: 0
+    applyGammaDecoding: 0
+  singleSpriteImportData:
+  - name: 
+    originalName: 
+    pivot: {x: 0, y: 0}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 0
+      y: 0
+      width: 0
+      height: 0
+    spriteID: d86600028e941f14d9c76266e3cfd703
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 0, y: 0}
+    spritePosition: {x: 0, y: 0}
+  multiSpriteImportData: []
+  layeredSpriteImportData:
+  - name: F_COAT_BACK
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 452
+      y: 4
+      width: 451
+      height: 405
+    spriteID: bf34673bf6cbe2647bcb79525ddb8667
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 452, y: 4}
+    spritePosition: {x: 122, y: 171}
+  - name: F_B_HAIR
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 4
+      y: 4
+      width: 440
+      height: 417
+    spriteID: 6213ea2547bd7594396745ac5ac4f92e
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 4, y: 4}
+    spritePosition: {x: 82, y: 501}
+  - name: F_UPPER_ARM_SCREEN_R
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 356
+      y: 1493
+      width: 85
+      height: 122
+    spriteID: 644ff9a5bd8891343ac06d9ce6efea57
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 356, y: 1493}
+    spritePosition: {x: 432, y: 438}
+  - name: F_FOREARM_SCREEN_R
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 331
+      y: 1648
+      width: 75
+      height: 115
+    spriteID: 9e1ccd1f4f8a8784ab5a24034c5454df
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 331, y: 1648}
+    spritePosition: {x: 477, y: 361}
+  - name: F_HAND_SCREEN_R
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 331
+      y: 1887
+      width: 84
+      height: 85
+    spriteID: bfdd46b836cbebc4f9090f1565d833af
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 331, y: 1887}
+    spritePosition: {x: 480, y: 306}
+  - name: F_THIGH_SCREEN_L
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 212
+      y: 1493
+      width: 136
+      height: 147
+    spriteID: abf5214ed85efac459fb26d8327b18ad
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 212, y: 1493}
+    spritePosition: {x: 217, y: 162}
+  - name: F_SHIN_SCREEN_L
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 911
+      y: 148
+      width: 106
+      height: 123
+    spriteID: 08658e5c3fe2fa143b3bd3af58e422ba
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 911, y: 148}
+    spritePosition: {x: 171, y: 87}
+  - name: F_THIGH_SCREEN_R
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 911
+      y: 4
+      width: 102
+      height: 136
+    spriteID: 9e53090de69baf44e80069f912f6721e
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 911, y: 4}
+    spritePosition: {x: 387, y: 169}
+  - name: F_SHIN_SCREEN_R
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 212
+      y: 1872
+      width: 82
+      height: 116
+    spriteID: fde97eb79e41a0f46b0d60dff1cfae1b
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 212, y: 1872}
+    spritePosition: {x: 441, y: 93}
+  - name: F_BOOT_SCREEN_L
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 212
+      y: 1335
+      width: 181
+      height: 150
+    spriteID: 3e87de7eaa75a1943994cce97193bb64
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 212, y: 1335}
+    spritePosition: {x: 109, y: 8}
+  - name: F_BOOT_SCREEN_R
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 212
+      y: 1160
+      width: 188
+      height: 167
+    spriteID: 3da31eea896c7174eaf27a0608c58bf6
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 212, y: 1160}
+    spritePosition: {x: 448, y: 9}
+  - name: F_PELVIS
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 452
+      y: 679
+      width: 240
+      height: 145
+    spriteID: 1bde2bb497a928b4994d9a25f8363ff5
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 452, y: 679}
+    spritePosition: {x: 255, y: 183}
+  - name: F_BODY
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 212
+      y: 839
+      width: 219
+      height: 313
+    spriteID: c4d0e5c44c1c34045a7ce7053fb533f2
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 212, y: 839}
+    spritePosition: {x: 277, y: 276}
+  - name: F_COAT_SCREEN_L
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 4
+      y: 839
+      width: 200
+      height: 350
+    spriteID: 1c21a4a547895794f8e99d120fd15aa7
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 4, y: 839}
+    spritePosition: {x: 99, y: 173}
+  - name: F_COAT_SCREEN_R
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 4
+      y: 1197
+      width: 133
+      height: 323
+    spriteID: 377b8b709d11d7045904b917663b49dd
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 4, y: 1197}
+    spritePosition: {x: 444, y: 198}
+  - name: F_UPPER_ARM_SCREEN_L
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 911
+      y: 279
+      width: 109
+      height: 117
+    spriteID: d106cfca77298b242b94965ff413269e
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 911, y: 279}
+    spritePosition: {x: 206, y: 439}
+  - name: F_FOREARM_SCREEN_L
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 212
+      y: 1648
+      width: 111
+      height: 110
+    spriteID: e5d5a1c4faba7d144b5ddaf2276a2ba3
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 212, y: 1648}
+    spritePosition: {x: 159, y: 365}
+  - name: F_HAND_SCREEN_L
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 212
+      y: 1766
+      width: 107
+      height: 98
+    spriteID: cf5e919d0efc9394fa95dff8f539d14c
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 212, y: 1766}
+    spritePosition: {x: 130, y: 307}
+  - name: F_CHEST_DEVICE
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 331
+      y: 1980
+      width: 78
+      height: 59
+    spriteID: 2b70a01f33cc26a408c2e9039abf4efb
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 331, y: 1980}
+    spritePosition: {x: 386, y: 490}
+  - name: F_EAR_SCREEN_L
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 4
+      y: 1528
+      width: 169
+      height: 243
+    spriteID: b7931d105fc0f104085520aa68548b1b
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 4, y: 1528}
+    spritePosition: {x: 193, y: 812}
+  - name: F_EAR_SCREEN_R
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 4
+      y: 1779
+      width: 175
+      height: 208
+    spriteID: 9ca1a9de9d6932143a8f6fea2fcbb60e
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 4, y: 1779}
+    spritePosition: {x: 406, y: 796}
+  - name: F_FACE
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 452
+      y: 417
+      width: 251
+      height: 254
+    spriteID: 2efd200bf91a8c544891480f42921527
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 452, y: 417}
+    spritePosition: {x: 257, y: 588}
+  - name: F_HAIR_FRONT
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 4
+      y: 429
+      width: 357
+      height: 402
+    spriteID: 619c370560b710b4a853ae1eaef2c327
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 4, y: 429}
+    spritePosition: {x: 194, y: 535}
+  - name: F_HAIR_CLIP
+    originalName: 
+    pivot: {x: 0.5, y: 0.5}
+    alignment: 0
+    border: {x: 0, y: 0, z: 0, w: 0}
+    customData: 
+    rect:
+      serializedVersion: 2
+      x: 331
+      y: 1771
+      width: 70
+      height: 108
+    spriteID: b4814f1e47fde5646a935ba4a778fa64
+    spriteBone: []
+    spriteOutline: []
+    vertices: []
+    spritePhysicsOutline: []
+    indices: 
+    edges: []
+    tessellationDetail: 0
+    uvTransform: {x: 331, y: 1771}
+    spritePosition: {x: 239, y: 825}
+  spriteImportData: []
+  rigSpriteImportData: []
+  sharedRigSpriteImportData: []
+  mosaicSpriteImportData: []
+  sharedRigCharacterData:
+    bones: []
+    parts: []
+    dimension: {x: 0, y: 0}
+    characterGroups: []
+    pivot: {x: 0, y: 0}
+    boneReadOnly: 0
+  characterData:
+    bones: []
+    parts: []
+    dimension: {x: 0, y: 0}
+    characterGroups: []
+    pivot: {x: 0, y: 0}
+    boneReadOnly: 0
+  platformSettings: []
+  mosaicLayers: 1
+  characterMode: 1
+  documentPivot: {x: 0, y: 0}
+  documentAlignment: 7
+  importHiddenLayers: 0
+  layerMappingOption: 2
+  generatePhysicsShape: 0
+  paperDollMode: 0
+  keepDupilcateSpriteName: 1
+  generateTileAssets: 0
+  tilePaletteCellLayout: 0
+  tilePaletteHexagonLayout: 0
+  tilePaletteCellSize: {x: 1, y: 1, z: 0}
+  tilePaletteCellSizing: 0
+  transparencySortMode: 0
+  transparencySortAxis: {x: 0, y: 0, z: 1}
+  tileTemplate: {instanceID: 0}
+  padding: 4
+  spriteSizeExpand: 0
+  skeletonAssetReferenceID: 
+  pipeline: {instanceID: 0}
+  pipelineVersion: 
+  spriteCategoryList:
+    categories: []
+  spritePackingTag: 
+  resliceFromLayer: 0
+  pSDLayerImportSetting: []
+  psdLayers:
+  - name: F_COAT_BACK
+    spriteName: F_COAT_BACK
+    isGroup: 0
+    parentIndex: -1
+    spriteID: bf34673bf6cbe2647bcb79525ddb8667
+    layerID: 25
+    mosaicPosition: {x: 452, y: 4}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: F_B_HAIR
+    spriteName: F_B_HAIR
+    isGroup: 0
+    parentIndex: -1
+    spriteID: 6213ea2547bd7594396745ac5ac4f92e
+    layerID: 24
+    mosaicPosition: {x: 4, y: 4}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: F_UPPER_ARM_SCREEN_R
+    spriteName: F_UPPER_ARM_SCREEN_R
+    isGroup: 0
+    parentIndex: -1
+    spriteID: 644ff9a5bd8891343ac06d9ce6efea57
+    layerID: 23
+    mosaicPosition: {x: 356, y: 1493}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: F_FOREARM_SCREEN_R
+    spriteName: F_FOREARM_SCREEN_R
+    isGroup: 0
+    parentIndex: -1
+    spriteID: 9e1ccd1f4f8a8784ab5a24034c5454df
+    layerID: 22
+    mosaicPosition: {x: 331, y: 1648}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: F_HAND_SCREEN_R
+    spriteName: F_HAND_SCREEN_R
+    isGroup: 0
+    parentIndex: -1
+    spriteID: bfdd46b836cbebc4f9090f1565d833af
+    layerID: 21
+    mosaicPosition: {x: 331, y: 1887}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: F_THIGH_SCREEN_L
+    spriteName: F_THIGH_SCREEN_L
+    isGroup: 0
+    parentIndex: -1
+    spriteID: abf5214ed85efac459fb26d8327b18ad
+    layerID: 20
+    mosaicPosition: {x: 212, y: 1493}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: F_SHIN_SCREEN_L
+    spriteName: F_SHIN_SCREEN_L
+    isGroup: 0
+    parentIndex: -1
+    spriteID: 08658e5c3fe2fa143b3bd3af58e422ba
+    layerID: 19
+    mosaicPosition: {x: 911, y: 148}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: F_THIGH_SCREEN_R
+    spriteName: F_THIGH_SCREEN_R
+    isGroup: 0
+    parentIndex: -1
+    spriteID: 9e53090de69baf44e80069f912f6721e
+    layerID: 18
+    mosaicPosition: {x: 911, y: 4}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: F_SHIN_SCREEN_R
+    spriteName: F_SHIN_SCREEN_R
+    isGroup: 0
+    parentIndex: -1
+    spriteID: fde97eb79e41a0f46b0d60dff1cfae1b
+    layerID: 17
+    mosaicPosition: {x: 212, y: 1872}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: F_BOOT_SCREEN_L
+    spriteName: F_BOOT_SCREEN_L
+    isGroup: 0
+    parentIndex: -1
+    spriteID: 3e87de7eaa75a1943994cce97193bb64
+    layerID: 16
+    mosaicPosition: {x: 212, y: 1335}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: F_BOOT_SCREEN_R
+    spriteName: F_BOOT_SCREEN_R
+    isGroup: 0
+    parentIndex: -1
+    spriteID: 3da31eea896c7174eaf27a0608c58bf6
+    layerID: 15
+    mosaicPosition: {x: 212, y: 1160}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: F_PELVIS
+    spriteName: F_PELVIS
+    isGroup: 0
+    parentIndex: -1
+    spriteID: 1bde2bb497a928b4994d9a25f8363ff5
+    layerID: 14
+    mosaicPosition: {x: 452, y: 679}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: F_BODY
+    spriteName: F_BODY
+    isGroup: 0
+    parentIndex: -1
+    spriteID: c4d0e5c44c1c34045a7ce7053fb533f2
+    layerID: 13
+    mosaicPosition: {x: 212, y: 839}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: F_COAT_SCREEN_L
+    spriteName: F_COAT_SCREEN_L
+    isGroup: 0
+    parentIndex: -1
+    spriteID: 1c21a4a547895794f8e99d120fd15aa7
+    layerID: 12
+    mosaicPosition: {x: 4, y: 839}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: F_COAT_SCREEN_R
+    spriteName: F_COAT_SCREEN_R
+    isGroup: 0
+    parentIndex: -1
+    spriteID: 377b8b709d11d7045904b917663b49dd
+    layerID: 11
+    mosaicPosition: {x: 4, y: 1197}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: F_SHOULDER_YOKE_OPTIONAL
+    spriteName: 
+    isGroup: 0
+    parentIndex: -1
+    spriteID: dc184acec1926e9458580523d398b751
+    layerID: 10
+    mosaicPosition: {x: 0, y: 0}
+    flatten: 0
+    isImported: 0
+    isVisible: 0
+  - name: F_UPPER_ARM_SCREEN_L
+    spriteName: F_UPPER_ARM_SCREEN_L
+    isGroup: 0
+    parentIndex: -1
+    spriteID: d106cfca77298b242b94965ff413269e
+    layerID: 9
+    mosaicPosition: {x: 911, y: 279}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: F_FOREARM_SCREEN_L
+    spriteName: F_FOREARM_SCREEN_L
+    isGroup: 0
+    parentIndex: -1
+    spriteID: e5d5a1c4faba7d144b5ddaf2276a2ba3
+    layerID: 8
+    mosaicPosition: {x: 212, y: 1648}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: F_HAND_SCREEN_L
+    spriteName: F_HAND_SCREEN_L
+    isGroup: 0
+    parentIndex: -1
+    spriteID: cf5e919d0efc9394fa95dff8f539d14c
+    layerID: 7
+    mosaicPosition: {x: 212, y: 1766}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: F_CHEST_DEVICE
+    spriteName: F_CHEST_DEVICE
+    isGroup: 0
+    parentIndex: -1
+    spriteID: 2b70a01f33cc26a408c2e9039abf4efb
+    layerID: 6
+    mosaicPosition: {x: 331, y: 1980}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: F_EAR_SCREEN_L
+    spriteName: F_EAR_SCREEN_L
+    isGroup: 0
+    parentIndex: -1
+    spriteID: b7931d105fc0f104085520aa68548b1b
+    layerID: 5
+    mosaicPosition: {x: 4, y: 1528}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: F_EAR_SCREEN_R
+    spriteName: F_EAR_SCREEN_R
+    isGroup: 0
+    parentIndex: -1
+    spriteID: 9ca1a9de9d6932143a8f6fea2fcbb60e
+    layerID: 4
+    mosaicPosition: {x: 4, y: 1779}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: F_FACE
+    spriteName: F_FACE
+    isGroup: 0
+    parentIndex: -1
+    spriteID: 2efd200bf91a8c544891480f42921527
+    layerID: 3
+    mosaicPosition: {x: 452, y: 417}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: F_HAIR_FRONT
+    spriteName: F_HAIR_FRONT
+    isGroup: 0
+    parentIndex: -1
+    spriteID: 619c370560b710b4a853ae1eaef2c327
+    layerID: 2
+    mosaicPosition: {x: 4, y: 429}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  - name: F_HAIR_CLIP
+    spriteName: F_HAIR_CLIP
+    isGroup: 0
+    parentIndex: -1
+    spriteID: b4814f1e47fde5646a935ba4a778fa64
+    layerID: 1
+    mosaicPosition: {x: 331, y: 1771}
+    flatten: 0
+    isImported: 1
+    isVisible: 1
+  mosaicPSDLayers: []
+  rigPSDLayers: []
+  sharedRigPSDLayers: []
+  importFileNodeState: 1
+  platformSettingsDirtyTick: 0
+  spriteSizeExpandChanged: 0
+  generateGOHierarchy: 0
+  textureAssetName: 
+  prefabAssetName: 
+  spriteLibAssetName: 
+  skeletonAssetName: 
+  secondarySpriteTextures: []

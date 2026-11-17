@@ -80,7 +80,8 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             if (simulation == value && routine != null) return;
             StopTutorial();
             simulation = value;
-            if (value == null || !isActiveAndEnabled) return;
+            // These hints depend on the authored automatic route and its timed tower encounters.
+            if (value == null || value.ManualMovement || !isActiveAndEnabled) return;
 
             // Do not run the tutorial again if the player restarted the level or already played the tutorial,
             // unless they explicitly clicked "Back to Last Hint" (resumeStep > 0).

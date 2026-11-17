@@ -52,7 +52,25 @@ namespace Team5.Rebuild.Presentation
             if (Mouse.current == null || !Mouse.current.leftButton.wasPressedThisFrame) return;
             var point = Mouse.current.position.ReadValue();
             if (PointerOverUI(point)) return;
-            if (!TrySelectAt(point)) CloseInspection();
+            if (owner.GetComponent<SiegeRamFleet>()?.TryBeginReplanningAt(point) == true) return;
+            if (TrySelectAt(point)) return;
+            if (owner.Session.ContinuousSquadMovement && selected == null && !squadSelected)
+            {
+                var sim = owner.Session.Simulation;
+                var camera = Camera.main;
+                if (sim != null && camera != null && !sim.IsPaused)
+                {
+                    var ray = camera.ScreenPointToRay(point);
+                    var plane = new Plane(Vector3.up, sim.SquadReferencePosition);
+                    if (plane.Raycast(ray, out var distance))
+                    {
+                        var target = ray.GetPoint(distance);
+                        var accepted = sim.RequestMovement(new MovementRequest(target));
+                        owner.GetComponent<ContinuousMovementView>()?.ShowDestination(accepted ? sim.SquadDestination : target, accepted);
+                    }
+                }
+            }
+            CloseInspection();
         }
 
         private bool PointerOverUI(Vector2 point)
@@ -136,14 +154,14 @@ namespace Team5.Rebuild.Presentation
             EnsurePanel(); uiRoot.SetActive(true);
             heading.text = "SQUAD 1";
             details.gameObject.SetActive(false);
-            hint.text = "Battle paused  |  Esc / X to cancel";
+            hint.text = owner.Session.ContinuousSquadMovement ? "Live changes  |  Esc / X to close" : "Battle paused  |  Esc / X to cancel";
             UnitState captain = null;
             foreach (var unit in selectedSimulation.Units)
             { if (captain == null) captain = unit; if (unit.Role == UnitRole.Captain) { captain = unit; break; } }
             icon.SetType(captain?.Role ?? UnitRole.Test);
             SetSquadFocus(bounds);
             UpdateCaptainHighlight();
-            inspectionSession = owner.Session; inspectionSession.SetUnitInspectionActive(true);
+            inspectionSession = owner.Session; inspectionSession.SetUnitInspectionActive(!owner.Session.ContinuousSquadMovement);
             squadEditor = hud.OpenSquadEditorInPanel(panel);
             if (squadEditor != null) return true;
             CloseInspection(); return false;
@@ -153,6 +171,14 @@ namespace Team5.Rebuild.Presentation
         {
             bounds = default;
             if (owner == null || owner.Session == null || owner.Session.Simulation == null) return false;
+            if (owner.Session.ContinuousSquadMovement)
+            {
+                var found = false;
+                foreach (var unit in owner.Session.Simulation.Units)
+                    if (unit.IsAlive && owner.TryGetView(unit.Id, out var visual) && visual.TryGetVisibleBounds(out var body))
+                    { if (!found) bounds = body; else bounds.Encapsulate(body); found = true; }
+                return found;
+            }
             foreach (var unit in owner.Session.Simulation.Units)
             {
                 if (!unit.IsAlive) continue;

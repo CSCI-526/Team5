@@ -22,7 +22,11 @@ namespace Team5.Rebuild.Simulation
         public int SquadId { get; }
         public Vector2Int FormationSlot { get; internal set; }
         public Vector3 FormationOffset { get; internal set; }
-        public Vector3 AnchorPosition => Position - FormationOffset;
+        internal bool ContinuousPosition;
+        internal Vector3 SquadReference;
+        public Vector3 AnchorPosition => ContinuousPosition ? SquadReference : Position - FormationOffset;
+        internal float BodyRadius = .44f;
+        public float CollisionRadius => BodyRadius;
         // Half-open cell boundaries avoid banker's rounding collisions at exact half-cell steps.
         public Vector3Int OccupiedCell => SmallCellOccupancy.PositionToCell(Position);
         public Vector3 Position { get; internal set; }
@@ -69,6 +73,7 @@ namespace Team5.Rebuild.Simulation
         public int Id { get; internal set; }
         public int SourceId { get; internal set; }
         public ProjectileTargetKind TargetKind { get; internal set; }
+        public AttackDamageType DamageType { get; internal set; }
         public int TargetId { get; internal set; }
         public int SquadId { get; internal set; } = 1;
         public Vector3 Position { get; internal set; }

@@ -8,7 +8,7 @@ using UnityEngine.UI;
 namespace Team5.Rebuild.Presentation.LegacyUI
 {
     // Battle editing uses a slot permutation; preparation delegates to the bounded deployment model.
-    // Neither mode changes a live simulation's state directly.
+    // Live editing submits a slot permutation through the owner's callback.
     public sealed class LegacyFormationGrid : MonoBehaviour
     {
         private readonly Image[] cells = new Image[9];
@@ -19,6 +19,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         private RectTransform dragLayer;
         private LegacyUnitIconUI ghost;
         private int dragFrom = -1, selected = -1;
+        public Func<int[], bool> ApplyLiveFormation { get; set; }
         public int[] CopySourceSlots() => (int[])sourceSlots.Clone();
 
         public static LegacyFormationGrid Create(Transform parent, RectTransform dragLayer, BattleSimulation simulation)
@@ -79,6 +80,12 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         {
             if (preparation != null) { preparation.TryMove(first, second); return; }
             var value = sourceSlots[first]; sourceSlots[first] = sourceSlots[second]; sourceSlots[second] = value;
+            if (ApplyLiveFormation != null)
+            {
+                if (ApplyLiveFormation(CopySourceSlots()))
+                    for (var i = 0; i < 9; i++) sourceSlots[i] = i;
+                else { value = sourceSlots[first]; sourceSlots[first] = sourceSlots[second]; sourceSlots[second] = value; }
+            }
         }
         public void HandleBeginDrag(int slot, PointerEventData eventData)
         {
@@ -116,6 +123,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             return -1;
         }
         private void OnDisable() { if (ghost != null) Destroy(ghost.gameObject); ghost = null; dragFrom = -1; }
+        private void Update() { if (ApplyLiveFormation != null) Refresh(); }
         private void OnDestroy() { if (preparation != null) preparation.Changed -= Refresh; }
     }
 }

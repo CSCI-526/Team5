@@ -122,6 +122,12 @@ namespace Team5.Rebuild.Presentation
             healBurstBoost = 1f;
         }
 
+        public void SetFormationDisplaySpacing(float spacing)
+        {
+            if (healPerimeterRing != null) healPerimeterRing.transform.localScale = Vector3.one * spacing;
+            if (healWaveRing != null) healWaveRing.transform.localScale = Vector3.one * spacing;
+        }
+
         private void ConfigureHealingRangeAnimation(bool isHealer)
         {
             if (!isHealer)

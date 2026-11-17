@@ -5,12 +5,25 @@ using UnityEngine;
 
 namespace Team5.Rebuild.Presentation
 {
+    [System.Serializable]
+    public sealed class MemberVisualOverride
+    {
+        public int memberId;
+        public UnitView prefab;
+    }
+
     [DisallowMultipleComponent]
     public sealed class BattlePresentation : MonoBehaviour
     {
         [SerializeField] private BattleSession session;
         [SerializeField] private UnitView unitPrefab;
         [SerializeField] private bool showTowerRanges = true;
+        [SerializeField] private bool showUnitLevels = true;
+        [Header("Optional single-member visual test (disabled in production scenes)")]
+        [SerializeField] private bool useTestUnitVisual;
+        [SerializeField] private int testVisualMemberId;
+        [SerializeField] private UnitView testUnitPrefab;
+        [SerializeField] private List<MemberVisualOverride> additionalTestVisuals = new List<MemberVisualOverride>();
         private readonly Dictionary<int, UnitView> views = new Dictionary<int, UnitView>();
         private readonly List<TowerRangeView> ranges = new List<TowerRangeView>();
         private BattleSimulation simulation;
@@ -26,6 +39,20 @@ namespace Team5.Rebuild.Presentation
             set { showTowerRanges = value; foreach (var range in ranges) if (range != null) range.SetVisible(value); }
         }
         public bool TryGetView(int unitId, out UnitView view) => views.TryGetValue(unitId, out view);
+        public void SetTestVisual(int memberId, UnitView prefab)
+        {
+            useTestUnitVisual = prefab != null;
+            testVisualMemberId = memberId;
+            testUnitPrefab = prefab;
+            if (simulation == null) return;
+            // Replace only this member's view, preserving the simulation and all other views.
+            foreach (var unit in simulation.Units)
+            {
+                if (unit.MemberId != memberId || !unit.IsAlive) continue;
+                if (views.TryGetValue(unit.Id, out var old)) { views.Remove(unit.Id); RemoveView(old); }
+                CreateView(unit);
+            }
+        }
         private void OnValidate()
         {
             foreach (var range in ranges) if (range != null) range.SetVisible(showTowerRanges);
@@ -43,6 +70,18 @@ namespace Team5.Rebuild.Presentation
             if (wallOcclusion == null) wallOcclusion = gameObject.AddComponent<WallOcclusionView>();
             wallOcclusion.Bind(this);
             wallOcclusion.enabled = true;
+            if (session.ContinuousSquadMovement)
+            {
+                var movementView = GetComponent<ContinuousMovementView>();
+                if (movementView == null) movementView = gameObject.AddComponent<ContinuousMovementView>();
+                movementView.Bind(this); movementView.enabled = true;
+            }
+            if (session.ManualSquadMovement && !session.ContinuousSquadMovement)
+            {
+                var routeInput = GetComponent<SquadRouteInput>();
+                if (routeInput == null) routeInput = gameObject.AddComponent<SquadRouteInput>();
+                routeInput.Bind(this);
+            }
             session.SimulationCreated += Bind;
             inspection = GetComponent<BattleUnitInspection>();
             if (inspection == null) inspection = gameObject.AddComponent<BattleUnitInspection>();
@@ -53,6 +92,10 @@ namespace Team5.Rebuild.Presentation
 
         private void OnDisable()
         {
+            var movementView = GetComponent<ContinuousMovementView>();
+            if (movementView != null) movementView.enabled = false;
+            var routeInput = GetComponent<SquadRouteInput>();
+            if (routeInput != null) routeInput.Cancel();
             if (wallOcclusion != null) wallOcclusion.enabled = false;
             if (inspection != null) inspection.enabled = false;
             if (session != null) session.SimulationCreated -= Bind;
@@ -69,6 +112,8 @@ namespace Team5.Rebuild.Presentation
 
         private void Bind(BattleSimulation next)
         {
+            var routeInput = GetComponent<SquadRouteInput>();
+            if (routeInput != null) routeInput.Cancel();
             if (inspection != null) inspection.CloseImmediately();
             Unbind();
             ClearViews();
@@ -119,10 +164,21 @@ namespace Team5.Rebuild.Presentation
         private void CreateView(UnitState unit)
         {
             if (views.ContainsKey(unit.Id)) return;
-            var view = Instantiate(unitPrefab, transform);
+            var prefab = useTestUnitVisual && unit.MemberId == testVisualMemberId && testUnitPrefab != null
+                ? testUnitPrefab : unitPrefab;
+            if (useTestUnitVisual)
+                foreach (var entry in additionalTestVisuals)
+                    if (entry != null && entry.memberId == unit.MemberId && entry.prefab != null)
+                    { prefab = entry.prefab; break; }
+            var view = Instantiate(prefab, transform);
             view.name = $"Unit View {unit.Id}";
             view.Bind(unit);
-            if (levelBadgeLayer == null)
+            if (session.ContinuousSquadMovement) view.SetFormationDisplaySpacing(session.ContinuousFormationSpacing);
+            var animatedCharacter = view.GetComponent<HaonUnitAnimation>();
+            if (animatedCharacter != null) animatedCharacter.Bind(view, session);
+            var spriteCharacter = view.GetComponent<FWUnitVisual>();
+            if (spriteCharacter != null) spriteCharacter.Bind(view, session);
+            if (showUnitLevels && levelBadgeLayer == null)
             {
                 var host = new GameObject("Unit Level Badges", typeof(RectTransform));
                 host.transform.SetParent(transform, false);
@@ -132,7 +188,7 @@ namespace Team5.Rebuild.Presentation
                 raycaster.enabled = false;
                 levelBadgeLayer = (RectTransform)canvas.transform;
             }
-            view.CreateLevelBadge(levelBadgeLayer);
+            if (showUnitLevels) view.CreateLevelBadge(levelBadgeLayer);
             views.Add(unit.Id, view);
         }
 
@@ -143,6 +199,7 @@ namespace Team5.Rebuild.Presentation
 
         private void OnFormationChanged()
         {
+            if (session.ContinuousSquadMovement) return;
             foreach (var view in views.Values) view.SnapToState();
         }
 

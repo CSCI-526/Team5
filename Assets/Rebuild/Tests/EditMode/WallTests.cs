@@ -51,7 +51,7 @@ namespace Team5.Rebuild.Tests
         [Test]
         public void DestroyingWallClearsOccupancyAndLetsSquadWinWithoutBounty()
         {
-            var simulation = Create(UnitRole.Attack);
+            var simulation = Create(UnitRole.Demolisher);
             for (var i = 0; i < 2000 && simulation.Outcome == BattleOutcome.Running; i++) simulation.Step(.02f);
             Assert.That(simulation.Towers[0].Hp, Is.Zero);
             Assert.That(simulation.Outcome, Is.EqualTo(BattleOutcome.Victory));
@@ -60,10 +60,39 @@ namespace Team5.Rebuild.Tests
             Assert.That(simulation.GetCellOccupancy(new Vector3Int(5, 0, 0)).TowerIds, Is.Empty);
         }
 
+        [TestCase(UnitRole.Attack)]
+        [TestCase(UnitRole.Captain)]
+        [TestCase(UnitRole.Sniper)]
+        [TestCase(UnitRole.Vanguard)]
+        public void NonExplosiveAttacksCannotDamageWalls(UnitRole role)
+        {
+            var simulation = Create(role);
+            var hits = 0;
+            simulation.TowerDamaged += _ => hits++;
+            for (var i = 0; i < 2000; i++) simulation.Step(.02f);
+            Assert.That(simulation.Towers[0].Hp, Is.EqualTo(4));
+            Assert.That(simulation.Units[0].RouteProgress, Is.LessThanOrEqualTo(4.06f));
+            Assert.That(hits, Is.Zero);
+            Assert.That(simulation.Projectiles, Is.Empty);
+        }
+
+        [Test]
+        public void FutureUnitsCanUseExplosiveDamageWithoutTheDemolisherRole()
+        {
+            var explosive = new UnitDefinition(10, .5f, UnitRole.Attack, damage: 10,
+                damageType: AttackDamageType.Explosive);
+            var wall = new TowerDefinition(1, new Vector3(5, .25f, 0), 0, 0, 1, TargetRule.Nearest,
+                isWall: true, wallAlongZ: true, maxHp: 4);
+            var simulation = new BattleSimulation(new BattleDefinition(new[] { new Vector3(0, .25f, 0), new Vector3(12, .25f, 0) },
+                new[] { wall }, new[] { new MemberSpawnDefinition(1, 4, explosive) }));
+            for (var i = 0; i < 2000 && simulation.Towers[0].IsAlive; i++) simulation.Step(.02f);
+            Assert.That(simulation.Towers[0].IsAlive, Is.False);
+        }
+
         [Test]
         public void UnitsNeverPassALivingWallAndResumeAfterItsDestruction()
         {
-            var simulation = Create(UnitRole.Attack);
+            var simulation = Create(UnitRole.Demolisher);
             var destroyed = false;
             var stoppedAt = 0f;
             for (var i = 0; i < 2000 && simulation.Outcome == BattleOutcome.Running; i++)
@@ -164,7 +193,7 @@ namespace Team5.Rebuild.Tests
         [Test]
         public void CheckpointRestoresWallHealthAndBlockedCells()
         {
-            var simulation = Create(UnitRole.Attack);
+            var simulation = Create(UnitRole.Demolisher);
             simulation.Step(.02f);
             var checkpoint = simulation.CaptureCheckpoint();
             for (var i = 0; i < 2000 && simulation.Towers[0].IsAlive; i++) simulation.Step(.02f);

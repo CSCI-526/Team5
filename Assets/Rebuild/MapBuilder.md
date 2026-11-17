@@ -13,9 +13,49 @@ Open **Team5 > Rebuild > Map Builder (2D Grid)**, or use the new shortcut in Lev
 
 Ctrl+Z/Ctrl+Y undo and redo draft edits; generation also registers the new scene objects with Undo. Draft state is temporary Editor window state, not a persistent map asset. Save a completed map as a Scene before closing/restarting Unity. The window warns about unsaved draft edits. Invalid/incomplete drafts cannot yet be saved through Generate; keep the window open while authoring.
 
-**Read layout from active scene** reads a single flat layer, its route, prefab tower settings and original grid origin. It prepares a draft for a NEW copy. Custom scene-only towers and stacked maps are rejected. It does not import cameras, lighting, arbitrary scene objects or custom tile meshes: generated copies use the standard rig and tile kit. Original scene assets remain untouched.
+**Place wall** is a dedicated tool. Choose Horizontal (3x1 / X) or Vertical (1x3 / Z), then click the center of
+three clear Road cells. Hover previews the complete footprint. Walls cannot overlap other towers/walls or extend
+off the map. They have HP only, block movement, and only take Explosive damage; normal attacks cannot damage them.
+They disappear when destroyed without a gold reward. Use
+**Remove tower/wall** to remove the complete wall by clicking any of its cells. Apply to the current scene or
+generate/save a new level using the usual buttons.
 
-This version supports one flat layer, terrain types, routing and tower placement. It does not implement stacked terrain, runtime editing, automatic campaign registration or unified test-target migration. New levels run independently until explicitly connected to a game flow. Editor scripts stay in the Editor assembly and are excluded from player builds.
+**Place wooden gate** places an independent timber gate with posts, planks, rails, diagonal braces and iron hinges.
+It offers the same X/Z orientations and three-Road-cell footprint as a wall, but both Normal and Explosive attacks
+can destroy it. Gates only have HP, block movement until destroyed, and give no gold reward. Existing stone walls
+still require Explosive damage. Read/apply/generate preserve the distinction between gates and stone walls.
+
+**Read layout from active scene** reads a single flat layer, its route, prefab tower settings and original grid origin.
+Use **Apply to current Scene** to update that existing scene, or Generate to make a separate copy. Custom scene-only
+towers and stacked maps cannot be read. Generated copies use the standard rig and tile kit rather than importing
+cameras, lighting, arbitrary scene objects or custom tile meshes.
+
+## Modify an existing scene
+
+1. Open the level in Edit Mode and choose **Read layout from active scene…**.
+2. Edit terrain, route and tower/wall placement in the grid.
+3. Click **Apply to current Scene**. The label beside the button names the target scene. A draft read from another
+   scene cannot be applied accidentally; read the intended scene again after switching levels.
+4. The current scene stays open. Check the result, then press **Ctrl+S** to save it. Applying does not save the file
+   automatically. **Ctrl+Z** undoes the entire application; **Ctrl+Y** reapplies it.
+
+Apply changes only map cells, route cell references and tower/wall placement. It reuses unchanged cells
+and existing tower objects, preserving their custom visuals, rotation, scale and combat stats such as HP and damage.
+New or replaced cells use the tile kit; new towers use the selected prefab and the draft's attack-area/bounty settings.
+Existing towers retain their current combat settings, including edits made in the Inspector after reading the draft.
+Removed cells and tower stamps are
+removed from the scene. Every intermediate map change is rolled back if validation fails.
+
+The existing BattleSession, GameplayGrid, SceneRoute, character/roster and visual overrides, UI, lighting, camera,
+manual movement setting, spawn/combat settings, route width, level number and game-flow/build settings are preserved.
+The draft's Level number field applies only when generating a new level. Apply never rebuilds or reframes the camera.
+Objects elsewhere in the scene are untouched. A tile or tower containing characters, UI or other level objects
+cannot be deleted/replaced until those objects are moved outside it. Map objects embedded inside a larger prefab
+also cannot be deleted/replaced; use separate tile/tower prefab instances. The LevelTemplate and Prefab Mode remain protected.
+
+This version supports one flat layer, terrain types, routing, tower placement and applying a draft to an existing
+scene. It does not implement stacked terrain, runtime editing, automatic campaign registration or unified test-target
+migration. New levels run independently until explicitly connected to a game flow. Editor scripts stay in the Editor assembly and are excluded from player builds.
 
 ## Resize the workspace
 

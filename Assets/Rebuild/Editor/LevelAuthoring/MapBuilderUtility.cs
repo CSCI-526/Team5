@@ -154,6 +154,139 @@ namespace Team5.Rebuild.Editor.LevelAuthoring
             if (!EditorSceneManager.SaveScene(scene, path)) throw new InvalidOperationException("Scene could not be saved.");
         }
 
+        public static BattleSession ApplyToScene(MapDraft draft, Scene scene)
+        {
+            RequireEditMode();
+            if (!scene.IsValid() || !scene.isLoaded) throw new ArgumentException("Open a level scene first.");
+            if (draft == null || draft.width < 3 || draft.length < 3 || draft.tiles == null || draft.tiles.Length != draft.width * draft.length)
+                throw new ArgumentException("Create or read a map grid first.");
+            var sessions = LevelValidation.Components<BattleSession>(scene);
+            if (sessions.Length != 1 || sessions[0].Grid == null || sessions[0].Route == null)
+                throw new ArgumentException("The current scene needs exactly one BattleSession with a grid and route.");
+            var session = sessions[0];
+            if (session.Grid.gameObject.scene != scene || session.Route.gameObject.scene != scene)
+                throw new ArgumentException("Grid and route must belong to the current scene.");
+            if (draft.sourceSceneHandle != 0 && draft.sourceSceneHandle != scene.handle || draft.sourceSession != null && draft.sourceSession != session)
+                throw new InvalidOperationException("This draft was read from another scene. Read the current scene before applying it.");
+            var oldCells = LevelValidation.Components<BattleCell>(scene);
+            if (oldCells.Any(cell => !cell.transform.IsChildOf(session.Grid.transform)) ||
+                oldCells.Select(cell => cell.Occupancy.y).Distinct().Count() > 1)
+                throw new ArgumentException("Apply supports one flat map inside this session's grid.");
+            var existing = new Dictionary<Vector3Int, BattleCell>();
+            foreach (var cell in oldCells)
+                if (!existing.TryAdd(cell.Occupancy, cell)) throw new ArgumentException("Repair duplicate map cells before applying.");
+            var oldTowers = LevelValidation.Components<BattleTower>(scene);
+            var retainedTowers = new HashSet<BattleTower>();
+            foreach (var stamp in draft.towers)
+                if (stamp.source != null && (!oldTowers.Contains(stamp.source) || !retainedTowers.Add(stamp.source)))
+                    throw new ArgumentException("A tower source is duplicated or no longer belongs to this scene. Read the scene again.");
+            var prefabs = Enum.GetValues(typeof(CellKind)).Cast<CellKind>().ToDictionary(kind => kind,
+                kind => AssetDatabase.LoadAssetAtPath<GameObject>(Kit + "Tiles/" + kind + "_Cell.prefab"));
+
+            try
+            {
+                using (var edit = new LevelEditScope(scene, "Apply Map to Current Scene"))
+                {
+                    edit.Record(session); edit.Record(session.Route);
+                    var cells = new Dictionary<Vector2Int, BattleCell>();
+                    var retainedCells = new HashSet<BattleCell>();
+                    for (var z = 0; z < draft.length; z++)
+                        for (var x = 0; x < draft.width; x++)
+                        {
+                            var p = new Vector2Int(x, z); var value = draft.Tile(p);
+                            if (value == -1) continue;
+                            if (!Enum.IsDefined(typeof(CellKind), value) || prefabs[(CellKind)value] == null)
+                                throw new ArgumentException($"Unknown tile at ({x}, {z}).");
+                            var position = draft.Position(p);
+                            var key = new Vector3Int(draft.originX + x, draft.layer, draft.originZ + z);
+                            if (existing.TryGetValue(key, out var previous) && (int)previous.Kind == value)
+                            {
+                                retainedCells.Add(previous); cells.Add(p, previous); continue;
+                            }
+                            var go = CreateMapObject(prefabs[(CellKind)value], scene, session.Grid.transform, position, edit);
+                            go.name = $"{(CellKind)value} ({key.x}, {key.z})";
+                            cells.Add(p, go.GetComponent<BattleCell>());
+                        }
+                    var route = new SerializedObject(session.Route);
+                    var entries = route.FindProperty("cells"); entries.arraySize = draft.route.Count;
+                    for (var i = 0; i < draft.route.Count; i++)
+                    {
+                        if (!cells.TryGetValue(draft.route[i], out var cell)) throw new ArgumentException("Route contains an empty cell.");
+                        entries.GetArrayElementAtIndex(i).objectReferenceValue = cell;
+                    }
+                    route.ApplyModifiedPropertiesWithoutUndo(); // Keep the existing route width and all session settings.
+                    foreach (var cell in oldCells)
+                        if (!retainedCells.Contains(cell)) DestroyMapObject(cell.gameObject, edit);
+
+                    var settings = new SerializedObject(session);
+                    var towerEntries = settings.FindProperty("towers"); towerEntries.arraySize = draft.towers.Count;
+                    var appliedTowers = new List<BattleTower>();
+                    foreach (var stamp in draft.towers)
+                    {
+                        var tower = stamp.source;
+                        var position = draft.Position(stamp.cell) + Vector3.up * BattleCell.LayerHeight / 2;
+                        if (tower == null)
+                        {
+                            if (stamp.prefab == null || !PrefabUtility.IsPartOfPrefabAsset(stamp.prefab) || stamp.prefab.GetComponent<BattleTower>() == null)
+                                throw new ArgumentException("Tower needs a prefab with BattleTower on its root.");
+                            var go = CreateMapObject(stamp.prefab, scene, session.Grid.transform.parent, position, edit);
+                            tower = go.GetComponent<BattleTower>(); edit.Record(tower);
+                            if (!string.IsNullOrEmpty(stamp.configuration)) JsonUtility.FromJsonOverwrite(stamp.configuration, tower);
+                            var serialized = new SerializedObject(tower);
+                            if (tower.IsWall)
+                                serialized.FindProperty("wallAlongZ").boolValue = stamp.prefab.GetComponent<BattleTower>().Footprint.y == 3;
+                            serialized.FindProperty("attackArea").enumValueIndex = (int)stamp.area;
+                            serialized.FindProperty("isAoe").boolValue = stamp.isAoe;
+                            serialized.FindProperty("goldBounty").intValue = stamp.goldBounty;
+                            serialized.ApplyModifiedPropertiesWithoutUndo();
+                        }
+                        else { edit.Record(tower.transform); tower.transform.position = position; }
+                        towerEntries.GetArrayElementAtIndex(appliedTowers.Count).objectReferenceValue = tower;
+                        appliedTowers.Add(tower);
+                    }
+                    settings.ApplyModifiedPropertiesWithoutUndo();
+                    foreach (var tower in oldTowers)
+                        if (!retainedTowers.Contains(tower)) DestroyMapObject(tower.gameObject, edit);
+                    var errors = LevelValidation.Validate(scene).Where(issue => issue.IsError).Select(issue => issue.Message).ToArray();
+                    if (errors.Length != 0) throw new InvalidOperationException("Map was not applied:\n" + string.Join("\n", errors.Take(12)));
+                    Undo.RegisterCompleteObjectUndo(draft, "Apply Map to Current Scene");
+                    draft.sourceSession = session;
+                    draft.sourceSceneHandle = scene.handle;
+                    for (var i = 0; i < draft.towers.Count; i++) draft.towers[i].source = appliedTowers[i];
+                    edit.Commit();
+                }
+            }
+            finally
+            {
+                // Grid/wall lookup caches are derived state and must also match after a rollback.
+                session.ValidateConfiguration();
+            }
+            return session;
+        }
+
+        private static GameObject CreateMapObject(GameObject prefab, Scene scene, Transform parent, Vector3 position, LevelEditScope edit)
+        {
+            var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab, scene);
+            edit.RegisterCreated(go);
+            // Transform snapshots do not record parenting. Track it explicitly so Redo restores grid ownership.
+            Undo.SetTransformParent(go.transform, parent, "Parent Map Object");
+            edit.Record(go); edit.Record(go.transform);
+            go.transform.position = position;
+            return go;
+        }
+
+        private static void DestroyMapObject(GameObject go, LevelEditScope edit)
+        {
+            if (go.GetComponentsInChildren<BattleSession>(true).Length != 0 || go.GetComponentsInChildren<BattleGrid>(true).Length != 0 ||
+                go.GetComponentsInChildren<SceneRoute>(true).Length != 0 || go.GetComponentsInChildren<Camera>(true).Length != 0 ||
+                go.GetComponentsInChildren<Canvas>(true).Length != 0 || go.GetComponentsInChildren<Team5.Rebuild.Presentation.UnitView>(true).Length != 0 ||
+                go.GetComponentsInChildren<BattleCell>(true).Length + go.GetComponentsInChildren<BattleTower>(true).Length != 1)
+                throw new InvalidOperationException($"{go.name} contains other level objects. Move them outside the map tile/tower before replacing it.");
+            if (PrefabUtility.IsPartOfPrefabInstance(go) && PrefabUtility.GetNearestPrefabInstanceRoot(go) != go)
+                throw new InvalidOperationException($"{go.name} is embedded in a larger prefab. Use separate tile/tower prefab instances for map editing.");
+            edit.Destroy(go);
+        }
+
         public static MapDraft Read(Scene scene)
         {
             RequireEditMode();
@@ -171,6 +304,8 @@ namespace Team5.Rebuild.Editor.LevelAuthoring
                 result.ResetGrid(Math.Max(3, cells.Max(c => c.Occupancy.x) - minX + 1), Math.Max(3, cells.Max(c => c.Occupancy.z) - minZ + 1));
                 result.originX = minX; result.originZ = minZ; result.layer = cells[0].Occupancy.y;
                 result.levelNumber = sessions[0].DisplayedLevelNumber;
+                result.sourceSession = sessions[0];
+                result.sourceSceneHandle = scene.handle;
                 foreach (var cell in cells) result.tiles[(cell.Occupancy.z - minZ) * result.width + cell.Occupancy.x - minX] = (int)cell.Kind;
                 foreach (var cell in sessions[0].Route.Cells)
                 {
@@ -183,7 +318,7 @@ namespace Team5.Rebuild.Editor.LevelAuthoring
                     if (source == null || source.GetComponent<BattleTower>() == null)
                         throw new ArgumentException("Import requires towers created from tower prefabs; custom scene towers are not converted automatically.");
                     if (tower.IsWall)
-                        source = AssetDatabase.LoadAssetAtPath<GameObject>(Kit + "Towers/Wall_3x1_" + (tower.Footprint.y == 3 ? "Z" : "X") + ".prefab");
+                        source = AssetDatabase.LoadAssetAtPath<GameObject>(Kit + "Towers/" + (tower.IsWoodenGate ? "WoodenGate_3x1_" : "Wall_3x1_") + (tower.Footprint.y == 3 ? "Z" : "X") + ".prefab");
                     var serialized = new SerializedObject(tower);
                     result.towers.Add(new MapTowerStamp
                     {
@@ -192,7 +327,8 @@ namespace Team5.Rebuild.Editor.LevelAuthoring
                         area = (Team5.Rebuild.Simulation.AttackArea)serialized.FindProperty("attackArea").enumValueIndex,
                         isAoe = tower.IsAoe,
                         goldBounty = tower.GoldBounty,
-                        configuration = JsonUtility.ToJson(tower)
+                        configuration = JsonUtility.ToJson(tower),
+                        source = tower
                     });
                 }
                 return result;

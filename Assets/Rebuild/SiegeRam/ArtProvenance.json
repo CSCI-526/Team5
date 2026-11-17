@@ -1,0 +1,6 @@
+{
+  "tool": "built-in imagegen",
+  "icon": "Unmodified supplied image; horizontal reflection is performed by UI transform.",
+  "sprite": "Transparent cutout edited from the supplied illustration; AI output may differ in small details.",
+  "prompt": "Edit the supplied wooden siege ram illustration ONLY by removing its dark navy background and dark drop-shadow halo, yielding a genuinely transparent alpha background. Preserve the EXACT vehicle silhouette, wooden triangular ram head facing LEFT, three wooden wheels, red roof beams, tan ropes, original colors, chunky black/brown outlines, isometric three-quarter orientation, and every structural detail. No redesign, no added objects, no labels, no ground plane, no lighting changes, no mirroring (Unity will perform a precise horizontal flip). Keep the complete vehicle uncropped with a small transparent margin. This is a game sprite cutout, not a new illustration."
+}

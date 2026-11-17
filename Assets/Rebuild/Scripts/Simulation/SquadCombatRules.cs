@@ -131,7 +131,8 @@ namespace Team5.Rebuild.Simulation
                 healPerSecond: heal,
                 rarity: rarity,
                 level: Mathf.Max(1, level),
-                towerDamageMultiplier: baseStats.TowerDamageMultiplier
+                towerDamageMultiplier: baseStats.TowerDamageMultiplier,
+                damageType: role == UnitRole.Demolisher ? AttackDamageType.Explosive : AttackDamageType.Normal
             );
         }
 

@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Team5.Rebuild.Simulation
 {
-    public sealed class BattleSimulation
+    public sealed partial class BattleSimulation
     {
         private readonly BattleDefinition definition;
         private readonly List<UnitState> units = new List<UnitState>();
@@ -17,6 +17,50 @@ namespace Team5.Rebuild.Simulation
         private bool stepping;
         private double healTimer;
         private int projectileSequence;
+        private List<Vector3> manualRoute;
+        public const int ManualRouteStep = 3;
+        public bool ManualMovement => manualRoute != null;
+        private IReadOnlyList<Vector3> Waypoints => manualRoute != null ? (IReadOnlyList<Vector3>)manualRoute : definition.Waypoints;
+        public void EnableManualMovement()
+        {
+            if (stepping || SpawnedCount != 0) throw new InvalidOperationException("Configure manual movement before spawning.");
+            manualRoute = new List<Vector3> { definition.Waypoints[0] };
+        }
+        public bool CanPlaceSquadAt(Vector3 anchor)
+        {
+            if (!BattleNumbers.Finite(anchor)) return false;
+            if (continuous != null) return continuous.CanPlaceFormation(anchor);
+            foreach (var member in units)
+                if (member.IsAlive && !CanStand(anchor + member.FormationOffset)) return false;
+            return AliveCount > 0;
+        }
+        public bool TrySetManualRoute(IReadOnlyList<Vector3> points)
+        {
+            if (stepping || continuous != null || !ManualMovement || !IsPaused || Outcome != BattleOutcome.Running ||
+                PendingSpawnCount != 0 || AliveCount == 0 || points == null || points.Count < 2) return false;
+            UnitState first = units.Find(u => u.IsAlive);
+            if (Vector3.Distance(first.AnchorPosition, points[0]) > .01f) return false;
+            for (var i = 0; i < points.Count; i++)
+            {
+                if (!CanPlaceSquadAt(points[i])) return false;
+                if (i == 0) continue;
+                var delta = points[i] - points[i - 1];
+                var length = delta.magnitude;
+                if (Mathf.Abs(delta.y) > .001f || Mathf.Abs(delta.x) > .001f && Mathf.Abs(delta.z) > .001f ||
+                    length < ManualRouteStep - .001f ||
+                    Mathf.Abs(length - Mathf.Round(length / ManualRouteStep) * ManualRouteStep) > .001f) return false;
+                foreach (var member in units)
+                    if (member.IsAlive)
+                        foreach (var cell in FormationClearance.SweptCells(points[i - 1] + member.FormationOffset, points[i] + member.FormationOffset))
+                            if ((walkable != null && !walkable.Contains(cell)) || HasTowerFootprint(cell)) return false;
+            }
+            manualRoute = new List<Vector3>(points);
+            foreach (var member in units)
+                if (member.IsAlive) { member.RouteProgress = 0; member.NextWaypoint = 1; }
+            FormationChanged?.Invoke();
+            return true;
+        }
+
         public ReadOnlyCollection<UnitState> Units { get; }
         public ReadOnlyCollection<TowerState> Towers { get; }
         public ReadOnlyCollection<ProjectileState> Projectiles { get; }
@@ -71,6 +115,8 @@ namespace Team5.Rebuild.Simulation
             foreach (var unit in units) copy.units.Add(unit.Copy());
             foreach (var shot in projectiles) copy.projectiles.Add(shot.Copy());
             copy.spawnedMembers.UnionWith(spawnedMembers);
+            copy.manualRoute = manualRoute == null ? null : new List<Vector3>(manualRoute);
+            if (continuous != null) copy.continuous = continuous.Copy(copy);
             copy.time = time; copy.healTimer = healTimer; copy.projectileSequence = projectileSequence;
             copy.Outcome = Outcome; copy.IsPaused = IsPaused;
             copy.SpawnedCount = SpawnedCount; copy.KilledCount = KilledCount; copy.ReachedGoalCount = ReachedGoalCount;
@@ -186,7 +232,7 @@ namespace Team5.Rebuild.Simulation
 
         public bool TryApplyFormation(IReadOnlyList<int> sourceSlots)
         {
-            if (stepping || !IsPaused || Outcome != BattleOutcome.Running || definition.FormationSize != 3 ||
+            if (stepping || (continuous == null && !IsPaused) || Outcome != BattleOutcome.Running || definition.FormationSize != 3 ||
                 sourceSlots == null || sourceSlots.Count != 9 || PendingSpawnCount != 0) return false;
             // The Captain owns this skill. Keep legacy Captain-less simulations usable by tests/tools.
             if (definition.Members != null)
@@ -201,8 +247,23 @@ namespace Team5.Rebuild.Simulation
                 if (source < 0 || source > 8 || !seen.Add(source)) return false;
                 destinations[source] = destination;
             }
+            if (continuous != null) return continuous.ApplyFormation(destinations);
             foreach (var unit in units)
-                if (unit.IsAlive && !CanStand(unit.AnchorPosition + SquadCombatRules.Offset(destinations[unit.SlotId]))) return false;
+            {
+                if (!unit.IsAlive) continue;
+                var offset = SquadCombatRules.Offset(destinations[unit.SlotId]);
+                var from = unit.AnchorPosition + offset;
+                if (!CanStand(from)) return false;
+                if (!ManualMovement) continue;
+                // An edit must also fit the untravelled portion of the manually planned route.
+                for (var next = unit.NextWaypoint; next < Waypoints.Count; next++)
+                {
+                    var to = Waypoints[next] + offset;
+                    foreach (var cell in FormationClearance.SweptCells(from, to))
+                        if ((walkable != null && !walkable.Contains(cell)) || HasTowerFootprint(cell)) return false;
+                    from = to;
+                }
+            }
             foreach (var unit in units)
             {
                 if (!unit.IsAlive) continue;
@@ -226,11 +287,13 @@ namespace Team5.Rebuild.Simulation
             {
                 Spawn();
                 TickLegendaryEffects(deltaTime);
-                var wallStop = WallStopProgress();
+                if (continuous != null) continuous.Step(deltaTime);
+                var wallStop = continuous == null ? WallStopProgress() : 0;
                 foreach (var unit in units)
                 {
                     if (!unit.IsAlive) continue;
-                    Move(unit, deltaTime, wallStop);
+                    if (continuous == null) Move(unit, deltaTime, wallStop);
+                    else UnitMoved?.Invoke(new UnitMovedEvent(unit));
                     if (Outcome != BattleOutcome.Running) return;
                     if (Objective == BattleObjective.DefendGoal && ReachedGoalCount >= definition.GoalLives) break;
                 }
@@ -269,6 +332,7 @@ namespace Team5.Rebuild.Simulation
                     unit.RouteProgress = SpawnProgress(member.Unit.Speed);
                     unit.NextWaypoint = NextWaypoint(unit.RouteProgress);
                     units.Add(unit); SpawnedCount++;
+                    if (continuous != null) continuous.Spawn(unit);
                     UnitSpawned?.Invoke(new UnitSpawnedEvent(unit));
                 }
                 return;
@@ -283,7 +347,7 @@ namespace Team5.Rebuild.Simulation
                     var coordinate = new Vector2Int(slot % definition.FormationSize, slot / definition.FormationSize);
                     var radius = definition.FormationSize / 2;
                     var offset = new Vector3(coordinate.x - radius, 0, coordinate.y - radius);
-                    var unit = new UnitState(++SpawnedCount, definition.Unit, definition.Waypoints[0] + offset, squadId, coordinate, offset);
+                    var unit = new UnitState(++SpawnedCount, definition.Unit, Waypoints[0] + offset, squadId, coordinate, offset);
                     units.Add(unit); UnitSpawned?.Invoke(new UnitSpawnedEvent(unit));
                 }
             }
@@ -316,10 +380,10 @@ namespace Team5.Rebuild.Simulation
             {
                 if (!wall.Definition.IsWall || !wall.IsAlive) continue;
                 var distance = 0f;
-                for (var i = 1; i < definition.Waypoints.Count; i++)
+                for (var i = 1; i < Waypoints.Count; i++)
                 {
-                    var from = definition.Waypoints[i - 1];
-                    var to = definition.Waypoints[i];
+                    var from = Waypoints[i - 1];
+                    var to = Waypoints[i];
                     var length = Vector3.Distance(from, to);
                     if (Mathf.Abs(from.y - wall.Position.y) < 0.1f)
                     foreach (var member in members)
@@ -358,9 +422,9 @@ namespace Team5.Rebuild.Simulation
         private void Move(UnitState unit, float deltaTime, float wallStop)
         {
             var remaining = Mathf.Min(unit.Speed * deltaTime, Mathf.Max(0, wallStop - unit.RouteProgress));
-            while (remaining > 0 && unit.NextWaypoint < definition.Waypoints.Count)
+            while (remaining > 0 && unit.NextWaypoint < Waypoints.Count)
             {
-                var target = definition.Waypoints[unit.NextWaypoint] + unit.FormationOffset;
+                var target = Waypoints[unit.NextWaypoint] + unit.FormationOffset;
                 var distance = Vector3.Distance(unit.Position, target);
                 var travel = Math.Min(remaining, distance);
                 unit.Position = Vector3.MoveTowards(unit.Position, target, travel);
@@ -368,7 +432,7 @@ namespace Team5.Rebuild.Simulation
                 if (travel >= distance) unit.NextWaypoint++; else break;
             }
             UnitMoved?.Invoke(new UnitMovedEvent(unit));
-            if (unit.NextWaypoint < definition.Waypoints.Count) return;
+            if (unit.NextWaypoint < Waypoints.Count || ManualMovement) return;
             unit.LifeState = UnitLifeState.ReachedGoal; ReachedGoalCount++;
             if (Objective == BattleObjective.ReachGoal) Outcome = BattleOutcome.Victory;
             UnitReachedGoal?.Invoke(new UnitEndedEvent(unit));
@@ -473,6 +537,7 @@ namespace Team5.Rebuild.Simulation
             foreach (var tower in towers)
             {
                 if (!tower.IsAlive) continue;
+                if (tower.Definition.RequiresExplosiveDamage && unit.Definition.DamageType != AttackDamageType.Explosive) continue;
                 var distance = (AimPosition(tower, unit.Position) - unit.Position).sqrMagnitude;
                 if (distance > nearest) continue;
                 target = tower; nearest = distance;
@@ -488,7 +553,8 @@ namespace Team5.Rebuild.Simulation
                 TargetKind = ProjectileTargetKind.Tower,
                 TargetId = target.Id,
                 Position = unit.Position,
-                Damage = effectiveTowerDamage
+                Damage = effectiveTowerDamage,
+                DamageType = unit.Definition.DamageType
             });
         }
 
@@ -528,7 +594,7 @@ namespace Team5.Rebuild.Simulation
                 if (hit)
                 {
                     shot.IsActive = false;
-                    if (tower != null) DamageTower(shot.SourceId, tower, shot.Damage);
+                    if (tower != null) DamageTower(shot.SourceId, tower, shot.Damage, shot.DamageType);
                     else if (member != null) DamageUnit(shot.SourceId, member, shot.Damage);
                 }
                 shot.Age += deltaTime;
@@ -553,9 +619,28 @@ namespace Team5.Rebuild.Simulation
             if (!unit.IsAlive) UnitDied?.Invoke(new UnitEndedEvent(unit));
         }
 
-        private void DamageTower(int sourceId, TowerState tower, float rawDamage)
+        // Vehicles use the same damage/death events as soldiers, restricted to contact with wooden gates.
+        public bool TryRamWoodenGate(int sourceId, Vector3 contactProbe, float radius, float damage)
+        {
+            if (stepping || IsPaused || Outcome != BattleOutcome.Running || !BattleNumbers.Finite(contactProbe) ||
+                !BattleNumbers.Finite(radius) || radius <= 0 || radius >= .5f || !BattleNumbers.Finite(damage) || damage <= 0) return false;
+            foreach (var tower in towers)
+            {
+                if (!tower.IsAlive || !tower.Definition.IsWoodenGate || Mathf.Abs(contactProbe.y - tower.Position.y) > .01f) continue;
+                var size = tower.Definition.Footprint;
+                var dx = Mathf.Max(Mathf.Abs(contactProbe.x - tower.Position.x) - size.x * .5f, 0);
+                var dz = Mathf.Max(Mathf.Abs(contactProbe.z - tower.Position.z) - size.y * .5f, 0);
+                if (dx * dx + dz * dz > radius * radius) continue;
+                DamageTower(sourceId, tower, damage, AttackDamageType.Normal);
+                return true;
+            }
+            return false;
+        }
+
+        private void DamageTower(int sourceId, TowerState tower, float rawDamage, AttackDamageType damageType)
         {
             if (!tower.IsAlive) return;
+            if (tower.Definition.RequiresExplosiveDamage && damageType != AttackDamageType.Explosive) return;
             var applied = Math.Min(tower.Hp, rawDamage);
             tower.Hp = Math.Max(0, tower.Hp - applied);
             // Active suppression: hitting a tower slightly delays its next shot
@@ -603,28 +688,28 @@ namespace Team5.Rebuild.Simulation
         private float RouteLength()
         {
             var length = 0f;
-            for (var i = 1; i < definition.Waypoints.Count; i++) length += Vector3.Distance(definition.Waypoints[i - 1], definition.Waypoints[i]);
+            for (var i = 1; i < Waypoints.Count; i++) length += Vector3.Distance(Waypoints[i - 1], Waypoints[i]);
             return length;
         }
         private int NextWaypoint(float distance)
         {
-            for (var i = 1; i < definition.Waypoints.Count; i++)
+            for (var i = 1; i < Waypoints.Count; i++)
             {
-                var segment = Vector3.Distance(definition.Waypoints[i - 1], definition.Waypoints[i]);
+                var segment = Vector3.Distance(Waypoints[i - 1], Waypoints[i]);
                 if (distance < segment) return i;
                 distance -= segment;
             }
-            return definition.Waypoints.Count;
+            return Waypoints.Count;
         }
         private Vector3 SampleAnchor(float distance)
         {
-            for (var i = 1; i < definition.Waypoints.Count; i++)
+            for (var i = 1; i < Waypoints.Count; i++)
             {
-                var segment = Vector3.Distance(definition.Waypoints[i - 1], definition.Waypoints[i]);
-                if (distance <= segment) return Vector3.Lerp(definition.Waypoints[i - 1], definition.Waypoints[i], distance / segment);
+                var segment = Vector3.Distance(Waypoints[i - 1], Waypoints[i]);
+                if (distance <= segment) return Vector3.Lerp(Waypoints[i - 1], Waypoints[i], distance / segment);
                 distance -= segment;
             }
-            return definition.Waypoints[definition.Waypoints.Count - 1];
+            return Waypoints[Waypoints.Count - 1];
         }
         private bool CanStand(Vector3 position)
         {

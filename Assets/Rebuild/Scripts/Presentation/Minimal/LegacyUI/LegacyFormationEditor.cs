@@ -22,7 +22,8 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             host.transform.SetParent(inspectionPanel != null ? inspectionPanel : owner.Session.transform, false);
             var editor = host.AddComponent<LegacyFormationEditor>();
             editor.owner = owner; editor.simulation = simulation; editor.wasPaused = simulation.IsPaused;
-            simulation.SetPaused(true); editor.Build(inspectionPanel != null); return editor;
+            if (!simulation.ContinuousMovementEnabled) simulation.SetPaused(true);
+            editor.Build(inspectionPanel != null); return editor;
         }
         private void Build(bool embedded)
         {
@@ -34,7 +35,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                 var backdrop = LegacyUiKit.CreateImage(root, "Input Blocker", Vector2.zero, Vector2.zero, new Color(0, 0, 0, 0.15f));
                 LegacyUiKit.Stretch(backdrop.rectTransform); backdrop.raycastTarget = true;
             }
-            var panel = LegacyUiKit.CreateImage(root, "Panel", new Vector2(-20, -20), new Vector2(320, 410), LegacyUiKit.PanelColor, 12);
+            var panel = LegacyUiKit.CreateImage(root, "Panel", new Vector2(-20, -20), new Vector2(320, owner.Session.ManualSquadMovement && !owner.Session.ContinuousSquadMovement ? 510 : 410), LegacyUiKit.PanelColor, 12);
             if (embedded)
             {
                 panel.rectTransform.anchoredPosition = Vector2.zero;
@@ -47,13 +48,35 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             panel.raycastTarget = true;
             var content = LegacyUiKit.CreateRect(panel.transform, "Content", Vector2.zero, Vector2.zero);
             LegacyUiKit.CreateText(content, "Title", "EDIT SQUAD", new Vector2(0, 174), new Vector2(280, 30), 24, LegacyUiKit.TextColor, FontStyles.Bold);
-            LegacyUiKit.CreateText(content, "Paused", "Battle paused", new Vector2(0, 145), new Vector2(280, 24), 16, LegacyUiKit.HighlightColor);
+            LegacyUiKit.CreateText(content, "Paused", simulation.ContinuousMovementEnabled ? "Drag to apply immediately" : "Battle paused", new Vector2(0, 145), new Vector2(280, 24), 16, LegacyUiKit.HighlightColor);
             grid = LegacyFormationGrid.Create(content, root, simulation);
             var done = LegacyUiKit.CreateButton(content, "Apply And Resume", new Vector2(0, -170), new Vector2(260, 48), LegacyUiKit.NodeGreenColor, 8);
-            LegacyUiKit.CreateText(done.transform, "Label", "APPLY & RESUME", Vector2.zero, new Vector2(250, 40), 20, Color.white, FontStyles.Bold);
+            LegacyUiKit.CreateText(done.transform, "Label", simulation.ContinuousMovementEnabled ? "DONE" : "APPLY & RESUME", Vector2.zero, new Vector2(250, 40), 20, Color.white, FontStyles.Bold);
             done.onClick.AddListener(() => ApplyAndResume());
             error = LegacyUiKit.CreateText(content, "Error", "", new Vector2(0, -136), new Vector2(290, 20), 11, Color.red);
             FormationChangeBudget.ShowNote(owner, content);
+            if (simulation.ContinuousMovementEnabled)
+                grid.ApplyLiveFormation = slots =>
+                {
+                    var moved = BattleAnalytics.MovedMembers(simulation, slots);
+                    if (moved > 0 && owner.FormationBudget != null && !owner.FormationBudget.HasChangesLeft)
+                    { error.text = "No formation changes left."; return false; }
+                    var applied = owner.Session.Simulation == simulation && simulation.TryApplyFormation(slots);
+                    if (applied && moved > 0) FormationChangeBudget.Spend(owner);
+                    FormationChangeBudget.ShowNote(owner, content);
+                    error.text = applied ? "" : "Formation cannot be applied.";
+                    return applied;
+                };
+            if (owner.Session.ManualSquadMovement && !owner.Session.ContinuousSquadMovement)
+            {
+                var move = LegacyUiKit.CreateButton(content, "Move Squad", new Vector2(0, -226), new Vector2(260, 48), LegacyUiKit.NodeBlueColor, 8);
+                LegacyUiKit.CreateText(move.transform, "Label", "MOVE SQUAD", Vector2.zero, new Vector2(250, 40), 20, Color.white, FontStyles.Bold);
+                move.onClick.AddListener(() =>
+                {
+                    var input = SquadRouteInput.ForSession(owner.Session);
+                    if (input != null && ApplyAndResume()) input.BeginDrawing();
+                });
+            }
             if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(null);
         }
         public bool ApplyAndResume()
@@ -67,12 +90,12 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             }
             GameAnalytics.TrackBattle("formation_edit", ("result", "applied"), ("members_moved", moved));
             if (moved > 0) FormationChangeBudget.Spend(owner);
-            simulation.SetPaused(wasPaused);
+            if (!simulation.ContinuousMovementEnabled) simulation.SetPaused(wasPaused);
             gameObject.SetActive(false); Destroy(gameObject); return true;
         }
         public void CancelAndClose()
         {
-            if (owner != null && owner.Session.Simulation == simulation) simulation.SetPaused(wasPaused);
+            if (owner != null && owner.Session.Simulation == simulation && !simulation.ContinuousMovementEnabled) simulation.SetPaused(wasPaused);
             GameAnalytics.TrackBattle("formation_edit", ("result", "cancel"), ("members_moved", 0));
             gameObject.SetActive(false); Destroy(gameObject);
         }

@@ -1,0 +1,52 @@
+{
+  "layers": [
+    {
+      "name": "F_LEG_CONTINUOUS_SCREEN_L",
+      "bounds_px": [
+        106,
+        752,
+        361,
+        1053
+      ],
+      "source_crop": [
+        157,
+        15,
+        643,
+        707
+      ],
+      "largest_alpha_component_ratio": 1.0
+    },
+    {
+      "name": "F_LEG_CONTINUOUS_SCREEN_R",
+      "bounds_px": [
+        360,
+        752,
+        636,
+        1053
+      ],
+      "source_crop": [
+        873,
+        15,
+        1337,
+        705
+      ],
+      "largest_alpha_component_ratio": 1.0
+    },
+    {
+      "name": "F_SHORTS_CONTINUOUS",
+      "bounds_px": [
+        254,
+        731,
+        496,
+        824
+      ],
+      "source_crop": [
+        1557,
+        258,
+        2048,
+        481
+      ],
+      "largest_alpha_component_ratio": 1.0
+    }
+  ]
+}

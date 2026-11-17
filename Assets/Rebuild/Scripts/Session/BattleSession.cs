@@ -35,6 +35,17 @@ namespace Team5.Rebuild.Session
         [SerializeField] private List<SquadMemberConfiguration> members = new List<SquadMemberConfiguration>();
         [SerializeField] private SquadRoster initialRoster;
         [SerializeField] private bool useSceneRosterOnly;
+        [SerializeField] private bool manualSquadMovement;
+        [SerializeField] private bool continuousSquadMovement;
+        [SerializeField] private bool compactSquadMovement;
+        [SerializeField, Min(.05f)] private float continuousFormationSpacing = .48f;
+        [SerializeField, Min(.02f)] private float continuousSoldierRadius = .2f;
+        [SerializeField, Min(.02f)] private float continuousVisualFootprint = .38f;
+        public bool ContinuousSquadMovement => continuousSquadMovement;
+        public float ContinuousFormationSpacing => continuousFormationSpacing;
+        public float ContinuousSoldierRadius => continuousSoldierRadius;
+        public float ContinuousVisualFootprint => continuousVisualFootprint;
+        public bool ManualSquadMovement => manualSquadMovement;
         public bool UsesSceneRosterOnly => useSceneRosterOnly;
         private IReadOnlyList<MemberSpawnDefinition> preparedMembers;
         private IEnumerable<SquadMemberConfiguration> ConfiguredMembers => initialRoster != null ? initialRoster.Members : members;
@@ -173,6 +184,10 @@ namespace Team5.Rebuild.Session
         public List<string> ValidateConfiguration()
         {
             var errors = new List<string>();
+            if (continuousSquadMovement && !squadCombat) errors.Add("Continuous squad movement requires squad combat.");
+            if (continuousSquadMovement && !BattleSimulation.ValidContinuousBodySettings(continuousFormationSpacing, continuousSoldierRadius, compactSquadMovement))
+                errors.Add(compactSquadMovement ? "Compact squad movement needs finite spacing >= 0.05 and obstacle radius >= 0.02."
+                    : $"Continuous formation spacing must be at least two soldier radii plus 0.01 (spacing={continuousFormationSpacing:R}, radius={continuousSoldierRadius:R}).");
             if (!float.IsFinite(levelTimeMultiplier) || levelTimeMultiplier <= 0) errors.Add("Level time multiplier must be finite and positive.");
             if (grid == null || route == null) { errors.Add("BattleSession requires a BattleGrid and SceneRoute."); return errors; }
             if (grid.gameObject.scene != gameObject.scene || route.gameObject.scene != gameObject.scene)
@@ -239,7 +254,7 @@ namespace Team5.Rebuild.Session
                 var spawns = CaptureSquadMembers();
                 var passable = new List<Vector3Int>();
                 foreach (var cell in grid.SceneCells)
-                    if (cell.IsRouteSurface && grid.HasClearTop(cell)) passable.Add(cell.Occupancy);
+                    if ((cell.IsRouteSurface || (manualSquadMovement || continuousSquadMovement) && cell.Kind == CellKind.Ground) && grid.HasClearTop(cell)) passable.Add(cell.Occupancy);
                 return new BattleDefinition(route.CaptureTopCenters(), towerDefinitions, spawns, passable);
             }
             return new BattleDefinition(route.CaptureTopCenters(), towerDefinitions,
@@ -262,6 +277,8 @@ namespace Team5.Rebuild.Session
                 return;
             }
             var next = new BattleSimulation(CaptureDefinition());
+            if (continuousSquadMovement) next.EnableContinuousMovement(continuousFormationSpacing, continuousSoldierRadius, compactSquadMovement);
+            else if (manualSquadMovement) next.EnableManualMovement();
             tutorialCheckpoint = null;
             RecoveryRequired = false;
             BindSimulation(next);
