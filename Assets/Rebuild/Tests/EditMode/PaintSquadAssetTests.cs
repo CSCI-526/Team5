@@ -94,7 +94,8 @@ namespace Team5.Rebuild.Tests
             // Only .mat files: a TTF also reports its built-in font material as a Material sub-asset.
             var paths = AssetDatabase.FindAssets("t:Material", new[] { Root.TrimEnd('/') })
                 .Select(AssetDatabase.GUIDToAssetPath).Where(p => p.EndsWith(".mat")).Distinct().ToArray();
-            Assert.That(paths.Length, Is.EqualTo(38));
+            // Role materials generated under RoleVisuals are covered by PaintSquadRoleVisualTests.
+            Assert.That(paths.Count(p => !p.StartsWith(Root + "RoleVisuals/")), Is.EqualTo(38));
             foreach (var path in paths)
             {
                 var material = AssetDatabase.LoadAssetAtPath<Material>(path);

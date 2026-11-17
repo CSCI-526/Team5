@@ -182,6 +182,8 @@ namespace Team5.Rebuild.Presentation
             if (animatedCharacter != null) animatedCharacter.Bind(view, session);
             var spriteCharacter = view.GetComponent<FWUnitVisual>();
             if (spriteCharacter != null) spriteCharacter.Bind(view, session);
+            var paintSquad = view.GetComponent<PaintSquadUnitAnimation>();
+            if (paintSquad != null) paintSquad.Bind(view, session);
             if (showUnitLevels && levelBadgeLayer == null)
             {
                 var host = new GameObject("Unit Level Badges", typeof(RectTransform));
@@ -211,6 +213,12 @@ namespace Team5.Rebuild.Presentation
         {
             if (!views.TryGetValue(value.UnitId, out var view)) return;
             views.Remove(value.UnitId);
+            // Paint Squad units keep their model briefly so the Die take can play after the view is gone.
+            if (view != null && view.State != null && view.State.LifeState == UnitLifeState.Dead)
+            {
+                var paintSquad = view.GetComponent<PaintSquadUnitAnimation>();
+                if (paintSquad != null) paintSquad.LeaveFallenBody(transform);
+            }
             RemoveView(view);
         }
 

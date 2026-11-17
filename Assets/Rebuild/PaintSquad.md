@@ -31,3 +31,34 @@ The source prefabs carried `PooledVfx` / `PaintProjectile`. Those components are
 - Paintball: a camera-facing `M_Quad` with `M_Team_Red_Dot`; the source script moved it and billboarded it.
 
 In Paint Squad Wars the unit prefab scales the model by 0.9 and places a `BlobShadow` quad (`M_Quad`, `M_BlobShadow`) at y 0.015, scale 0.945, lying flat.
+
+## Role prefabs and catalog (Task 2)
+
+Menu **Team5/Rebuild/Paint Squad/Build role visuals** (`Assets/Rebuild/Editor/PaintSquadRoleVisualBuilder.cs`) rebuilds everything under `PaintSquad/RoleVisuals/` in place (GUIDs are kept, so references survive a rebuild):
+
+- `PaintSquad<Role>.prefab` for the ten roles, and `PaintSquadAllRoles.asset` (`UnitRoleVisualSet`) with an entry for all 11 `UnitRole` values; `Test` uses the Attack prefab.
+- `Materials/PaintSquad<Role>Helmet|Body|Paint.mat`: copies of `M_U_TeamColor`, `M_U_TeamColorDark` and `M_U_Paint` with the role colour. Body is the primary at 65 percent value, Paint is the primary times 1.25 (the source rig's third team slot).
+- `Meshes/PaintSquadSoldierUnarmed.asset` (the Soldier mesh with the triangles skinned to the Gun bone removed), `PaintSquadCone.asset` and `PaintSquadCrystal.asset` (gear shapes).
+
+**Team5/Rebuild/Paint Squad/Capture role preview** renders all ten roles (front three-quarter and back rows, plus the Catgirl Attack prefab for scale) to `Logs/PaintSquadScreens/task2-roles.png`.
+
+Role look (colours in `PaintSquadRoleLooks`):
+
+| Role | Helmet | Model | Gear (parent bone) |
+|---|---|---|---|
+| Attack | #DA4029 | Soldier | baked paint rifle |
+| Tank | #F59A1A | SoldierHeavy | heavy body with its baked gun |
+| Heal | #8DB52B | Soldier, gun removed | white medic cross on the helmet front (Head) |
+| Captain | #E8B923 | Hero | three metal helmet spikes and a collar (Head) |
+| Sniper | #3F7FD0 | Soldier, gun removed | long rifle with stock, barrel and scope (Gun) |
+| Vanguard | #229A8A | Soldier | small round shield (Arm.L) plus the baked rifle |
+| Demolisher | #8A5A34 | Soldier, gun removed | bazooka with a paint warhead (Gun) |
+| Frostweaver | #7FD6F0 | Soldier, gun removed | ice staff with a crystal tip (Gun) |
+| Warcaller | #DB4793 | Soldier | banner pole and flag on the back (Spine) plus the baked rifle |
+| Aegis | #8F63B0 | Soldier, gun removed | big tower shield (Arm.L) |
+
+Prefab layout: root (foot point) with `UnitView` and `PaintSquadUnitAnimation`; child `Model` (the unpacked FBX with its Animator, role materials and gear; rotated for facing); child `Blob Shadow` (`M_Quad` with `M_BlobShadow`, 0.8 wide, y 0.015). No colliders, model shadows off. Scale: each base model gets one shared scale (Soldier 0.933, height about 0.95; SoldierHeavy 0.989, height 1.0; Hero 0.803, height about 1.24); a role whose gear would overhang shrinks so the model and gear stay within 0.87 across the rest, Idle and Run poses (Sniper 0.933, Demolisher 0.907, Warcaller 0.908, Frostweaver 0.864). For comparison the Catgirl prefabs are about 1.47 tall and 0.74 wide.
+
+`PaintSquadUnitAnimation` is bound by `BattlePresentation.CreateView` like `HaonUnitAnimation` and `FWUnitVisual`. It only observes the simulation: Speed 0/1 (Idle/Run blend) from route progress or continuous movement, Shoot plus `PaintSquadMuzzleFlash` when the unit's attack cooldown re-arms (and on its legendary skill), Hit plus `PaintSquadHitSplash` on `UnitDamaged`, Cheer when the battle is won, Idle with the Animator stopped while paused. Units turn toward their movement, and toward the tower they shot at for a moment after firing. On death `BattlePresentation` calls `LeaveFallenBody`, which moves the model and shadow into a short-lived `PaintSquad Fallen <id>` object that plays Die, then the view is destroyed as before.
+
+No scene uses the catalog yet; character selection (Task 3) chooses it at runtime. Tests: `PaintSquadRoleVisualTests` (EditMode), `PaintSquadUnitPlayModeTests` (PlayMode).
