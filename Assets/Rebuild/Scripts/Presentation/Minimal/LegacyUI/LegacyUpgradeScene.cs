@@ -29,6 +29,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         private bool startPending;
         private GameObject dismissOverlay;
         private GameObject unitIntroductionOverlay;
+        private GameObject unitDetailsOverlay;
         private GameObject summonGuideOverlay;
         private Canvas summonGuideButtonCanvas;
         private GraphicRaycaster summonGuideButtonRaycaster;
@@ -104,7 +105,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             claimLabel = LegacyUiKit.CreateText(claimButton.transform, "Label", "SUMMON UNIT", Vector2.zero, new Vector2(320, 54), 22, Color.white, FontStyles.Bold);
             claimButton.onClick.AddListener(OpenClaimCards);
 
-            warehouseHint = LegacyUiKit.CreateText(root, "Warehouse Hint", "Drag units to squad  |  Click X on a card to dismiss",
+            warehouseHint = LegacyUiKit.CreateText(root, "Warehouse Hint", "Drag units to squad  |  Click a card for details  |  X to dismiss",
                 new Vector2(-165, -115), new Vector2(780, 26), 16, LegacyUiKit.MutedColor);
 
             Grid = LegacyFormationGrid.CreateForPreparation(root, root, Preparation);
@@ -134,13 +135,13 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             if (startGameButton != null && Preparation != null)
                 startGameButton.interactable = CanStartWave && levelPreview == null;
             if (previewButton != null)
-                previewButton.interactable = levelPreview == null && claimOverlay == null && dismissOverlay == null && unitIntroductionOverlay == null && summonGuideOverlay == null && !BattleSceneFlow.IsOutOfLives && !startPending;
+                previewButton.interactable = levelPreview == null && claimOverlay == null && dismissOverlay == null && unitIntroductionOverlay == null && unitDetailsOverlay == null && summonGuideOverlay == null && !BattleSceneFlow.IsOutOfLives && !startPending;
         }
 
         public bool CanStartWave =>
-            Preparation != null && Preparation.CanStart && !BattleSceneFlow.IsOutOfLives && claimOverlay == null && dismissOverlay == null && unitIntroductionOverlay == null && summonGuideOverlay == null && !startPending;
+            Preparation != null && Preparation.CanStart && !BattleSceneFlow.IsOutOfLives && claimOverlay == null && dismissOverlay == null && unitIntroductionOverlay == null && unitDetailsOverlay == null && summonGuideOverlay == null && !startPending;
 
-        public bool IsOverlayOpen => claimOverlay != null || levelPreview != null || dismissOverlay != null || unitIntroductionOverlay != null || summonGuideOverlay != null;
+        public bool IsOverlayOpen => claimOverlay != null || levelPreview != null || dismissOverlay != null || unitIntroductionOverlay != null || unitDetailsOverlay != null || summonGuideOverlay != null;
 
         public TMP_Text SquadCountLabel => countLabel;
 
@@ -167,7 +168,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         {
             // The highlighted Summon button is the only permitted action during this prompt.
             if (BattleSceneFlow.IsOutOfLives || claimOverlay != null || levelPreview != null ||
-                dismissOverlay != null || unitIntroductionOverlay != null) return;
+                dismissOverlay != null || unitIntroductionOverlay != null || unitDetailsOverlay != null) return;
             if (summonGuideOverlay != null)
             {
                 Preparation.CompleteFirstSummonPrompt();
@@ -245,7 +246,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         {
             var shop = BattleSceneFlow.CardShop;
             if (claimButton == null || shop == null) return;
-            claimButton.interactable = shop.CanClaim && claimOverlay == null && levelPreview == null && dismissOverlay == null && unitIntroductionOverlay == null && !BattleSceneFlow.IsOutOfLives;
+            claimButton.interactable = shop.CanClaim && claimOverlay == null && levelPreview == null && dismissOverlay == null && unitIntroductionOverlay == null && unitDetailsOverlay == null && !BattleSceneFlow.IsOutOfLives;
             claimButton.image.color = claimButton.interactable ? LegacyUiKit.NodeGreenColor : LegacyUiKit.PanelLineColor;
             claimLabel.text = Preparation.CanAddMember ? $"SUMMON UNIT ({shop.NextPrice} GOLD)" : "STORAGE FULL";
             quotaLabel.text = shop.GetBannerSummary();
@@ -324,7 +325,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             panelImage.raycastTarget = true;
             panel.gameObject.AddComponent<WarehouseUnitCardUI>().Initialize(this, root, member);
             cardGroups[member.MemberId] = cell.gameObject.AddComponent<CanvasGroup>();
-            cardStatuses[member.MemberId] = LegacyUnitIntroductionUI.Build(panel, member.Unit);
+            cardStatuses[member.MemberId] = LegacyUnitIntroductionUI.Build(panel, member.Unit, compact: true);
             var remove = LegacyUiKit.MakeButton(LegacyUiKit.CreateCircle(panel, "Dismiss Unit", Vector2.zero, 42,
                 new Color(0.72f, 0.18f, 0.22f)));
             var removeRect = (RectTransform)remove.transform;
@@ -420,20 +421,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                 new Vector2(0, 16), new Vector2(550, 28), 18, LegacyUnitLooks.RarityColor(unit.Rarity));
             var box = LegacyUiKit.CreateImage(panel, "Description Box", new Vector2(0, -82),
                 new Vector2(532, 144), LegacyUiKit.CellColor, 8);
-            var description = unit.Role switch
-            {
-                UnitRole.Attack => "A steady tower breaker with fast attacks and 1.5x damage against towers. Place it where it can fire while tougher teammates take the hits.",
-                UnitRole.Tank => "High health and damage reduction help this unit absorb incoming fire. Protect teammates through positioning. It cannot attack or taunt enemies.",
-                UnitRole.Heal => "Heals teammates in the eight neighboring formation slots every 2 seconds. Cannot heal itself. A central position lets it cover more allies.",
-                UnitRole.Sniper => "The longest attack range in the squad, with powerful shots and 1.85x damage against towers. Its low health makes safe positioning essential.",
-                UnitRole.Vanguard => "An armored fighter that combines damage reduction with tower attacks. Useful in positions that need to absorb damage while helping break towers.",
-                UnitRole.Demolisher => "A siege specialist dealing 2.25x damage against towers. Its attacks hit one tower at a time. Keep it protected and within range to make the most of its damage.",
-                UnitRole.Captain => LegendarySkillRules.Description(UnitRole.Captain, unit.Level),
-                UnitRole.Frostweaver => LegendarySkillRules.Description(UnitRole.Frostweaver, unit.Level),
-                UnitRole.Warcaller => LegendarySkillRules.Description(UnitRole.Warcaller, unit.Level),
-                UnitRole.Aegis => LegendarySkillRules.Description(UnitRole.Aegis, unit.Level),
-                _ => "Arrange this unit in your squad before starting the next battle."
-            };
+            var description = LegacyUnitIntroductionUI.LongDescription(unit);
             var text = LegacyUiKit.CreateText(box.transform, "Description", description, Vector2.zero,
                 new Vector2(492, 116), 20, LegacyUiKit.TextColor);
             text.textWrappingMode = TextWrappingModes.Normal;
@@ -447,6 +435,112 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                 new Vector2(232, 48), 22, Color.white, FontStyles.Bold);
             close.onClick.AddListener(CloseUnitIntroduction);
             RefreshClaimCards();
+        }
+
+        public bool IsUnitDetailsOpen => unitDetailsOverlay != null;
+
+        /// <summary>Opens the full stat sheet for a storage card. Cards only show identity at a glance.</summary>
+        public void ShowUnitDetails(int memberId)
+        {
+            if (IsOverlayOpen || startPending) return;
+            var member = Preparation.FindMember(memberId);
+            if (member == null) return;
+            var unit = member.Unit;
+            var rarityColor = LegacyUnitLooks.RarityColor(unit.Rarity);
+
+            unitDetailsOverlay = new GameObject("Unit Details", typeof(RectTransform));
+            LegacyUiKit.CreateCanvas(unitDetailsOverlay, 600, new Vector2(1280, 720), 0.5f);
+            // Clicking the dimmed backdrop closes the panel, like tapping outside a popup.
+            var backdrop = LegacyUiKit.CreateImage(unitDetailsOverlay.transform, "Input Blocker", Vector2.zero,
+                Vector2.zero, new Color(0, 0, 0, 0.78f));
+            LegacyUiKit.Stretch(backdrop.rectTransform);
+            backdrop.raycastTarget = true;
+            var backdropButton = backdrop.gameObject.AddComponent<Button>();
+            backdropButton.transition = Selectable.Transition.None;
+            backdropButton.onClick.AddListener(CloseUnitDetails);
+
+            var frame = LegacyUiKit.CreateImage(unitDetailsOverlay.transform, "Frame", Vector2.zero,
+                new Vector2(624, 524), rarityColor, 18).rectTransform;
+            frame.GetComponent<Image>().raycastTarget = true;
+            var panel = LegacyUiKit.CreateImage(frame, "Panel", Vector2.zero,
+                new Vector2(620, 520), LegacyUiKit.PanelColor, 16).rectTransform;
+            panel.GetComponent<Image>().raycastTarget = true;
+
+            LegacyUiKit.CreateCircle(panel, "Emblem Ring", new Vector2(-210, 170), 120, rarityColor);
+            var face = LegacyUiKit.CreateCircle(panel, "Emblem", new Vector2(-210, 170), 112, LegacyUiKit.PanelColor);
+            LegacyUnitIconUI.Create(face.transform, Vector2.zero, 120).SetType(unit.Role);
+
+            var name = LegacyUiKit.CreateText(panel, "Unit Name", $"{LegacyUnitLooks.Name(unit.Role)}  Lv.{unit.Level}",
+                new Vector2(60, 200), new Vector2(400, 40), 30, Color.white, FontStyles.Bold);
+            name.alignment = TextAlignmentOptions.Left;
+            var rarity = LegacyUiKit.CreateText(panel, "Rarity", unit.Rarity.ToString().ToUpperInvariant(),
+                new Vector2(60, 164), new Vector2(400, 28), 19, rarityColor, FontStyles.Bold);
+            rarity.alignment = TextAlignmentOptions.Left;
+            var deployed = Preparation.IsDeployed(member.MemberId);
+            var status = LegacyUiKit.CreateText(panel, "Availability", deployed ? "IN SQUAD" : "AVAILABLE",
+                new Vector2(60, 134), new Vector2(400, 24), 16, deployed ? LegacyUiKit.HighlightColor : LegacyUiKit.MutedColor);
+            status.alignment = TextAlignmentOptions.Left;
+
+            var box = LegacyUiKit.CreateImage(panel, "Description Box", new Vector2(0, 40),
+                new Vector2(572, 112), LegacyUiKit.CellColor, 8);
+            var text = LegacyUiKit.CreateText(box.transform, "Description", LegacyUnitIntroductionUI.LongDescription(unit),
+                Vector2.zero, new Vector2(532, 96), 19, LegacyUiKit.TextColor);
+            text.textWrappingMode = TextWrappingModes.Normal;
+            text.alignment = TextAlignmentOptions.MidlineLeft;
+            text.enableAutoSizing = true;
+            text.fontSizeMin = 14;
+            text.fontSizeMax = 19;
+
+            var stats = UnitDetailStats(unit);
+            for (var i = 0; i < stats.Count; i++)
+            {
+                // Two columns of label/value rows under the description.
+                var column = i % 2;
+                var row = i / 2;
+                var position = new Vector2(column == 0 ? -146 : 146, -48 - row * 38);
+                var cellBg = LegacyUiKit.CreateImage(panel, "Stat " + stats[i].label, position, new Vector2(272, 32), LegacyUiKit.CellColor, 6);
+                var label = LegacyUiKit.CreateText(cellBg.transform, "Label", stats[i].label, Vector2.zero, new Vector2(248, 28),
+                    15, LegacyUiKit.MutedColor, FontStyles.Bold, 2);
+                label.alignment = TextAlignmentOptions.Left;
+                var value = LegacyUiKit.CreateText(cellBg.transform, "Value", stats[i].value, Vector2.zero, new Vector2(248, 28),
+                    18, LegacyUiKit.TextColor, FontStyles.Bold);
+                value.alignment = TextAlignmentOptions.Right;
+            }
+
+            var close = LegacyUiKit.CreateButton(panel, "Close", new Vector2(0, -214),
+                new Vector2(220, 52), LegacyUiKit.PanelLineColor, 6);
+            LegacyUiKit.CreateText(close.transform, "Label", "CLOSE", Vector2.zero,
+                new Vector2(212, 48), 21, Color.white, FontStyles.Bold);
+            close.onClick.AddListener(CloseUnitDetails);
+
+            GameAnalytics.Track("unit_details_open", ("role", unit.Role.ToString()), ("rarity", unit.Rarity.ToString()),
+                ("unit_level", unit.Level), ("deployed", deployed));
+        }
+
+        /// <summary>Only the stats that mean something for this role, so a Tank never shows a 0 ATK row.</summary>
+        public static List<(string label, string value)> UnitDetailStats(UnitDefinition unit)
+        {
+            var stats = new List<(string label, string value)> { ("HP", $"{unit.MaxHp:0.##}") };
+            if (SquadCombatRules.IsLegendaryRole(unit.Role)) stats.Add(("SKILL", "ACTIVE"));
+            if (SquadCombatRules.CanAttackTowers(unit.Role))
+            {
+                stats.Add(("ATK", $"{unit.Damage:0.##}"));
+                stats.Add(("ATK SPEED", $"{unit.AttackInterval:0.##}s"));
+                stats.Add(("RANGE", $"{unit.Range:0.##}"));
+                if (!Mathf.Approximately(unit.TowerDamageMultiplier, 1f))
+                    stats.Add(("VS TOWERS", $"x{unit.TowerDamageMultiplier:0.##}"));
+            }
+            if (unit.Defense > 0) stats.Add(("DEF", $"{unit.Defense * 100:0}%"));
+            if (unit.Role == UnitRole.Heal) stats.Add(("HEAL", $"{unit.HealPerSecond:0.##}/s"));
+            return stats;
+        }
+
+        public void CloseUnitDetails()
+        {
+            if (unitDetailsOverlay == null) return;
+            unitDetailsOverlay.SetActive(false);
+            Destroy(unitDetailsOverlay);
+            unitDetailsOverlay = null;
         }
 
         private void CloseUnitIntroduction()
@@ -486,7 +580,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             RefreshWarehouseCards();
             countLabel.text = $"{Preparation.DeployedCount}/{SquadPreparation.MaxDeployed}";
             startGameButton.interactable = CanStartWave && levelPreview == null;
-            warehouseHint.text = "Drag units into squad  |  Click X on a card to dismiss";
+            warehouseHint.text = "Drag units to squad  |  Click a card for details  |  X to dismiss";
             foreach (var member in Preparation.Members)
             {
                 var deployed = Preparation.IsDeployed(member.MemberId);
@@ -499,6 +593,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         {
             CloseSummonGuide();
             if (unitIntroductionOverlay != null) Destroy(unitIntroductionOverlay);
+            CloseUnitDetails();
             CloseDismissConfirmation();
             if (levelPreview != null) Destroy(levelPreview.gameObject);
             if (claimOverlay != null) Destroy(claimOverlay.gameObject);

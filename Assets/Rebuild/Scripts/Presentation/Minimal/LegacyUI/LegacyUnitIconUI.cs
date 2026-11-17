@@ -6,40 +6,40 @@ namespace Team5.Rebuild.Presentation.LegacyUI
 {
     public static class LegacyUnitIntroductionUI
     {
-        public static TMP_Text Build(Transform panel, UnitDefinition stats, bool showAvailability = true)
+        /// <summary>
+        /// Builds a unit card. Compact cards (Unit Storage) show identity only; the full
+        /// stats live behind a click in the upgrade screen's unit details panel.
+        /// </summary>
+        public static TMP_Text Build(Transform panel, UnitDefinition stats, bool showAvailability = true, bool compact = false)
         {
             var role = stats.Role;
             var rarityColor = LegacyUnitLooks.RarityColor(stats.Rarity);
+            // Compact cards drop the stat block, so lower the identity block to keep it centered.
+            var y = compact ? -25f : 0f;
 
-            LegacyUiKit.CreateCircle(panel, "Emblem Ring", new Vector2(0, 75), 76, rarityColor);
-            var face = LegacyUiKit.CreateCircle(panel, "Emblem", new Vector2(0, 75), 70, LegacyUiKit.PanelColor);
+            LegacyUiKit.CreateCircle(panel, "Emblem Ring", new Vector2(0, 75 + y), 76, rarityColor);
+            var face = LegacyUiKit.CreateCircle(panel, "Emblem", new Vector2(0, 75 + y), 70, LegacyUiKit.PanelColor);
             LegacyUnitIconUI.Create(face.transform, Vector2.zero, 76 * 1.15f).SetType(role);
 
-            LegacyUiKit.CreateText(panel, "Name", $"{LegacyUnitLooks.Name(role)}  Lv.{stats.Level}", new Vector2(0, 18), new Vector2(200, 24), 17,
+            LegacyUiKit.CreateText(panel, "Name", $"{LegacyUnitLooks.Name(role)}  Lv.{stats.Level}", new Vector2(0, 18 + y), new Vector2(200, 24), 17,
                 LegacyUiKit.TextColor, FontStyles.Bold, 2);
 
-            LegacyUiKit.CreateText(panel, "Rarity", stats.Rarity.ToString().ToUpperInvariant(), new Vector2(0, -2), new Vector2(200, 18), 13,
+            LegacyUiKit.CreateText(panel, "Rarity", stats.Rarity.ToString().ToUpperInvariant(), new Vector2(0, -2 + y), new Vector2(200, 18), 13,
                 rarityColor, FontStyles.Bold, 2);
 
             var status = showAvailability
-                ? LegacyUiKit.CreateText(panel, "Availability", "", new Vector2(0, -20), new Vector2(200, 20), 13, LegacyUiKit.MutedColor)
+                ? LegacyUiKit.CreateText(panel, "Availability", "", new Vector2(0, -20 + y), new Vector2(200, 20), 13, LegacyUiKit.MutedColor)
                 : null;
 
-            var description = role switch
+            if (compact)
             {
-                UnitRole.Captain => "Formation skill / unique",
-                UnitRole.Frostweaver => "Click map: freeze towers",
-                UnitRole.Warcaller => "Boost ally tower damage",
-                UnitRole.Aegis => "Block 2 hits per ally",
-                UnitRole.Tank => "Heavy frontline shield",
-                UnitRole.Heal => "Heals 8 neighbors",
-                UnitRole.Sniper => "Long-range tower hunter",
-                UnitRole.Vanguard => "Armored bruiser / ATK+DEF",
-                UnitRole.Demolisher => "2.25x Siege DMG vs Towers",
-                _ => "1.5x DMG vs Towers"
-            };
+                LegacyUiKit.CreateImage(panel, "Divider", new Vector2(0, -78), new Vector2(160, 2), rarityColor);
+                LegacyUiKit.CreateText(panel, "Details Hint", "CLICK FOR DETAILS", new Vector2(0, -100), new Vector2(200, 20), 13,
+                    LegacyUiKit.HighlightColor, FontStyles.Bold, 2);
+                return status;
+            }
 
-            LegacyUiKit.CreateText(panel, "Role", description, new Vector2(0, -38), new Vector2(200, 18), 12, LegacyUiKit.MutedColor);
+            LegacyUiKit.CreateText(panel, "Role", ShortDescription(role), new Vector2(0, -38), new Vector2(200, 18), 12, LegacyUiKit.MutedColor);
             LegacyUiKit.CreateImage(panel, "Divider", new Vector2(0, -54), new Vector2(160, 2), rarityColor);
 
             var isAttacker = SquadCombatRules.CanAttackTowers(role);
@@ -54,6 +54,33 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             BuildStat(panel, "HP", $"{stats.MaxHp:0.##}", -104);
             return status;
         }
+
+        public static string ShortDescription(UnitRole role) => role switch
+        {
+            UnitRole.Captain => "Formation skill / unique",
+            UnitRole.Frostweaver => "Click map: freeze towers",
+            UnitRole.Warcaller => "Boost ally tower damage",
+            UnitRole.Aegis => "Block 2 hits per ally",
+            UnitRole.Tank => "Heavy frontline shield",
+            UnitRole.Heal => "Heals 8 neighbors",
+            UnitRole.Sniper => "Long-range tower hunter",
+            UnitRole.Vanguard => "Armored bruiser / ATK+DEF",
+            UnitRole.Demolisher => "2.25x Siege DMG vs Towers",
+            _ => "1.5x DMG vs Towers"
+        };
+
+        public static string LongDescription(UnitDefinition unit) => unit.Role switch
+        {
+            UnitRole.Attack => "A steady tower breaker with fast attacks and 1.5x damage against towers. Place it where it can fire while tougher teammates take the hits.",
+            UnitRole.Tank => "High health and damage reduction help this unit absorb incoming fire. Protect teammates through positioning. It cannot attack or taunt enemies.",
+            UnitRole.Heal => "Heals teammates in the eight neighboring formation slots every 2 seconds. Cannot heal itself. A central position lets it cover more allies.",
+            UnitRole.Sniper => "The longest attack range in the squad, with powerful shots and 1.85x damage against towers. Its low health makes safe positioning essential.",
+            UnitRole.Vanguard => "An armored fighter that combines damage reduction with tower attacks. Useful in positions that need to absorb damage while helping break towers.",
+            UnitRole.Demolisher => "A siege specialist dealing 2.25x damage against towers. Its attacks hit one tower at a time. Keep it protected and within range to make the most of its damage.",
+            UnitRole.Captain or UnitRole.Frostweaver or UnitRole.Warcaller or UnitRole.Aegis =>
+                LegendarySkillRules.Description(unit.Role, unit.Level),
+            _ => "Arrange this unit in your squad before starting the next battle."
+        };
 
         private static void BuildStat(Transform panel, string name, string value, float y)
         {

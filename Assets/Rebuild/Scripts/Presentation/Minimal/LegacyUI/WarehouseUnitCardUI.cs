@@ -24,6 +24,12 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             {
                 owner.TryDismissMember(member.MemberId);
             }
+            // Unity marks a press as not eligible for click once a drag starts, so dragging a
+            // card into the squad never also opens its details.
+            else if (data.button == PointerEventData.InputButton.Left && !data.dragging && owner != null && member != null)
+            {
+                owner.ShowUnitDetails(member.MemberId);
+            }
         }
 
         public void OnBeginDrag(PointerEventData data)
