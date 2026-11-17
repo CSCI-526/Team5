@@ -165,6 +165,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Team5.Rebuild.Presentation::Team5.Rebuild.Presentation.BattlePresentation
   session: {fileID: 2044225506}
   unitPrefab: {fileID: 7082717736601844884, guid: c8da0dedecea54742bbe264ffc94ade5, type: 3}
+  roleVisuals: {fileID: 11400000, guid: 3d0abe8e4e047974aa812166b197c809, type: 2}
   showTowerRanges: 1
 --- !u!1 &176265811
 GameObject:

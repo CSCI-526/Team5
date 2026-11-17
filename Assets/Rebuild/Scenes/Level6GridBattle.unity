@@ -11133,6 +11133,10 @@ PrefabInstance:
       propertyPath: 'towers.Array.data[5]'
       value: 
       objectReference: {fileID: 1563980022}
+    - target: {fileID: 3686462, guid: 93c0f8edb07c4061af5a109352d24339, type: 3}
+      propertyPath: roleVisuals
+      value: 
+      objectReference: {fileID: 11400000, guid: 3d0abe8e4e047974aa812166b197c809, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:

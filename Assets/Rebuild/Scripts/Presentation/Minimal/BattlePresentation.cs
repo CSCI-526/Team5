@@ -17,6 +17,8 @@ namespace Team5.Rebuild.Presentation
     {
         [SerializeField] private BattleSession session;
         [SerializeField] private UnitView unitPrefab;
+        [Tooltip("Optional role-based visuals for summoned members, independent of MemberId and rarity.")]
+        [SerializeField] private UnitRoleVisualSet roleVisuals;
         [SerializeField] private bool showTowerRanges = true;
         [SerializeField] private bool showUnitLevels = true;
         [Header("Optional single-member visual test (disabled in production scenes)")]
@@ -164,8 +166,8 @@ namespace Team5.Rebuild.Presentation
         private void CreateView(UnitState unit)
         {
             if (views.ContainsKey(unit.Id)) return;
-            var prefab = useTestUnitVisual && unit.MemberId == testVisualMemberId && testUnitPrefab != null
-                ? testUnitPrefab : unitPrefab;
+            var prefab = roleVisuals != null && roleVisuals.TryGet(unit.Role, out var rolePrefab) ? rolePrefab : unitPrefab;
+            if (useTestUnitVisual && unit.MemberId == testVisualMemberId && testUnitPrefab != null) prefab = testUnitPrefab;
             if (useTestUnitVisual)
                 foreach (var entry in additionalTestVisuals)
                     if (entry != null && entry.memberId == unit.MemberId && entry.prefab != null)

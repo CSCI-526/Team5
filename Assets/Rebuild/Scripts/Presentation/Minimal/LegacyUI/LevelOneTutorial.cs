@@ -147,7 +147,10 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                 inspection.CloseImmediately();
                 cameraController.FocusPoint(Captain().Position, 2f);
                 GlowCaptain();
-                Show(1, "YOU ARE THE ATTACKER!", "\nThe gold crown is your Captain. It marches automatically.", true);
+                var usesCharacter = presentation.TryGetView(Captain().Id, out var captainView) && captainView.GetComponent<FWUnitVisual>() != null;
+                Show(1, "YOU ARE THE ATTACKER!", usesCharacter
+                    ? "\nThe gold-haired character is your Captain.\nThe platform carries your squad automatically."
+                    : "\nThe gold crown is your Captain. It marches automatically.", true);
                 yield return WaitForNext();
                 if (!Running) { Finish(); yield break; }
             }

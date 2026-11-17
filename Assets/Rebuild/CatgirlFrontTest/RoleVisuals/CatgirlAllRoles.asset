@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4a55458334b5a4d4ab369635641068c7, type: 3}
+  m_Name: CatgirlAllRoles
+  m_EditorClassIdentifier: Team5.Rebuild.Presentation::Team5.Rebuild.Presentation.UnitRoleVisualSet
+  entries:
+  - role: 1
+    prefab: {fileID: 6624711686001247672, guid: 2fbc4c008bc409f4a854334c22b015fb, type: 3}
+  - role: 2
+    prefab: {fileID: 6624711686001247672, guid: db8c91ae610938b44a9c7afc2034b25e, type: 3}
+  - role: 3
+    prefab: {fileID: 6624711686001247672, guid: 17cef6904d9020b4caa1b953c0ef6ac3, type: 3}
+  - role: 4
+    prefab: {fileID: 6624711686001247672, guid: b0d3d641d026a4445b6078bdd87647a8, type: 3}
+  - role: 5
+    prefab: {fileID: 6624711686001247672, guid: 73e42b875da816f4d87f8a6eae767772, type: 3}
+  - role: 6
+    prefab: {fileID: 6624711686001247672, guid: bdc3822f39eb8354f8b1969e481938c5, type: 3}
+  - role: 7
+    prefab: {fileID: 6624711686001247672, guid: 3891e93c49b3def44912dff984e58ce3, type: 3}
+  - role: 8
+    prefab: {fileID: 6624711686001247672, guid: 881b06bf9a03b874fbe988fdc289304f, type: 3}
+  - role: 9
+    prefab: {fileID: 6624711686001247672, guid: 32d9662bb8e49a24eab5ba2730164b32, type: 3}
+  - role: 10
+    prefab: {fileID: 6624711686001247672, guid: b9412c445980fe443af8e96afa60b2bb, type: 3}

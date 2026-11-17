@@ -102,6 +102,9 @@ namespace Team5.Rebuild.Tests
                 Assert.That(wheel.localPosition.y-SquadPlatformView.WheelRadius,Is.EqualTo(.012f).Within(.001f));
             Assert.That(owner.TryGetView(110, out var captain), Is.True);
             Assert.That(owner.TryGetView(111, out var attack), Is.True);
+            var character = captain.GetComponent<FWUnitVisual>();
+            Assert.That(character, Is.Not.Null); Assert.That(attack.GetComponent<FWUnitVisual>(), Is.Not.Null);
+            Assert.That(captain.transform.Find("Body"), Is.Null, "The old block soldier must not overlap the Catgirl.");
             void AssertOnDeck(UnitView view)
             {
                 Assert.That(view.IsRidingPlatform, Is.True);
@@ -112,10 +115,11 @@ namespace Team5.Rebuild.Tests
             AssertOnDeck(captain); AssertOnDeck(attack);
             var start = platform.RenderAnchor;
             var wheelRotation = wheels[0].localRotation;
-            session.AdvancePlaybackFrame(.5f); yield return null; yield return null;
+            session.AdvancePlaybackFrame(.5f); yield return new WaitForSecondsRealtime(.06f); yield return null;
             Assert.That(Vector3.Distance(platform.RenderAnchor,start), Is.GreaterThan(.1f));
             Assert.That(Quaternion.Angle(wheels[0].localRotation,wheelRotation),Is.GreaterThan(.1f));
             AssertOnDeck(captain); AssertOnDeck(attack); Assert.That(captain.IsPlatformRepositioning, Is.False);
+            Assert.That(character.IsMoving,Is.False,"Riding the platform must keep the character in Idle.");
             session.Simulation.SetPaused(true); yield return new WaitForSecondsRealtime(.06f);
             var stopped = platform.RenderAnchor; var pausedWheel = wheels[0].localRotation; yield return new WaitForSecondsRealtime(.08f);
             Assert.That(platform.RenderAnchor, Is.EqualTo(stopped));
@@ -126,8 +130,11 @@ namespace Team5.Rebuild.Tests
             Assert.That(captain.State.SlotId, Is.Zero);
             Assert.That(captain.PlatformRelativeOffset, Is.EqualTo(oldOffset), "Changing slots must not instantly teleport the displayed passenger.");
             session.Simulation.SetPaused(false);
+            yield return null; yield return null;
+            Assert.That(character.IsMoving,Is.True,"Walking between platform slots must play Run.");
             yield return new WaitForSecondsRealtime(.5f); yield return null;
             Assert.That(captain.IsPlatformRepositioning, Is.False); AssertOnDeck(captain); AssertOnDeck(attack);
+            Assert.That(character.IsMoving,Is.False);
             Directory.CreateDirectory("Logs/SquadPlatform"); Capture();
             // Scene 1 keeps its free-squad movement mode and has no platform component.
             EditorSceneManager.LoadSceneInPlayMode("Assets/Rebuild/Scenes/1.unity", new LoadSceneParameters(LoadSceneMode.Additive));

@@ -31,3 +31,13 @@ Unity 6000.3.22f1 编译通过。车体厚度仍为 0.5，车体包围盒检查�
 生成工具为 `SquadPlatformBuilder`；工具拒绝覆盖已存在的 Prefab，避免丢失手工调整。首次场景备份保存在 `Logs/SquadPlatform/Level1BeforePlatform.unity`。
 
 蓝白轮组更新工具：Team5 → Rebuild → Level 1 → Style platform blue-white and add rail wheels。旧 Prefab、材质和场景备份在 `Logs/SquadPlatform/BeforeBlueWhite`。更新回归结果在 `Logs/SquadPlatform/BlueWhiteTests.xml`（原有回归 12 项通过）及 `Logs/SquadPlatform/BlueWhitePlatform.xml`（平台专项），包括轮数、接轨高度、滚动/暂停、人物台面高度、原换位与教程时序、Scene 1 模式与 FW/破城车功能。
+
+## Level1 Catgirl 外观
+
+Level1GridBattle 已替换为 Catgirl 2.5D 外观。默认 Prefab 为保留的白发混合版本；当前正式 Captain（MemberId 110、SlotId 4）使用金发 CatgirlCaptain。原方块 Unit Prefab 保留但该场景不再使用。未改变初始编队、属性、平台、地图或移动系统。人物搭乘时 Idle，在运行中的台面换位时 Run，换位完成返回 Idle；保留教程暂停期间完成显示换位后才出现结果提示的流程。
+
+修改工具为 Level1CatgirlBuilder，场景备份和校验记录位于 `Logs/Level1Catgirl`。Unity 编译、实际渲染、原人物/破城车 12 项回归以及 Catgirl 平台/教程 2 项专项测试已通过。渲染中的双人编队仅为测试数据，正式场景仍为原单 Captain。
+
+## Level2 平台搭乘
+
+Level2GridBattle 已实例化同一个蓝白轮式平台 Prefab，并启用 SquadPlatformView。车体厚 0.5、抬高 0.32、台面高度 0.82，12 个轮子对应三条轨道；保留原 Catgirl 职业外观表、固定路线、初始编队、战斗属性和关卡设置。平台与单位同步，搭乘 Idle、换位 Run，暂停停止。专用工具 Level2RailPlatformBuilder 复用通用 RailwayPathBuilder.BuildScene，仅在 Level2 增加装饰和平台引用。实际运行预览 `Logs/Level2RailPlatform/PlayMode.png`，回归 16/16 通过。

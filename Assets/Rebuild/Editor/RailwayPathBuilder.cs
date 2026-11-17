@@ -20,21 +20,23 @@ namespace Team5.Rebuild.Editor
         private const string RootName = "Railway Path Artwork";
 
         [MenuItem("Team5/Rebuild/Level 1/Rebuild flat railway artwork")]
-        public static void Build()
+        public static void Build() => BuildScene(ScenePath, "Logs/RailwayPath");
+
+        public static void BuildScene(string scenePath, string outputDirectory)
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode) throw new InvalidOperationException("Exit Play Mode first.");
             if (!Application.isBatchMode && !EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
             AssetDatabase.Refresh();
             var straight = MaterialFor("RailStraight");
             var corner = MaterialFor("RailCorner");
-            Directory.CreateDirectory("Logs/RailwayPath");
-            var backup = "Logs/RailwayPath/Level1GridBattleBeforeRails.unity";
-            if (!File.Exists(backup)) File.Copy(ScenePath, backup);
-            var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+            Directory.CreateDirectory(outputDirectory);
+            var backup = outputDirectory + "/" + Path.GetFileNameWithoutExtension(scenePath) + "BeforeRails.unity";
+            if (!File.Exists(backup)) File.Copy(scenePath, backup);
+            var scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
             var session = scene.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<BattleSession>(true)).Single();
             var route = session.Route;
             var signature = Signature(scene, session);
-            Capture(scene, "Before");
+            Capture(scene, "Before", outputDirectory);
             var existing = scene.GetRootGameObjects().FirstOrDefault(g => g.name == RootName);
             if (existing != null) Object.DestroyImmediate(existing);
             var root = new GameObject(RootName);
@@ -91,8 +93,8 @@ namespace Team5.Rebuild.Editor
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
             AssetDatabase.SaveAssets();
-            Capture(scene, "After");
-            File.WriteAllText("Logs/RailwayPath/Verification.txt", $"Scene: {ScenePath}\nFlat texture tiles: {root.transform.childCount}\nCorner tiles: {corners}\nColliders: 0\nOriginal map/route/roster/camera signature preserved: true\n");
+            Capture(scene, "After", outputDirectory);
+            File.WriteAllText(outputDirectory + "/Verification.txt", $"Scene: {scenePath}\nFlat texture tiles: {root.transform.childCount}\nCorner tiles: {corners}\nColliders: 0\nOriginal map/route/roster/camera signature preserved: true\n");
             Debug.Log($"Flat railway artwork built: {root.transform.childCount} tiles, {corners} corners; original scene configuration preserved.");
         }
 
@@ -166,7 +168,7 @@ namespace Team5.Rebuild.Editor
             return cells + route + actors + cameras + EditorJsonUtility.ToJson(session);
         }
 
-        private static void Capture(Scene scene, string name)
+        private static void Capture(Scene scene, string name, string outputDirectory)
         {
             if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null) return;
             var camera = scene.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<Camera>()).First(c => c.CompareTag("MainCamera"));
@@ -179,7 +181,7 @@ namespace Team5.Rebuild.Editor
                 camera.targetTexture = target;
                 camera.Render(); RenderTexture.active = target;
                 image.ReadPixels(new Rect(0, 0, 1600, 1000), 0, 0); image.Apply();
-                File.WriteAllBytes("Logs/RailwayPath/" + name + ".png", image.EncodeToPNG());
+                File.WriteAllBytes(outputDirectory + "/" + name + ".png", image.EncodeToPNG());
             }
             finally
             { camera.targetTexture = oldTarget; RenderTexture.active = oldActive; target.Release(); Object.DestroyImmediate(target); Object.DestroyImmediate(image); }

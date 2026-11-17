@@ -39,3 +39,30 @@ Unity 6000.3.22f1 编译通过；D3D11 Play Mode **4/4 通过，0 跳过**，结
 4. 原白发混合版保留衣服、靴子和 FW 原生动作，蒙皮、腰部与靴口衔接回归通过。
 
 预览：`Logs/CatgirlRoles/FourRoleModels.jpg`；单职业 Idle/Run 和隔离头发图在 `Logs/FWVisual/Catgirl<Role>*.png`。
+
+## Summon 全职业 Catgirl
+
+新增独立的 CatgirlSniper、CatgirlVanguard、CatgirlDemolisher、CatgirlFrostweaver、CatgirlWarcaller、CatgirlAegis Prefab；原 Attack、Tank、Heal、Captain 四个 Prefab 与白发原版没有被覆盖。
+
+| 职业 | 发色（取自图标主题色） | Prefab |
+|---|---|---|
+| Attack | 红色 #F2594C | CatgirlAttack.prefab |
+| Tank | 蓝灰 #808FA6 | CatgirlTank.prefab |
+| Heal | 绿色 #4CC773 | CatgirlHeal.prefab |
+| Captain | 金棕 #B88F47 | CatgirlCaptain.prefab |
+| Sniper | 青色 #38C7E0 | CatgirlSniper.prefab |
+| Vanguard | 蓝紫 #617AD1 | CatgirlVanguard.prefab |
+| Demolisher | 橙色 #FA8C29 | CatgirlDemolisher.prefab |
+| Frostweaver | 冰蓝 #61D6FF | CatgirlFrostweaver.prefab |
+| Warcaller | 杏橙 #FFA84C | CatgirlWarcaller.prefab |
+| Aegis | 紫色 #9E73FF | CatgirlAegis.prefab |
+
+当前 Summon 池为 6 种常规职业和 3 种传奇职业，共 9 种；Captain 不在随机招募池，但保留对应外观，总计 10 种。只改变头发图层，不改变肤色、服装、武器、骨骼或动画；同职业的等级/稀有度共用外观，稀有度继续由原 UI 表示。
+
+`CatgirlAllRoles.asset` 为职业→Prefab 外观表。BattlePresentation 的 Role Visuals 指向此表，动态招募产生任意 MemberId 后仍按 Role 正确选择。原单成员/额外成员测试覆盖优先级更高；未知的 Test 角色回退原 Unit Prefab。
+
+已接入 Level1–Level7、TestLevel 与 Scene 1，共 9 个战斗场景。只改变表现配置，不修改 Summon 概率、价格、单位属性、技能、编队、地图或各场景原移动模式；卡牌图标和单位介绍 UI 保持原样。Level1 保持平台系统，Scene 1 保持自由小队系统。Haon/FW 等独立模型测试场景不应用该外观表。
+
+生成工具：CatgirlSummonVisualBuilder。备份、颜色记录和验证结果在 `Logs/CatgirlAllRoles`。
+
+验证：Unity 6000.3.22f1 编译通过。职业资源 Edit Mode 检查 1/1 通过；动态 MemberId 全职业配色与 Idle/Run、原平台/教程、FW 动画及破城车 Play Mode 检查 15/15 通过，0 跳过。九个场景原对象 ID 保留，配置差异仅为 Role Visuals 外观表引用。

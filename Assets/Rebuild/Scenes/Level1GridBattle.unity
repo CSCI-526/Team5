@@ -166,8 +166,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Team5.Rebuild.Presentation::Team5.Rebuild.Presentation.BattlePresentation
   session: {fileID: 2044225506}
-  unitPrefab: {fileID: 7082717736601844884, guid: c8da0dedecea54742bbe264ffc94ade5, type: 3}
+  unitPrefab: {fileID: 6624711686001247672, guid: 21d25061de5700549923d286310e02a4, type: 3}
+  roleVisuals: {fileID: 11400000, guid: 3d0abe8e4e047974aa812166b197c809, type: 2}
   showTowerRanges: 1
+  showUnitLevels: 1
+  useTestUnitVisual: 1
+  testVisualMemberId: 110
+  testUnitPrefab: {fileID: 6624711686001247672, guid: b0d3d641d026a4445b6078bdd87647a8, type: 3}
+  additionalTestVisuals: []
 --- !u!114 &3686463
 MonoBehaviour:
   m_ObjectHideFlags: 0
