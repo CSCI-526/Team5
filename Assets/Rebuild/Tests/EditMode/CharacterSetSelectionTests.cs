@@ -123,7 +123,20 @@ namespace Team5.Rebuild.Tests
             // BattleAnalytics subscribes OnRunStarted to BattleSceneFlow.RunStarted; call it directly.
             var handler = typeof(BattleAnalytics).GetMethod("OnRunStarted", BindingFlags.NonPublic | BindingFlags.Static);
             Assert.That(handler, Is.Not.Null);
-            handler.Invoke(null, null);
+            // OnRunStarted mutates BattleAnalytics' session statics; snapshot and restore them so other tests see no leak.
+            const BindingFlags StaticPrivate = BindingFlags.NonPublic | BindingFlags.Static;
+            var runsField = typeof(BattleAnalytics).GetField("runsInSession", StaticPrivate);
+            var startedField = typeof(BattleAnalytics).GetField("runStartedAt", StaticPrivate);
+            Assert.That(runsField, Is.Not.Null);
+            Assert.That(startedField, Is.Not.Null);
+            var savedRuns = runsField.GetValue(null);
+            var savedStarted = startedField.GetValue(null);
+            try { handler.Invoke(null, null); }
+            finally
+            {
+                runsField.SetValue(null, savedRuns);
+                startedField.SetValue(null, savedStarted);
+            }
             var runStart = sink.Events.Single(e => e.Name == "run_start");
             Assert.That(runStart["character_set"], Is.EqualTo(expected));
             Assert.That(runStart.ToJson(), Does.Contain("\"character_set\":\"" + expected + "\""));

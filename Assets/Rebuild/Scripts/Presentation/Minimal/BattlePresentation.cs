@@ -242,6 +242,14 @@ namespace Team5.Rebuild.Presentation
         {
             foreach (var view in views.Values) RemoveView(view);
             views.Clear();
+            // Paint Squad death bodies are parented here (LeaveFallenBody) and outlive their views; clear them too.
+            for (var i = transform.childCount - 1; i >= 0; i--)
+            {
+                var child = transform.GetChild(i);
+                if (!child.name.StartsWith("PaintSquad Fallen", System.StringComparison.Ordinal)) continue;
+                child.gameObject.SetActive(false);
+                Destroy(child.gameObject);
+            }
         }
 
         private void ClearRanges()

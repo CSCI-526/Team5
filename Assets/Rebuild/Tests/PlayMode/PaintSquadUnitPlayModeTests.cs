@@ -107,12 +107,19 @@ namespace Team5.Rebuild.Tests
         [UnityTearDown]
         public IEnumerator Close()
         {
-            Time.timeScale = 1;
-            var owner = opened.IsValid() && opened.isLoaded ? opened.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<BattleSession>()).FirstOrDefault() : null;
-            if (owner != null && owner.Simulation != null) owner.Simulation.SetPaused(true);
-            if (initial.IsValid() && initial.isLoaded) SceneManager.SetActiveScene(initial);
-            if (opened.IsValid() && opened.isLoaded) yield return SceneManager.UnloadSceneAsync(opened);
-            prefs?.Dispose();
+            try
+            {
+                Time.timeScale = 1;
+                var owner = opened.IsValid() && opened.isLoaded ? opened.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<BattleSession>()).FirstOrDefault() : null;
+                if (owner != null && owner.Simulation != null) owner.Simulation.SetPaused(true);
+                if (initial.IsValid() && initial.isLoaded) SceneManager.SetActiveScene(initial);
+                if (opened.IsValid() && opened.isLoaded) yield return SceneManager.UnloadSceneAsync(opened);
+            }
+            finally
+            {
+                // Runs even if the scene unload throws, so the PlayerPrefs scope is always restored.
+                prefs?.Dispose();
+            }
         }
     }
 }

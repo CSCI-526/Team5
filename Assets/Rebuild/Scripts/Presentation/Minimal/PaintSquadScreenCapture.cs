@@ -1,3 +1,5 @@
+// Dev tool only: excluded from release player builds.
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -187,3 +189,4 @@ namespace Team5.Rebuild.Presentation
         }
     }
 }
+#endif
