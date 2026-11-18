@@ -102,3 +102,16 @@ PAINT_SQUAD_CAPTURE_PREFIX=task4 Unity -batchmode -projectPath ~/Team5 -runTests
 Run it without `-nographics`. Tests: `PaintSquadUiSkinTests` (EditMode: skin asset, sprite slices, static fonts with fallback, every UI string character renders, kit text and button styling, idempotent backdrop).
 
 Note: `Tools/Rebuild/port_paint_squad_art.py` copies the source (dynamic) font assets back; rerun **Build UI skin** after it to make them static again.
+
+## Level dressing (Task 5)
+
+`Editor/PaintSquadLevelDressing.cs`, menu **Team5/Rebuild/Paint Squad/Dress levels** (batch: `-executeMethod Team5.Rebuild.Editor.PaintSquadLevelDressing.DressLevelsBatch`), rebuilds the 16 prop prefabs in `PaintSquad/Environment/` (`PaintSquadTree_A` ... `PaintSquadTent`, each the Task 1 model scaled to a fixed height with its ported materials, no colliders, Ignore Raycast layer, batching static, no shadow casting) and then dresses `Level1GridBattle` to `Level7GridBattle`:
+
+- Everything goes under one scene root, `Paint Squad Dressing`. Rerunning deletes and rebuilds that root; the layout is seeded by the scene name, so it comes out the same each time.
+- Ground: the existing `Decorative Border Tiles` (Levels 1 to 4). The Map Builder levels (5 to 7) have an empty border, so the tool lays four flat slabs with `DecorativeBorder.mat` around the grid, under the dressing root. No gameplay tile or material is changed.
+- Only tiles visible to the battle camera are used. By ring distance from the grid: ring 1 small grass, flowers and pebbles (30 percent); ring 2 bushes, rocks, the odd crate or barrel (45 percent); ring 3 and beyond mostly pine trees, with bushes, big rocks, logs, fences and a rare tent (72 percent). Positions get a small jitter, a random yaw and a 0.85 to 1.15 scale.
+- A prop is rejected if its bounds overlap any BattleCell (every BattleCell is gameplay), or if, seen from the battle camera, any of its corners lands on the playfield plus a 0.6 margin. A rejected prop is replaced by the next lower one (bush, rock, grass), so the near (camera) side only ever gets low props.
+
+Test: `PaintSquadLevelDressingTests` (EditMode). Screenshots: `PaintSquadScreenTour.CaptureEveryLevel` (explicit Play Mode test) writes `<prefix>-level<N>.png` and `<prefix>-level<N>-overview.png`.
+
+Note: Unity reserializes the level scenes on save (default values for newer fields). The committed scenes keep the original text for existing objects and only add the dressing objects.

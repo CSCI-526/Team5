@@ -86,6 +86,43 @@ namespace Team5.Rebuild.Tests
             button.onClick.Invoke();
         }
 
+        // One battle-camera shot per level for the Paint Squad dressing, as <prefix>-level<N>.png
+        // (prefix from PAINT_SQUAD_CAPTURE_PREFIX, default "tour"), plus <prefix>-level<N>-overview.png before the start.
+        [UnityTest]
+        public IEnumerator CaptureEveryLevel()
+        {
+            for (var level = 1; level <= 7; level++)
+            {
+                yield return Load($"Level{level}GridBattle");
+                foreach (var guide in Object.FindObjectsByType<LevelOneTutorial>(FindObjectsSortMode.None)) guide.Skip();
+                yield return Frames(3);
+                yield return Shot($"level{level}-overview");
+                var session = Find<BattleSession>();
+                var fixture = new SerializedObject(session);
+                fixture.FindProperty("initialRoster").objectReferenceValue = null;
+                var roles = new[] { UnitRole.Captain, UnitRole.Attack, UnitRole.Tank, UnitRole.Heal, UnitRole.Sniper };
+                var slots = new[] { 4, 1, 3, 5, 7 };
+                var members = fixture.FindProperty("members");
+                members.arraySize = roles.Length;
+                for (var i = 0; i < roles.Length; i++)
+                {
+                    var member = members.GetArrayElementAtIndex(i);
+                    member.FindPropertyRelative("enabled").boolValue = true;
+                    member.FindPropertyRelative("memberId").intValue = 310 + i;
+                    member.FindPropertyRelative("slotId").intValue = slots[i];
+                    member.FindPropertyRelative("role").intValue = (int)roles[i];
+                    member.FindPropertyRelative("spawnTime").floatValue = 0;
+                }
+                fixture.ApplyModifiedPropertiesWithoutUndo();
+                session.StartBattle();
+                session.Simulation.SetPaused(false);
+                yield return Seconds(1.5f);
+                session.Simulation.SetPaused(true);
+                yield return Frames(2);
+                yield return Shot($"level{level}");
+            }
+        }
+
         [UnityTest]
         public IEnumerator CaptureEveryScreen()
         {
