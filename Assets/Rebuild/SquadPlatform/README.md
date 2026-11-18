@@ -1,3 +1,5 @@
+> Current campaign status: Level1 and Level2 no longer use rail artwork or squad platforms. Units walk directly on the original route. These assets and editor tools are retained for optional reuse.
+
 # Level1 平台搭乘模式
 
 `Level1GridBattle` 的 BattlePresentation 对象启用了独立的 `SquadPlatformView` 组件。Scene 1 没有该组件，继续使用原连续坐标自由小队系统。

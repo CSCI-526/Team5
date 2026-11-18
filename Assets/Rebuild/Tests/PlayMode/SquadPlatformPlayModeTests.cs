@@ -80,7 +80,7 @@ namespace Team5.Rebuild.Tests
             var before=view.transform.position;var oldSlot=unit.SlotId;
             session.AdvancePlaybackFrame(.2f);yield return new WaitForSecondsRealtime(.05f);
             Assert.That(Vector3.Distance(view.transform.position,before),Is.GreaterThan(.01f));
-            session.Simulation.SetPaused(true);yield return null;yield return null;
+            session.Simulation.SetPaused(true);yield return new WaitForSecondsRealtime(.06f);yield return null;
             var stopped=view.transform.position;yield return new WaitForSecondsRealtime(.05f);
             Assert.That(Vector3.Distance(view.transform.position,stopped),Is.LessThan(.001f));
             Assert.That(view.GetComponent<FWUnitVisual>().IsMoving,Is.False);

@@ -1,3 +1,5 @@
+> Current campaign status: Level1 and Level2 no longer use rail artwork or squad platforms. Units walk directly on the original route. These assets and editor tools are retained for optional reuse.
+
 # Level1GridBattle 平面铁轨
 
 仅为 `Assets/Rebuild/Scenes/Level1GridBattle.unity` 的固定 SceneRoute 添加透明铁轨贴图。Hierarchy 中 `Railway Path Artwork` 包含左、中、右三条轨道，占据三格宽道路；共 45 个平面贴图面，其中 42 个直线、3 个弯道。未覆盖 Spawn/Goal 的颜色标记。

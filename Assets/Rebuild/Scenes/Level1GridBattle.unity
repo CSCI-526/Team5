@@ -1293,12 +1293,6 @@ MonoBehaviour:
   members: []
   initialRoster: {fileID: 11400000, guid: c7fea7eb60294bfa83cb342d4b00af06, type: 2}
   useSceneRosterOnly: 1
-  manualSquadMovement: 0
-  continuousSquadMovement: 0
-  compactSquadMovement: 0
-  continuousFormationSpacing: 0.48
-  continuousSoldierRadius: 0.2
-  continuousVisualFootprint: 0.38
   displayedLevelNumber: 1
   attemptsPerLevel: 3
   levelTimeMultiplier: 2
@@ -61952,10 +61946,6 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1000001, guid: f17c64aa34e9408cbc60ba73226e9659, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 1000001, guid: f17c64aa34e9408cbc60ba73226e9659, type: 3}
       propertyPath: m_LocalRotation.x
       value: 0
       objectReference: {fileID: 0}
@@ -61966,6 +61956,10 @@ PrefabInstance:
     - target: {fileID: 1000001, guid: f17c64aa34e9408cbc60ba73226e9659, type: 3}
       propertyPath: m_LocalRotation.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1000001, guid: f17c64aa34e9408cbc60ba73226e9659, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1000001, guid: f17c64aa34e9408cbc60ba73226e9659, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -62037,13 +62031,13 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 2159973352995989666, guid: 31e536457b18f1947b49df2b2631b66d, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 7900499783024486531, guid: 31e536457b18f1947b49df2b2631b66d, type: 3}
       propertyPath: m_Name
       value: Level 1 Tower 1 (3x3)
+      objectReference: {fileID: 0}
+    - target: {fileID: 2159973352995989666, guid: 31e536457b18f1947b49df2b2631b66d, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
