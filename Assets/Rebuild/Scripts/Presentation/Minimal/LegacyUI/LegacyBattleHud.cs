@@ -17,7 +17,6 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         [SerializeField] private Button editButton;
         private TextMeshProUGUI levelLabel, livesLabel;
         private Canvas canvas;
-        private TMP_FontAsset hudFont;
         private BattleCombatControls debugControls;
         private bool previousDebugPanel;
         private bool previousEditButtonActive;
@@ -61,8 +60,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             canvas = GetComponent<Canvas>(); canvas.enabled = true;
             if (session == null || speedSlider == null)
             { Debug.LogError("Legacy HUD needs its scene bindings.", this); return; }
-            var authoredText = editButton != null ? editButton.GetComponentInChildren<TMP_Text>(true) : GetComponentInChildren<TMP_Text>(true);
-            hudFont = authoredText != null && authoredText.font != null ? authoredText.font : TMP_Settings.defaultFontAsset;
+            PaintSquadSceneSkin.StyleSpeedBar(speedSlider);
             if (editButton != null)
             {
                 previousEditButtonActive = editButton.gameObject.activeSelf;
@@ -130,6 +128,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             {
                 var button = LegacyUiKit.CreateButton(transform, "Squad Selection " + (i + 1), Vector2.zero,
                     Vector2.one * 56 * scale, LegacyUiKit.PanelLineColor, 0);
+                LegacyUiKit.RoundButton(button.image); // Paint Squad round badge with a drop edge.
                 var rect = (RectTransform)button.transform;
                 rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0, 1);
                 rect.anchoredPosition = new Vector2(24, -124 - i * 68) * scale;
@@ -159,13 +158,12 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             if (pauseButton == null)
             {
                 pauseButton = LegacyUiKit.CreateButton(speedSlider.transform, "Pause Battle", Vector2.zero,
-                    new Vector2(80, 22), LegacyUiKit.PanelLineColor, 3);
+                    new Vector2(80, 22), LegacyUiKit.ButtonSlate, 8);
                 var rect = (RectTransform)pauseButton.transform;
                 rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 1);
                 rect.anchoredPosition = new Vector2(0, 30);
-                pauseLabel = LegacyUiKit.CreateText(rect, "Label", "Pause", Vector2.zero,
-                    new Vector2(76, 20), 12, Color.white);
-                pauseLabel.font = hudFont;
+                pauseLabel = LegacyUiKit.CreateText(rect, "Label", "Pause", new Vector2(0, 1),
+                    new Vector2(76, 20), 13, Color.white, FontStyles.Bold, 1);
                 pauseButton.onClick.AddListener(TogglePause);
             }
             pauseButton.gameObject.SetActive(true);
@@ -216,8 +214,8 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         }
         private TextMeshProUGUI CreateCornerLabel(string name, Vector2 position, Vector2 size, float fontSize, FontStyles style)
         {
-            var label = LegacyUiKit.CreateText(transform, name, "", position, size, fontSize, Color.white, style);
-            label.font = hudFont;
+            // Outlined Lilita One over the scene, like the Paint Squad HUD (no backing plate, so the playfield stays clear).
+            var label = LegacyUiKit.CreateText(transform, name, "", position, size, fontSize, Color.white, FontStyles.Bold, style == FontStyles.Bold ? 2 : 0);
             label.rectTransform.anchorMin = label.rectTransform.anchorMax = label.rectTransform.pivot = new Vector2(0, 1);
             label.rectTransform.anchoredPosition = position;
             label.alignment = TextAlignmentOptions.TopLeft;

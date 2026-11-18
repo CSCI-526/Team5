@@ -46,6 +46,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                     ? "Try again with your Captain. Level 1 uses its fixed squad."
                     : "Summon stronger units or rearrange your squad on the Upgrade screen.";
             }
+            PaintSquadSceneSkin.StyleSettlement(gameObject.scene, missionHeading, rewardHeading, rewardAmount, rewardDescription, victory);
         }
 
         public void ContinueToUpgrade() => BattleSceneFlow.ContinueToUpgrade();

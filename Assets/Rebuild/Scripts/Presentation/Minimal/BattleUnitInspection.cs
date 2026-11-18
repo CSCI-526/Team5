@@ -337,7 +337,7 @@ namespace Team5.Rebuild.Presentation
             uiRoot.transform.SetParent(transform, false);
             LegacyUiKit.CreateCanvas(uiRoot, 100, new Vector2(1280, 720), 0.5f);
             var background = LegacyUiKit.CreateImage(uiRoot.transform, "Unit Details Panel", Vector2.zero, Vector2.zero,
-                new Color(0.08f, 0.11f, 0.17f, 0.97f));
+                new Color(LegacyUiKit.Slate.r, LegacyUiKit.Slate.g, LegacyUiKit.Slate.b, 0.96f));
             background.raycastTarget = true;
             panel = background.rectTransform;
             panel.anchorMin = Vector2.zero; panel.anchorMax = new Vector2(0.5f, 1);
@@ -349,11 +349,12 @@ namespace Team5.Rebuild.Presentation
             icon = LegacyUnitIconUI.Create(panel, Vector2.zero, 110);
             icon.Rect.anchorMin = icon.Rect.anchorMax = new Vector2(0, 1);
             icon.Rect.anchoredPosition = new Vector2(65, -65);
-            var close = LegacyUiKit.CreateButton(panel, "Close Details", Vector2.zero, new Vector2(48, 40), LegacyUiKit.PanelLineColor, 6);
+            var close = LegacyUiKit.CreateButton(panel, "Close Details", Vector2.zero, new Vector2(48, 44), LegacyUiKit.Red, 12);
             var closeRect = (RectTransform)close.transform;
             closeRect.anchorMin = closeRect.anchorMax = closeRect.pivot = Vector2.one;
             closeRect.anchoredPosition = new Vector2(-20, -20);
-            LegacyUiKit.CreateText(close.transform, "Label", "X", Vector2.zero, new Vector2(48, 40), 24, Color.white);
+            if (LegacyUiKit.CreateIcon(close.transform, "Icon", "close", new Vector2(0, 2), 28) == null)
+                LegacyUiKit.CreateText(close.transform, "Label", "X", Vector2.zero, new Vector2(48, 40), 24, Color.white);
             close.onClick.AddListener(CloseInspection);
             details = LegacyUiKit.CreateText(panel, "Live Stats", "", Vector2.zero, Vector2.zero, 22, LegacyUiKit.TextColor);
             details.alignment = TextAlignmentOptions.TopLeft;

@@ -102,13 +102,14 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             _ => string.Empty
         };
 
+        // UI rarity colors from the Paint Squad palette (silver grey, blue, purple, gold).
         public static Color RarityColor(UnitRarity rarity) => rarity switch
         {
-            UnitRarity.Common => new Color(0.75f, 0.75f, 0.75f),    // Silver
-            UnitRarity.Rare => new Color(0.20f, 0.55f, 0.90f),      // Blue
-            UnitRarity.Epic => new Color(0.58f, 0.25f, 0.85f),      // Purple
-            UnitRarity.Legendary => new Color(1.00f, 0.75f, 0.15f), // Gold/Orange
-            _ => new Color(0.60f, 0.60f, 0.60f)
+            UnitRarity.Common => LegacyUiKit.Hex(0xA9AEB9),    // Silver
+            UnitRarity.Rare => LegacyUiKit.Hex(0x3E8EDB),      // Blue
+            UnitRarity.Epic => LegacyUiKit.Hex(0x8F63B0),      // Purple
+            UnitRarity.Legendary => LegacyUiKit.Hex(0xF6B12B), // Gold
+            _ => LegacyUiKit.Hex(0x868B97)
         };
     }
 }

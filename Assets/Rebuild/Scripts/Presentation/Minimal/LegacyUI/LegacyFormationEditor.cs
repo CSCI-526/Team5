@@ -35,7 +35,9 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                 var backdrop = LegacyUiKit.CreateImage(root, "Input Blocker", Vector2.zero, Vector2.zero, new Color(0, 0, 0, 0.15f));
                 LegacyUiKit.Stretch(backdrop.rectTransform); backdrop.raycastTarget = true;
             }
-            var panel = LegacyUiKit.CreateImage(root, "Panel", new Vector2(-20, -20), new Vector2(320, owner.Session.ManualSquadMovement && !owner.Session.ContinuousSquadMovement ? 510 : 410), LegacyUiKit.PanelColor, 12);
+            // Cream Paint Squad card with a thicker bottom edge.
+            var panel = LegacyUiKit.CreateImage(root, "Panel", new Vector2(-20, -20), new Vector2(320, owner.Session.ManualSquadMovement && !owner.Session.ContinuousSquadMovement ? 510 : 410), LegacyUiKit.CardColor, 22);
+            LegacyUiKit.Panel(panel);
             if (embedded)
             {
                 panel.rectTransform.anchoredPosition = Vector2.zero;
@@ -47,13 +49,13 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             }
             panel.raycastTarget = true;
             var content = LegacyUiKit.CreateRect(panel.transform, "Content", Vector2.zero, Vector2.zero);
-            LegacyUiKit.CreateText(content, "Title", "EDIT SQUAD", new Vector2(0, 174), new Vector2(280, 30), 24, LegacyUiKit.TextColor, FontStyles.Bold);
-            LegacyUiKit.CreateText(content, "Paused", simulation.ContinuousMovementEnabled ? "Drag to apply immediately" : "Battle paused", new Vector2(0, 145), new Vector2(280, 24), 16, LegacyUiKit.HighlightColor);
+            LegacyUiKit.CreateText(content, "Title", "EDIT SQUAD", new Vector2(0, 174), new Vector2(280, 30), 28, LegacyUiKit.Ink, FontStyles.Bold);
+            LegacyUiKit.CreateText(content, "Paused", simulation.ContinuousMovementEnabled ? "Drag to apply immediately" : "Battle paused", new Vector2(0, 145), new Vector2(280, 24), 16, LegacyUiKit.GoldDark);
             grid = LegacyFormationGrid.Create(content, root, simulation);
-            var done = LegacyUiKit.CreateButton(content, "Apply And Resume", new Vector2(0, -170), new Vector2(260, 48), LegacyUiKit.NodeGreenColor, 8);
-            LegacyUiKit.CreateText(done.transform, "Label", simulation.ContinuousMovementEnabled ? "DONE" : "APPLY & RESUME", Vector2.zero, new Vector2(250, 40), 20, Color.white, FontStyles.Bold);
+            var done = LegacyUiKit.CreateButton(content, "Apply And Resume", new Vector2(0, -170), new Vector2(260, 52), LegacyUiKit.NodeGreenColor, 14);
+            LegacyUiKit.CreateText(done.transform, "Label", simulation.ContinuousMovementEnabled ? "DONE" : "APPLY & RESUME", new Vector2(0, 3), new Vector2(250, 40), 22, Color.white, FontStyles.Bold);
             done.onClick.AddListener(() => ApplyAndResume());
-            error = LegacyUiKit.CreateText(content, "Error", "", new Vector2(0, -136), new Vector2(290, 20), 11, Color.red);
+            error = LegacyUiKit.CreateText(content, "Error", "", new Vector2(0, -136), new Vector2(290, 20), 12, LegacyUiKit.Red);
             FormationChangeBudget.ShowNote(owner, content);
             if (simulation.ContinuousMovementEnabled)
                 grid.ApplyLiveFormation = slots =>
@@ -69,8 +71,8 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                 };
             if (owner.Session.ManualSquadMovement && !owner.Session.ContinuousSquadMovement)
             {
-                var move = LegacyUiKit.CreateButton(content, "Move Squad", new Vector2(0, -226), new Vector2(260, 48), LegacyUiKit.NodeBlueColor, 8);
-                LegacyUiKit.CreateText(move.transform, "Label", "MOVE SQUAD", Vector2.zero, new Vector2(250, 40), 20, Color.white, FontStyles.Bold);
+                var move = LegacyUiKit.CreateButton(content, "Move Squad", new Vector2(0, -226), new Vector2(260, 52), LegacyUiKit.NodeBlueColor, 14);
+                LegacyUiKit.CreateText(move.transform, "Label", "MOVE SQUAD", new Vector2(0, 3), new Vector2(250, 40), 22, Color.white, FontStyles.Bold);
                 move.onClick.AddListener(() =>
                 {
                     var input = SquadRouteInput.ForSession(owner.Session);

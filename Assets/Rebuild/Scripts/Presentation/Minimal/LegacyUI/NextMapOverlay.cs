@@ -89,7 +89,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
 
         private static float LegendLabel(Transform parent, string text, RectTransform swatch, float x, float y)
         {
-            var label = LegacyUiKit.CreateText(parent, "Legend " + text, text, Vector2.zero, new Vector2(160f, 20f), 13, LegacyUiKit.MutedColor, FontStyles.Bold, 2);
+            var label = LegacyUiKit.CreateText(parent, "Legend " + text, text, Vector2.zero, new Vector2(160f, 20f), 14, LegacyUiKit.InkMuted, FontStyles.Bold, 2);
             label.alignment = TextAlignmentOptions.Left;
             label.rectTransform.anchoredPosition = new Vector2(x + 30f + 80f, y);
             return x + 30f + label.GetPreferredValues(text).x + 26f;

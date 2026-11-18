@@ -27,28 +27,32 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         private void Build()
         {
             LegacyUiKit.CreateCanvas(gameObject, 2000, new Vector2(1280, 720), 0.5f);
-            var backdrop = LegacyUiKit.CreateImage(transform, "Backdrop", Vector2.zero, Vector2.zero, new Color(0.025f, 0.035f, 0.055f, 0.95f));
+            var backdrop = LegacyUiKit.CreateImage(transform, "Backdrop", Vector2.zero, Vector2.zero, new Color(LegacyUiKit.SlateDark.r, LegacyUiKit.SlateDark.g, LegacyUiKit.SlateDark.b, 0.82f));
             LegacyUiKit.Stretch(backdrop.rectTransform); backdrop.raycastTarget = true;
-            var card = LegacyUiKit.CreateImage(transform, "Recovery Card", Vector2.zero, new Vector2(760, 400), LegacyUiKit.PanelColor, 12).transform;
+            // Paint Squad defeat card: cream board under a slate ribbon.
+            var face = LegacyUiKit.CreateCard(transform, "Recovery Card", Vector2.zero, new Vector2(760, 400), 26);
+            var card = face.transform.parent;
+            LegacyUiKit.CreateShadow((RectTransform)card);
             var exhausted = session.AttemptsRemaining == 0;
-            LegacyUiKit.CreateText(card, "Title", exhausted ? "OUT OF LIVES" : "SQUAD DEFEATED", new Vector2(0, 140), new Vector2(700, 55), 34, Color.white, FontStyles.Bold);
+            var ribbon = LegacyUiKit.CreateRibbon(card, "Title", exhausted ? "OUT OF LIVES" : "SQUAD DEFEATED", new Vector2(0, 204), new Vector2(560, 84), LegacyUiKit.Slate, 40);
+            ribbon.name = "Title Ribbon";
             LegacyUiKit.CreateText(card, "Description", exhausted
                 ? $"You have used all {session.AttemptsPerLevel} lives.\nExit and restart the game to try again."
                 : $"Lives: {session.AttemptsRemaining}/{session.AttemptsPerLevel}\nRestart, or return to the last tutorial hint.\nRewinding does not refund a lost life.",
-                new Vector2(0, 45), new Vector2(700, 110), 23, LegacyUiKit.TextColor);
+                new Vector2(0, 58), new Vector2(700, 110), 24, LegacyUiKit.Ink);
             if (!exhausted)
             {
                 Button(card, "Restart", "RESTART LEVEL", new Vector2(-170, -50), BattleSceneFlow.RestartCurrentLevel);
                 var rewind = Button(card, "Rewind", "BACK TO LAST HINT", new Vector2(170, -50), () => BattleSceneFlow.RewindLevelOne());
                 rewind.interactable = session.HasTutorialCheckpoint;
             }
-            Button(card, "Exit", "EXIT & RESTART GAME", new Vector2(0, -140), BattleSceneFlow.ReturnToStart);
+            Button(card, "Exit", "EXIT & RESTART GAME", new Vector2(0, -140), BattleSceneFlow.ReturnToStart, LegacyUiKit.ButtonSlate);
         }
 
-        private static Button Button(Transform parent, string name, string label, Vector2 position, UnityEngine.Events.UnityAction action)
+        private static Button Button(Transform parent, string name, string label, Vector2 position, UnityEngine.Events.UnityAction action, Color? face = null)
         {
-            var button = LegacyUiKit.CreateButton(parent, name, position, new Vector2(320, 58), LegacyUiKit.NodeBlueColor, 6);
-            LegacyUiKit.CreateText(button.transform, "Label", label, Vector2.zero, new Vector2(310, 54), 21, Color.white, FontStyles.Bold);
+            var button = LegacyUiKit.CreateButton(parent, name, position, new Vector2(320, 62), face ?? (name == "Restart" ? LegacyUiKit.Green : LegacyUiKit.Gold), 16);
+            LegacyUiKit.CreateText(button.transform, "Label", label, new Vector2(0, 3), new Vector2(310, 54), 24, Color.white, FontStyles.Bold);
             button.onClick.AddListener(() => GameAnalytics.Track("recovery_choice", ("choice", name.ToLowerInvariant())));
             button.onClick.AddListener(action);
             return button;

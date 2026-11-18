@@ -75,14 +75,14 @@ namespace Team5.Rebuild.Presentation
             if(hud==null||gateGuidePanel!=null)return;
             var scaler=hud.GetComponent<CanvasScaler>();
             var scale=scaler!=null&&scaler.uiScaleMode==CanvasScaler.ScaleMode.ScaleWithScreenSize?scaler.referenceResolution.x/1280f:1f;
-            var panel=LegacyUiKit.CreateImage(hud.transform,"Wooden Gate Guide",Vector2.zero,new Vector2(940,90)*scale,LegacyUiKit.DropColor);
+            var panel=LegacyUiKit.CreateImage(hud.transform,"Wooden Gate Guide",Vector2.zero,new Vector2(940,90)*scale,LegacyUiKit.Gold,24*scale);
             gateGuidePanel=panel.gameObject;
             gateIconFlashStart=Time.unscaledTime;
             gateIconFlashing=!replanReminder;
             gateGuideDismissAt=replanReminder?Time.unscaledTime+8:float.PositiveInfinity;
             var rect=panel.rectTransform;rect.anchorMin=rect.anchorMax=rect.pivot=new Vector2(.5f,0);
             rect.anchoredPosition=new Vector2(0,24)*scale;
-            var background=LegacyUiKit.CreateImage(rect,"Background",Vector2.zero,Vector2.zero,new Color(.06f,.17f,.13f,.96f));
+            var background=LegacyUiKit.CreateImage(rect,"Background",Vector2.zero,Vector2.zero,new Color(LegacyUiKit.Slate.r,LegacyUiKit.Slate.g,LegacyUiKit.Slate.b,.96f),21*scale);
             LegacyUiKit.Stretch(background.rectTransform);background.rectTransform.offsetMin=Vector2.one*3*scale;background.rectTransform.offsetMax=-Vector2.one*3*scale;
             var label=LegacyUiKit.CreateText(rect,"Gate Instructions",
                 replanReminder

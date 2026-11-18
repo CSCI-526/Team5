@@ -10,9 +10,10 @@ namespace Team5.Rebuild.Presentation.LegacyUI
     public sealed class LegacyHealthBars : MonoBehaviour
     {
         private sealed class Bar { public RectTransform Root; public Image Fill; public float Width, Height, Inset; }
-        private static readonly Color backgroundColor = new Color(0.055f, 0.067f, 0.082f, 0.92f);
-        private static readonly Color fullColor = new Color(0.35f, 0.85f, 0.4f);
-        private static readonly Color emptyColor = new Color(0.9f, 0.25f, 0.2f);
+        // Paint Squad pills: dark ink track, green to red fill.
+        private static readonly Color backgroundColor = new Color(0.165f, 0.176f, 0.227f, 0.9f);
+        private static readonly Color fullColor = LegacyUiKit.Green;
+        private static readonly Color emptyColor = LegacyUiKit.Red;
         private readonly Dictionary<int, Bar> unitBars = new Dictionary<int, Bar>();
         private readonly Dictionary<int, Bar> towerBars = new Dictionary<int, Bar>();
         private readonly HashSet<int> damaged = new HashSet<int>();
@@ -54,10 +55,10 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         }
         private Bar Create(string name, float width, float height, float inset)
         {
-            var background = LegacyUiKit.CreateImage(transform, name, Vector2.zero, new Vector2(width, height), backgroundColor);
+            var background = LegacyUiKit.CreatePill(transform, name, Vector2.zero, new Vector2(width, height), backgroundColor);
             var rect = background.rectTransform;
             rect.anchorMin = rect.anchorMax = Vector2.zero;
-            var fill = LegacyUiKit.CreateImage(rect, "Fill", Vector2.zero, new Vector2(width - inset * 2, height - inset * 2), fullColor);
+            var fill = LegacyUiKit.CreatePill(rect, "Fill", Vector2.zero, new Vector2(width - inset * 2, height - inset * 2), fullColor);
             fill.rectTransform.anchorMin = fill.rectTransform.anchorMax = new Vector2(0, 0.5f);
             fill.rectTransform.pivot = new Vector2(0, 0.5f);
             fill.rectTransform.anchoredPosition = new Vector2(inset, 0);
@@ -92,7 +93,9 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             }
             bar.Root.gameObject.SetActive(visible && screen.z > 0);
             if (!visible) return;
-            if (RectTransformUtility.ScreenPointToLocalPointInRectangle((RectTransform)transform, screen, null, out var local))
+            var canvas = GetComponentInParent<Canvas>();
+            var eventCamera = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null;
+            if (RectTransformUtility.ScreenPointToLocalPointInRectangle((RectTransform)transform, screen, eventCamera, out var local))
                 bar.Root.anchoredPosition = local;
             fraction = Mathf.Clamp01(fraction);
             bar.Fill.rectTransform.sizeDelta = new Vector2((bar.Width - bar.Inset * 2) * fraction, bar.Height - bar.Inset * 2);

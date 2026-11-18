@@ -6,7 +6,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
     public sealed class StartWaveNotice : MonoBehaviour
     {
         private const string Message = "Drag a unit into your squad to start";
-        private static readonly Color EmptyCountColor = new Color(1f, 0.35f, 0.35f);
+        private static readonly Color EmptyCountColor = LegacyUiKit.Red;
 
         [SerializeField, Tooltip("Gap in pixels between the bottom of Start Wave and the center of the notice.")] private float gap = 18f;
 
@@ -21,10 +21,8 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         public static StartWaveNotice Attach(LegacyUpgradeScene owner, RectTransform root)
         {
             if (owner == null || root == null || owner.StartWaveButton == null) return null;
-            var label = LegacyUiKit.CreateText(root, "Start Wave Notice", Message, Vector2.zero, new Vector2(480f, 26f), 16,
-                LegacyUiKit.HighlightColor, FontStyles.Bold);
-            var buttonText = owner.StartWaveButton.GetComponentInChildren<TMP_Text>(true);
-            if (buttonText != null) label.font = buttonText.font;
+            var label = LegacyUiKit.CreateText(root, "Start Wave Notice", Message, Vector2.zero, new Vector2(480f, 26f), 17,
+                LegacyUiKit.RedDark, FontStyles.Bold, 1);
             label.enabled = false;
             var notice = label.gameObject.AddComponent<StartWaveNotice>();
             notice.owner = owner;

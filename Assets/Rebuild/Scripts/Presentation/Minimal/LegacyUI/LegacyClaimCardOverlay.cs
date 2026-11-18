@@ -22,36 +22,40 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             view.owner = owner;
 
             LegacyUiKit.CreateCanvas(host, 200, new Vector2(1280, 720), 0.5f);
-            var backdrop = LegacyUiKit.CreateImage(host.transform, "Backdrop", Vector2.zero, Vector2.zero, new Color(0.02f, 0.03f, 0.05f, 0.94f));
+            var backdrop = LegacyUiKit.CreateImage(host.transform, "Backdrop", Vector2.zero, Vector2.zero, LegacyUiKit.DimColor);
             LegacyUiKit.Stretch(backdrop.rectTransform);
             backdrop.raycastTarget = true;
 
-            // Main modal container frame
-            LegacyUiKit.CreateImage(host.transform, "Modal Border", new Vector2(0, 6), new Vector2(1024, 654), LegacyUiKit.PanelLineColor, 18);
-            var modal = LegacyUiKit.CreateImage(host.transform, "Modal Body", new Vector2(0, 6), new Vector2(1018, 648), new Color(0.06f, 0.08f, 0.13f, 0.98f), 16).rectTransform;
+            // Main modal: a cream Paint Squad board with a red title ribbon across its top edge.
+            var border = LegacyUiKit.CreateImage(host.transform, "Modal Border", new Vector2(0, -4), new Vector2(1030, 640), LegacyUiKit.CardRimColor, 30);
+            if (LegacyUiKit.Skin != null && LegacyUiKit.Skin.panel != null) { border.sprite = LegacyUiKit.Skin.panel; border.pixelsPerUnitMultiplier = LegacyUiKit.SkinCornerRadius / 30f; }
+            LegacyUiKit.CreateShadow(border.rectTransform);
+            var modal = LegacyUiKit.CreateImage(host.transform, "Modal Body", new Vector2(0, 0), new Vector2(1018, 624), LegacyUiKit.CardColor, 26).rectTransform;
 
             var shop = BattleSceneFlow.CardShop;
             var tier = Mathf.Max(1, BattleSceneFlow.HighestClearedLevel);
             var (minLv, maxLv) = shop.GetLevelRange();
 
-            LegacyUiKit.CreateText(host.transform, "Title", "SUMMON NEW UNIT", new Vector2(0, 286),
-                new Vector2(900, 46), 34, Color.white, FontStyles.Bold, 3);
+            LegacyUiKit.CreateRibbon(host.transform, "Title Ribbon", string.Empty, new Vector2(0, 300), new Vector2(520, 80), LegacyUiKit.Red);
+            LegacyUiKit.CreateText(host.transform, "Title", "SUMMON NEW UNIT", new Vector2(0, 306),
+                new Vector2(900, 46), 38, Color.white, FontStyles.Bold, 3);
 
             // Tier & Level Range Pill + Color-Coded Rarity Boxes
             BuildTierAndOddsRow(modal, tier, minLv, maxLv, shop);
 
             // Gold Cost & Balance Pill
             var balance = BattleSceneFlow.HasUnlimitedGold ? "UNLIMITED" : $"{BattleSceneFlow.GoldBalance:N0} Gold";
-            var pricePill = LegacyUiKit.CreateImage(modal, "Price Pill", new Vector2(0, 190), new Vector2(460, 34), LegacyUiKit.CellColor, 8);
+            var pricePill = LegacyUiKit.CreatePill(modal, "Price Pill", new Vector2(0, 190), new Vector2(500, 38), LegacyUiKit.CardInnerColor);
+            LegacyUiKit.CreateIcon(pricePill.transform, "Coin", "coin", new Vector2(-232, 0), 44);
             LegacyUiKit.CreateText(pricePill.transform, "Price", $"Summon Cost: {shop.NextPrice} Gold   |   Balance: {balance}",
-                Vector2.zero, new Vector2(440, 30), 18, LegacyUiKit.HighlightColor, FontStyles.Bold);
+                new Vector2(10, 0), new Vector2(440, 30), 19, LegacyUiKit.Ink, FontStyles.Bold);
 
             // Summon Cards (wider 310px spacing)
             for (var i = 0; i < offer.Count; i++)
                 view.BuildSummonCard(i, offer[i], new Vector2((i - (offer.Count - 1) * 0.5f) * 310, -18), shop);
 
-            var cancel = LegacyUiKit.CreateButton(host.transform, "Cancel", new Vector2(0, -268), new Vector2(240, 50), LegacyUiKit.PanelLineColor, 8);
-            LegacyUiKit.CreateText(cancel.transform, "Label", "CANCEL", Vector2.zero, new Vector2(230, 46), 21, Color.white, FontStyles.Bold);
+            var cancel = LegacyUiKit.CreateButton(host.transform, "Cancel", new Vector2(0, -262), new Vector2(240, 56), LegacyUiKit.ButtonSlate, 14);
+            LegacyUiKit.CreateText(cancel.transform, "Label", "CANCEL", new Vector2(0, 3), new Vector2(230, 46), 24, Color.white, FontStyles.Bold);
             cancel.onClick.AddListener(() =>
             {
                 GameAnalytics.Track("summon_cancel", ("price", shop.NextPrice), ("gold", BattleSceneFlow.GoldBalance));
@@ -73,7 +77,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             var (tierMinLv, tierMaxLv) = shop.GetLevelRange();
             var tierNum = Mathf.Max(1, shop.HighestStageCleared);
             var tierLabel = LegacyUiKit.CreateText(container, "TierText", $"TIER {tierNum} (Lv.{tierMinLv}-{tierMaxLv})",
-                new Vector2(-235, 0), new Vector2(180, 24), 15, LegacyUiKit.HighlightColor, FontStyles.Bold);
+                new Vector2(-235, 0), new Vector2(180, 24), 16, LegacyUiKit.GoldDark, FontStyles.Bold);
             tierLabel.alignment = TextAlignmentOptions.Right;
 
             var (c, r, e, l) = shop.GetRarityWeights();
@@ -93,15 +97,12 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                 var swatchColor = new Color(color.r, color.g, color.b, alpha);
 
                 // Colored rarity box instead of "C:" / "R:" text prefix
-                var box = LegacyUiKit.CreateImage(container, $"{entry.name} Box", new Vector2(x, 0), new Vector2(16, 16), swatchColor, 4);
-                var outline = box.gameObject.AddComponent<Outline>();
-                outline.effectColor = new Color(0f, 0f, 0f, 0.65f);
-                outline.effectDistance = new Vector2(1f, -1f);
+                LegacyUiKit.CreateCircle(container, $"{entry.name} Box", new Vector2(x, 0), 18, swatchColor);
 
                 var text = $"{entry.name} {entry.pct}%";
                 var label = LegacyUiKit.CreateText(container, $"{entry.name} Odds", text,
-                    new Vector2(x + 14 + 52, 0), new Vector2(104, 22), 14,
-                    entry.pct > 0 ? LegacyUiKit.TextColor : LegacyUiKit.MutedColor, FontStyles.Bold);
+                    new Vector2(x + 14 + 52, 0), new Vector2(104, 22), 15,
+                    entry.pct > 0 ? LegacyUiKit.Ink : LegacyUiKit.InkMuted, FontStyles.Bold);
                 label.alignment = TextAlignmentOptions.Left;
 
                 x += 22f + label.GetPreferredValues(text).x + 18f;
@@ -119,20 +120,18 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             var rarityColor = LegacyUnitLooks.RarityColor(rolledUnit.Rarity);
 
             // Outer rarity-colored frame
-            var button = LegacyUiKit.CreateButton(transform, $"Summon Option {index}", position, new Vector2(276, 364), rarityColor, 14);
-            var cardOutline = button.gameObject.AddComponent<Outline>();
-            cardOutline.effectColor = new Color(rarityColor.r, rarityColor.g, rarityColor.b, 0.45f);
-            cardOutline.effectDistance = new Vector2(3, -3);
+            // Paint Squad card: rarity rim with a chunky bottom edge around a cream face.
+            var button = LegacyUiKit.CreateButton(transform, $"Summon Option {index}", position, new Vector2(276, 364), rarityColor, 22);
+            LegacyUiKit.CreateShadow((RectTransform)button.transform, 16, 10, 0.22f);
 
-            // Inner dark card body
-            LegacyUiKit.CreateImage(button.transform, "Face", Vector2.zero, new Vector2(266, 354), LegacyUiKit.PanelColor, 11);
+            LegacyUiKit.CreateImage(button.transform, "Face", new Vector2(0, 5), new Vector2(264, 340), LegacyUiKit.CardColor, 17);
 
-            // Top Rarity Header Ribbon
-            var header = LegacyUiKit.CreateImage(button.transform, "Rarity Ribbon", new Vector2(0, 156), new Vector2(246, 28),
-                new Color(rarityColor.r * 0.28f, rarityColor.g * 0.28f, rarityColor.b * 0.28f, 0.95f), 6);
-            LegacyUiKit.CreateImage(header.transform, "Rarity Swatch", new Vector2(-98, 0), new Vector2(14, 14), rarityColor, 3);
+            // Top rarity header: a solid rarity strip with an outlined label.
+            var header = LegacyUiKit.CreateImage(button.transform, "Rarity Ribbon", new Vector2(0, 154), new Vector2(246, 30),
+                rarityColor, 12);
+            LegacyUiKit.CreateCircle(header.transform, "Rarity Swatch", new Vector2(-104, 0), 16, Color.white);
             LegacyUiKit.CreateText(header.transform, "Rarity Banner", $"{rolledUnit.Rarity.ToString().ToUpperInvariant()} TIER",
-                new Vector2(6, 0), new Vector2(200, 24), 13, rarityColor, FontStyles.Bold, 3);
+                new Vector2(6, 1), new Vector2(200, 24), 16, Color.white, FontStyles.Bold, 3);
 
             // Unit Introduction (preserves exact child hierarchy for tests)
             var introduction = LegacyUiKit.CreateRect(button.transform, "Introduction", new Vector2(0, 16), new Vector2(200, 262));
@@ -140,9 +139,10 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             LegacyUnitIntroductionUI.Build(introduction, rolledUnit, false);
 
             // Bottom Recruit Action Pill
-            var buyPill = LegacyUiKit.CreateImage(button.transform, "Buy Pill", new Vector2(0, -144), new Vector2(236, 42), LegacyUiKit.NodeGreenColor, 8);
-            LegacyUiKit.CreateText(buyPill.transform, "Cost", $"RECRUIT  •  {shop.NextPrice}G", Vector2.zero,
-                new Vector2(226, 36), 18, Color.white, FontStyles.Bold, 1);
+            var buyPill = LegacyUiKit.CreateImage(button.transform, "Buy Pill", new Vector2(0, -140), new Vector2(236, 46), LegacyUiKit.NodeGreenColor, 14);
+            LegacyUiKit.Chunky(buyPill);
+            LegacyUiKit.CreateText(buyPill.transform, "Cost", $"RECRUIT  •  {shop.NextPrice}G", new Vector2(0, 3),
+                new Vector2(226, 36), 21, Color.white, FontStyles.Bold, 1);
 
             button.onClick.AddListener(() =>
             {

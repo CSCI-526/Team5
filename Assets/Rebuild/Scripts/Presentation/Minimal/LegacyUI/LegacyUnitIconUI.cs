@@ -17,30 +17,34 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             // Compact cards drop the stat block, so lower the identity block to keep it centered.
             var y = compact ? -25f : 0f;
 
-            LegacyUiKit.CreateCircle(panel, "Emblem Ring", new Vector2(0, 75 + y), 76, rarityColor);
-            var face = LegacyUiKit.CreateCircle(panel, "Emblem", new Vector2(0, 75 + y), 70, LegacyUiKit.PanelColor);
-            LegacyUnitIconUI.Create(face.transform, Vector2.zero, 76 * 1.15f).SetType(role);
+            // Paint Squad card art: the portrait on a big rarity disc with a rarity ring, larger than the old
+            // emblem so the role reads at a glance in the small storage cards.
+            var emblemY = compact ? 56f : 74f;
+            var diameter = compact ? 100f : 88f;
+            LegacyUiKit.CreateCircle(panel, "Emblem Ring", new Vector2(0, emblemY), diameter, rarityColor);
+            var face = LegacyUiKit.CreateCircle(panel, "Emblem", new Vector2(0, emblemY), diameter - 8f, Color.Lerp(rarityColor, Color.white, 0.55f));
+            LegacyUnitIconUI.Create(face.transform, new Vector2(0, -diameter * 0.04f), diameter * 2f).SetType(role);
 
-            LegacyUiKit.CreateText(panel, "Name", $"{LegacyUnitLooks.Name(role)}  Lv.{stats.Level}", new Vector2(0, 18 + y), new Vector2(200, 24), 17,
-                LegacyUiKit.TextColor, FontStyles.Bold, 2);
+            LegacyUiKit.CreateText(panel, "Name", $"{LegacyUnitLooks.Name(role)}  Lv.{stats.Level}", new Vector2(0, 18 + y), new Vector2(200, 24), 19,
+                LegacyUiKit.Ink, FontStyles.Bold, 1);
 
-            LegacyUiKit.CreateText(panel, "Rarity", stats.Rarity.ToString().ToUpperInvariant(), new Vector2(0, -2 + y), new Vector2(200, 18), 13,
-                rarityColor, FontStyles.Bold, 2);
+            LegacyUiKit.CreateText(panel, "Rarity", stats.Rarity.ToString().ToUpperInvariant(), new Vector2(0, -2 + y), new Vector2(200, 18), 14,
+                LegacyUiKit.Darker(rarityColor, 0.85f), FontStyles.Bold, 2);
 
             var status = showAvailability
-                ? LegacyUiKit.CreateText(panel, "Availability", "", new Vector2(0, -20 + y), new Vector2(200, 20), 13, LegacyUiKit.MutedColor)
+                ? LegacyUiKit.CreateText(panel, "Availability", "", new Vector2(0, -20 + y), new Vector2(200, 20), 14, LegacyUiKit.InkMuted)
                 : null;
 
             if (compact)
             {
-                LegacyUiKit.CreateImage(panel, "Divider", new Vector2(0, -78), new Vector2(160, 2), rarityColor);
-                LegacyUiKit.CreateText(panel, "Details Hint", "CLICK FOR DETAILS", new Vector2(0, -100), new Vector2(200, 20), 13,
-                    LegacyUiKit.HighlightColor, FontStyles.Bold, 2);
+                LegacyUiKit.CreateImage(panel, "Divider", new Vector2(0, -78), new Vector2(160, 3), LegacyUiKit.CardLineColor, 1.5f);
+                LegacyUiKit.CreateText(panel, "Details Hint", "CLICK FOR DETAILS", new Vector2(0, -100), new Vector2(200, 20), 14,
+                    LegacyUiKit.Blue, FontStyles.Bold, 2);
                 return status;
             }
 
-            LegacyUiKit.CreateText(panel, "Role", ShortDescription(role), new Vector2(0, -38), new Vector2(200, 18), 12, LegacyUiKit.MutedColor);
-            LegacyUiKit.CreateImage(panel, "Divider", new Vector2(0, -54), new Vector2(160, 2), rarityColor);
+            LegacyUiKit.CreateText(panel, "Role", ShortDescription(role), new Vector2(0, -38), new Vector2(200, 18), 13, LegacyUiKit.InkMuted);
+            LegacyUiKit.CreateImage(panel, "Divider", new Vector2(0, -54), new Vector2(160, 3), LegacyUiKit.CardLineColor, 1.5f);
 
             var isAttacker = SquadCombatRules.CanAttackTowers(role);
             var isLegendary = SquadCombatRules.IsLegendaryRole(role);
@@ -85,9 +89,9 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         private static void BuildStat(Transform panel, string name, string value, float y)
         {
             var size = new Vector2(148, 24);
-            var label = LegacyUiKit.CreateText(panel, "Stat", name, new Vector2(0, y), size, 14, LegacyUiKit.MutedColor, FontStyles.Bold, 2);
+            var label = LegacyUiKit.CreateText(panel, "Stat", name, new Vector2(0, y), size, 15, LegacyUiKit.InkMuted, FontStyles.Bold, 2);
             label.alignment = TextAlignmentOptions.Left;
-            var number = LegacyUiKit.CreateText(panel, "Value", value, new Vector2(0, y), size, 18, LegacyUiKit.TextColor, FontStyles.Bold);
+            var number = LegacyUiKit.CreateText(panel, "Value", value, new Vector2(0, y), size, 19, LegacyUiKit.Ink, FontStyles.Bold);
             number.alignment = TextAlignmentOptions.Right;
         }
     }

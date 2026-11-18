@@ -53,23 +53,28 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         {
             Preparation = BattleSceneFlow.PrepareSquad(roster);
             PrepAnalytics.Enter(Preparation);
+            PaintSquadSceneSkin.StyleUpgradeScene(startGameButton);
             screen = new GameObject("Squad Screen", typeof(RectTransform));
             LegacyUiKit.CreateCanvas(screen, 10, new Vector2(1280, 720), 0);
             var root = (RectTransform)screen.transform;
             screenRoot = root;
+            BuildPanels(startGameButton.GetComponentInParent<Canvas>().rootCanvas.transform);
 
+            // Paint Squad currency chip: dark pill, big coin over its left end, white number.
+            var chip = LegacyUiKit.CreatePill(root, "Gold Chip", Vector2.zero, new Vector2(196, 44), new Color(LegacyUiKit.Ink.r, LegacyUiKit.Ink.g, LegacyUiKit.Ink.b, 0.85f));
+            chip.rectTransform.anchorMin = chip.rectTransform.anchorMax = chip.rectTransform.pivot = new Vector2(1, 1);
+            chip.rectTransform.anchoredPosition = new Vector2(-22, -22);
+            LegacyUiKit.CreateIcon(chip.transform, "Coin", "coin", new Vector2(-92, 0), 56);
             goldLabel = LegacyUiKit.CreateText(root, "Gold Balance", "", Vector2.zero, new Vector2(260, 48),
-                30, LegacyUiKit.HighlightColor, FontStyles.Bold);
-            goldLabel.font = startGameButton.GetComponentInChildren<TMP_Text>(true).font;
+                30, Color.white, FontStyles.Bold);
             goldLabel.alignment = TextAlignmentOptions.Right;
             goldLabel.rectTransform.anchorMin = goldLabel.rectTransform.anchorMax = new Vector2(1, 1);
             goldLabel.rectTransform.pivot = new Vector2(1, 1);
-            goldLabel.rectTransform.anchoredPosition = new Vector2(-28, -20);
+            goldLabel.rectTransform.anchoredPosition = new Vector2(-40, -20);
             RefreshGoldLabel();
 
             levelLabel = LegacyUiKit.CreateText(root, "Level Label", "", Vector2.zero, new Vector2(360, 60),
                 36, Color.white, FontStyles.Bold);
-            levelLabel.font = startGameButton.GetComponentInChildren<TMP_Text>(true).font;
             levelLabel.alignment = TextAlignmentOptions.Bottom;
             levelLabel.rectTransform.anchorMin = levelLabel.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
             levelLabel.rectTransform.pivot = new Vector2(0.5f, 0);
@@ -77,10 +82,10 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             levelHeart = (RectTransform)levelLabel.transform.Find("Heart Icon");
             levelHeart.anchorMin = levelHeart.anchorMax = levelHeart.pivot = new Vector2(0.5f, 0.5f);
 
-            previewButton = LegacyUiKit.CreateButton(root, "Preview Next Level", Vector2.zero, new Vector2(240, 48), LegacyUiKit.PanelLineColor, 6);
-            var previewLabel = LegacyUiKit.CreateText(previewButton.transform, "Label", "Preview Next Level", Vector2.zero, Vector2.zero, 24, Color.white);
+            previewButton = LegacyUiKit.CreateButton(root, "Preview Next Level", Vector2.zero, new Vector2(240, 48), LegacyUiKit.ButtonSlate, 12);
+            var previewLabel = LegacyUiKit.CreateText(previewButton.transform, "Label", "PREVIEW NEXT LEVEL", Vector2.zero, Vector2.zero, 24, Color.white, FontStyles.Bold);
             LegacyUiKit.Stretch(previewLabel.rectTransform);
-            previewLabel.font = levelLabel.font;
+            previewLabel.margin = new Vector4(10, 0, 10, 4);
             previewLabel.enableAutoSizing = true;
             previewLabel.fontSizeMin = 14;
             previewLabel.fontSizeMax = 24;
@@ -90,30 +95,31 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             previewButton.onClick.AddListener(OpenNextLevelPreview);
             RefreshLevelLabel();
 
+            LegacyUiKit.CreateRibbon(root, "Warehouse Ribbon", string.Empty, new Vector2(-165, 296), new Vector2(330, 58), LegacyUiKit.Red);
             LegacyUiKit.CreateText(root, "Warehouse Title", "UNIT STORAGE", new Vector2(-165, 300), new Vector2(780, 30),
-                24, LegacyUiKit.TextColor, FontStyles.Bold, 3);
+                28, LegacyUiKit.TextColor, FontStyles.Bold, 3);
             for (var index = 0; index < SquadPreparation.WarehouseCapacity; index++)
                 BuildWarehouseCell(root, index);
             renderedMembers = Preparation.Members.ToArray();
 
-            var quota = LegacyUiKit.CreateImage(root, "Card Quota", new Vector2(-165, -160), new Vector2(330, 10), LegacyUiKit.CellColor, 5);
-            quotaFill = LegacyUiKit.CreateImage(quota.transform, "Fill", Vector2.zero, new Vector2(330, 10), LegacyUiKit.HighlightColor, 5);
+            var quota = LegacyUiKit.CreatePill(root, "Card Quota", new Vector2(-165, -160), new Vector2(330, 10), new Color(LegacyUiKit.Ink.r, LegacyUiKit.Ink.g, LegacyUiKit.Ink.b, 0.16f));
+            quotaFill = LegacyUiKit.CreatePill(quota.transform, "Fill", Vector2.zero, new Vector2(330, 10), LegacyUiKit.Gold);
             quotaFill.rectTransform.anchorMin = quotaFill.rectTransform.anchorMax = quotaFill.rectTransform.pivot = new Vector2(0, 0.5f);
 
-            quotaLabel = LegacyUiKit.CreateText(root, "Card Quota Text", "", new Vector2(-165, -140), new Vector2(740, 26), 16, LegacyUiKit.HighlightColor);
-            claimButton = LegacyUiKit.CreateButton(root, "Claim Card Button", new Vector2(-165, -210), new Vector2(330, 58), LegacyUiKit.NodeGreenColor, 6);
-            claimLabel = LegacyUiKit.CreateText(claimButton.transform, "Label", "SUMMON UNIT", Vector2.zero, new Vector2(320, 54), 22, Color.white, FontStyles.Bold);
+            quotaLabel = LegacyUiKit.CreateText(root, "Card Quota Text", "", new Vector2(-165, -140), new Vector2(740, 26), 16, LegacyUiKit.Ink);
+            claimButton = LegacyUiKit.CreateButton(root, "Claim Card Button", new Vector2(-165, -210), new Vector2(330, 58), LegacyUiKit.NodeGreenColor, 14);
+            claimLabel = LegacyUiKit.CreateText(claimButton.transform, "Label", "SUMMON UNIT", new Vector2(0, 3), new Vector2(320, 54), 23, Color.white, FontStyles.Bold);
             claimButton.onClick.AddListener(OpenClaimCards);
 
             warehouseHint = LegacyUiKit.CreateText(root, "Warehouse Hint", "Drag units to squad  |  Click a card for details  |  X to dismiss",
-                new Vector2(-165, -115), new Vector2(780, 26), 16, LegacyUiKit.MutedColor);
+                new Vector2(-165, -115), new Vector2(780, 26), 16, LegacyUiKit.InkMuted);
 
             Grid = LegacyFormationGrid.CreateForPreparation(root, root, Preparation);
             ((RectTransform)Grid.transform).anchoredPosition = new Vector2(465, 43);
             LegacyUiKit.CreateText(Grid.transform, "Title", "SQUAD", new Vector2(0, 151), new Vector2(310, 26),
-                18, LegacyUiKit.TextColor, FontStyles.Bold, 3);
+                20, LegacyUiKit.Ink, FontStyles.Bold, 3);
             countLabel = LegacyUiKit.CreateText(Grid.transform, "Squad Count", "", new Vector2(0, 189), new Vector2(310, 30),
-                26, LegacyUiKit.TextColor, FontStyles.Bold);
+                30, LegacyUiKit.Ink, FontStyles.Bold);
 
             Preparation.Changed += Refresh;
             startGameButton.onClick.AddListener(StartWave);
@@ -194,22 +200,21 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             summonGuideOverlay = new GameObject("First Summon Guide", typeof(RectTransform));
             LegacyUiKit.CreateCanvas(summonGuideOverlay, 900, new Vector2(1280, 720), 0.5f);
             var shade = LegacyUiKit.CreateImage(summonGuideOverlay.transform, "Input Blocker", Vector2.zero,
-                Vector2.zero, new Color(0, 0, 0, 0.78f));
+                Vector2.zero, new Color(LegacyUiKit.SlateDark.r, LegacyUiKit.SlateDark.g, LegacyUiKit.SlateDark.b, 0.72f));
             LegacyUiKit.Stretch(shade.rectTransform);
             shade.raycastTarget = true;
+            // Paint Squad tutorial bar: dark slate plate, outlined title, white body.
             var banner = LegacyUiKit.CreateImage(summonGuideOverlay.transform, "Tutorial Banner", Vector2.zero,
-                new Vector2(880, 140), new Color(0.08f, 0.11f, 0.17f, 0.96f));
+                new Vector2(880, 140), new Color(LegacyUiKit.Slate.r, LegacyUiKit.Slate.g, LegacyUiKit.Slate.b, 0.96f), 26);
             banner.raycastTarget = true;
             banner.rectTransform.anchorMin = banner.rectTransform.anchorMax = new Vector2(0.5f, 1);
             banner.rectTransform.pivot = new Vector2(0.5f, 1);
             banner.rectTransform.anchoredPosition = new Vector2(0, -24);
-            var outline = banner.gameObject.AddComponent<Outline>();
-            outline.effectColor = new Color(0.3f, 0.85f, 0.4f, 1);
-            outline.effectDistance = new Vector2(3, -3);
+            LegacyUiKit.CreateIcon(banner.transform, "Icon", "users", new Vector2(-380, 0), 72);
             LegacyUiKit.CreateText(banner.transform, "Title", "RECRUIT YOUR SQUAD", new Vector2(0, 32),
-                new Vector2(820, 42), 30, new Color(0.35f, 0.95f, 0.45f), FontStyles.Bold);
+                new Vector2(820, 42), 32, LegacyUiKit.Gold, FontStyles.Bold);
             LegacyUiKit.CreateText(banner.transform, "Body", "Click SUMMON UNIT to recruit a new teammate.",
-                new Vector2(0, -22), new Vector2(820, 46), 23, Color.white);
+                new Vector2(0, -22), new Vector2(820, 46), 24, Color.white);
             // Lift the real button above the dimmer without moving it or copying its listeners.
             summonGuideButtonCanvas = claimButton.gameObject.AddComponent<Canvas>();
             summonGuideButtonCanvas.overrideSorting = true;
@@ -247,7 +252,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             var shop = BattleSceneFlow.CardShop;
             if (claimButton == null || shop == null) return;
             claimButton.interactable = shop.CanClaim && claimOverlay == null && levelPreview == null && dismissOverlay == null && unitIntroductionOverlay == null && unitDetailsOverlay == null && !BattleSceneFlow.IsOutOfLives;
-            claimButton.image.color = claimButton.interactable ? LegacyUiKit.NodeGreenColor : LegacyUiKit.PanelLineColor;
+            claimButton.image.color = claimButton.interactable ? LegacyUiKit.NodeGreenColor : LegacyUiKit.GreyDark;
             claimLabel.text = Preparation.CanAddMember ? $"SUMMON UNIT ({shop.NextPrice} GOLD)" : "STORAGE FULL";
             quotaLabel.text = shop.GetBannerSummary();
             quotaFill.enabled = BattleSceneFlow.GoldBalance > 0;
@@ -268,7 +273,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
 
         private void RefreshGoldLabel()
         {
-            if (goldLabel != null) goldLabel.text = BattleSceneFlow.HasUnlimitedGold ? "$ UNLIMITED" : $"$ {BattleSceneFlow.GoldBalance:N0}";
+            if (goldLabel != null) goldLabel.text = BattleSceneFlow.HasUnlimitedGold ? "UNLIMITED" : $"{BattleSceneFlow.GoldBalance:N0}";
         }
 
         private void RefreshLevelLabel()
@@ -300,7 +305,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                 if (info.characterCount >= lives.Length)
                 {
                     var first = info.characterInfo[info.characterCount - lives.Length];
-                    levelHeart.localPosition = new Vector3(first.bottomLeft.x - 18,
+                    levelHeart.localPosition = new Vector3(first.bottomLeft.x - 20,
                         (first.topRight.y + first.bottomLeft.y) / 2, 0);
                 }
             }
@@ -310,14 +315,18 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         {
             var position = WarehouseCellPosition(index);
             var size = new Vector2(200, 262);
-            var cell = LegacyUiKit.CreateImage(root, "Warehouse Cell " + index, position, size + Vector2.one * 4, LegacyUiKit.PanelLineColor, 14).rectTransform;
+            // Paint Squad card: rim (rarity color for units) with a thicker bottom edge around a cream face.
+            var empty = index >= Preparation.Members.Count;
+            var cellImage = LegacyUiKit.CreateImage(root, "Warehouse Cell " + index, position, size + Vector2.one * 10, LegacyUiKit.CardLineColor, 22);
+            if (LegacyUiKit.Skin != null && LegacyUiKit.Skin.panel != null) { cellImage.sprite = LegacyUiKit.Skin.panel; cellImage.pixelsPerUnitMultiplier = LegacyUiKit.SkinCornerRadius / 22f; }
+            var cell = cellImage.rectTransform;
             warehouseCells.Add(cell.gameObject);
             cell.localScale = Vector3.one * 0.6f;
-            var panelImage = LegacyUiKit.CreateImage(cell, "Introduction", Vector2.zero, size, LegacyUiKit.PanelColor, 12);
+            var panelImage = LegacyUiKit.CreateImage(cell, "Introduction", new Vector2(0, 3), size - new Vector2(0, 6), empty ? LegacyUiKit.CardInnerColor : LegacyUiKit.CardColor, 18);
             var panel = panelImage.rectTransform;
-            if (index >= Preparation.Members.Count)
+            if (empty)
             {
-                LegacyUiKit.CreateText(panel, "Empty", "EMPTY", Vector2.zero, size, 18, LegacyUiKit.MutedColor);
+                LegacyUiKit.CreateText(panel, "Empty", "EMPTY", Vector2.zero, size, 22, LegacyUiKit.CardRimColor, FontStyles.Bold, 2);
                 return;
             }
             var member = Preparation.Members[index];
@@ -326,18 +335,19 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             panel.gameObject.AddComponent<WarehouseUnitCardUI>().Initialize(this, root, member);
             cardGroups[member.MemberId] = cell.gameObject.AddComponent<CanvasGroup>();
             cardStatuses[member.MemberId] = LegacyUnitIntroductionUI.Build(panel, member.Unit, compact: true);
-            var remove = LegacyUiKit.MakeButton(LegacyUiKit.CreateCircle(panel, "Dismiss Unit", Vector2.zero, 42,
-                new Color(0.72f, 0.18f, 0.22f)));
+            var remove = LegacyUiKit.MakeButton(LegacyUiKit.CreateCircle(panel, "Dismiss Unit", Vector2.zero, 46,
+                LegacyUiKit.Red));
             var removeRect = (RectTransform)remove.transform;
             removeRect.anchorMin = removeRect.anchorMax = new Vector2(1, 1);
-            removeRect.anchoredPosition = new Vector2(-23, -23);
-            // Draw the cross with UI geometry so it does not depend on emoji font support.
-            for (var i = 0; i < 2; i++)
-            {
-                var stroke = LegacyUiKit.CreateImage(remove.transform, "Cross " + i, Vector2.zero,
-                    new Vector2(20, 4), Color.white);
-                stroke.rectTransform.localRotation = Quaternion.Euler(0, 0, i == 0 ? 45 : -45);
-            }
+            removeRect.anchoredPosition = new Vector2(-18, -18);
+            // Draw the cross with the Paint Squad icon, or UI geometry when the skin is missing.
+            if (LegacyUiKit.CreateIcon(remove.transform, "Cross", "close", new Vector2(0, 2), 30) == null)
+                for (var i = 0; i < 2; i++)
+                {
+                    var stroke = LegacyUiKit.CreateImage(remove.transform, "Cross " + i, Vector2.zero,
+                        new Vector2(20, 4), Color.white);
+                    stroke.rectTransform.localRotation = Quaternion.Euler(0, 0, i == 0 ? 45 : -45);
+                }
             remove.interactable = member.Unit.Rarity != UnitRarity.Legendary && Preparation.Members.Count > 1;
             remove.onClick.AddListener(() => TryDismissMember(member.MemberId));
         }
@@ -373,30 +383,26 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             dismissOverlay = new GameObject("Dismiss Unit Confirmation", typeof(RectTransform));
             LegacyUiKit.CreateCanvas(dismissOverlay, 600, new Vector2(1280, 720), 0.5f);
             var backdrop = LegacyUiKit.CreateImage(dismissOverlay.transform, "Input Blocker", Vector2.zero,
-                Vector2.zero, new Color(0, 0, 0, 0.78f));
+                Vector2.zero, LegacyUiKit.DimColor);
             LegacyUiKit.Stretch(backdrop.rectTransform);
             backdrop.raycastTarget = true;
-            var panel = LegacyUiKit.CreateImage(dismissOverlay.transform, "Panel", Vector2.zero,
-                new Vector2(480, 390), LegacyUiKit.PanelColor, 14).rectTransform;
-            panel.GetComponent<Image>().raycastTarget = true;
-            LegacyUiKit.CreateText(panel, "Title", "DISMISS THIS UNIT?", new Vector2(0, 145),
-                new Vector2(440, 44), 28, Color.white, FontStyles.Bold);
-            LegacyUnitIconUI.Create(panel, new Vector2(0, 75), 150).SetType(member.Unit.Role);
+            var panel = PopupCard(dismissOverlay.transform, new Vector2(480, 390), "DISMISS THIS UNIT?", LegacyUiKit.Red);
+            UnitDisc(panel, new Vector2(0, 70), 132, member.Unit);
             LegacyUiKit.CreateText(panel, "Unit Name", $"{LegacyUnitLooks.Name(member.Unit.Role)}  Lv.{member.Unit.Level}",
-                new Vector2(0, 12), new Vector2(440, 34), 24, Color.white, FontStyles.Bold);
+                new Vector2(0, -12), new Vector2(440, 34), 28, LegacyUiKit.Ink, FontStyles.Bold);
             LegacyUiKit.CreateText(panel, "Rarity", member.Unit.Rarity.ToString().ToUpperInvariant(),
-                new Vector2(0, -24), new Vector2(440, 28), 19, LegacyUnitLooks.RarityColor(member.Unit.Rarity));
-            LegacyUiKit.CreateText(panel, "No Refund", "No Gold will be refunded.", new Vector2(0, -72),
-                new Vector2(440, 26), 17, LegacyUiKit.MutedColor);
+                new Vector2(0, -42), new Vector2(440, 28), 19, LegacyUiKit.Darker(LegacyUnitLooks.RarityColor(member.Unit.Rarity), 0.85f), FontStyles.Bold, 2);
+            LegacyUiKit.CreateText(panel, "No Refund", "No Gold will be refunded.", new Vector2(0, -78),
+                new Vector2(440, 26), 18, LegacyUiKit.InkMuted);
             var cancel = LegacyUiKit.CreateButton(panel, "Cancel", new Vector2(-112, -140),
-                new Vector2(192, 52), LegacyUiKit.PanelLineColor, 6);
-            LegacyUiKit.CreateText(cancel.transform, "Label", "CANCEL", Vector2.zero,
-                new Vector2(184, 48), 21, Color.white, FontStyles.Bold);
+                new Vector2(192, 56), LegacyUiKit.ButtonSlate, 14);
+            LegacyUiKit.CreateText(cancel.transform, "Label", "CANCEL", new Vector2(0, 3),
+                new Vector2(184, 48), 23, Color.white, FontStyles.Bold);
             cancel.onClick.AddListener(CloseDismissConfirmation);
             var confirm = LegacyUiKit.CreateButton(panel, "Confirm", new Vector2(112, -140),
-                new Vector2(192, 52), new Color(0.72f, 0.18f, 0.22f), 6);
-            LegacyUiKit.CreateText(confirm.transform, "Label", "CONFIRM", Vector2.zero,
-                new Vector2(184, 48), 21, Color.white, FontStyles.Bold);
+                new Vector2(192, 56), LegacyUiKit.Red, 14);
+            LegacyUiKit.CreateText(confirm.transform, "Label", "CONFIRM", new Vector2(0, 3),
+                new Vector2(184, 48), 23, Color.white, FontStyles.Bold);
             confirm.onClick.AddListener(ConfirmDismissMember);
         }
 
@@ -406,33 +412,30 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             unitIntroductionOverlay = new GameObject("New Unit Introduction", typeof(RectTransform));
             LegacyUiKit.CreateCanvas(unitIntroductionOverlay, 600, new Vector2(1280, 720), 0.5f);
             var backdrop = LegacyUiKit.CreateImage(unitIntroductionOverlay.transform, "Input Blocker", Vector2.zero,
-                Vector2.zero, new Color(0, 0, 0, 0.8f));
+                Vector2.zero, LegacyUiKit.DimColor);
             LegacyUiKit.Stretch(backdrop.rectTransform);
             backdrop.raycastTarget = true;
-            var panel = LegacyUiKit.CreateImage(unitIntroductionOverlay.transform, "Panel", Vector2.zero,
-                new Vector2(600, 490), LegacyUiKit.PanelColor, 16).rectTransform;
-            panel.GetComponent<Image>().raycastTarget = true;
-            LegacyUiKit.CreateText(panel, "Title", "NEW UNIT DISCOVERED", new Vector2(0, 194),
-                new Vector2(550, 42), 28, LegacyUiKit.HighlightColor, FontStyles.Bold);
-            LegacyUnitIconUI.Create(panel, new Vector2(0, 120), 170).SetType(unit.Role);
+            var panel = PopupCard(unitIntroductionOverlay.transform, new Vector2(600, 490), "NEW UNIT DISCOVERED!", LegacyUiKit.Gold);
+            UnitDisc(panel, new Vector2(0, 118), 140, unit);
             LegacyUiKit.CreateText(panel, "Unit Name", $"{LegacyUnitLooks.Name(unit.Role)}  Lv.{unit.Level}",
-                new Vector2(0, 51), new Vector2(550, 36), 26, Color.white, FontStyles.Bold);
+                new Vector2(0, 30), new Vector2(550, 36), 30, LegacyUiKit.Ink, FontStyles.Bold);
             LegacyUiKit.CreateText(panel, "Rarity", unit.Rarity.ToString().ToUpperInvariant(),
-                new Vector2(0, 16), new Vector2(550, 28), 18, LegacyUnitLooks.RarityColor(unit.Rarity));
-            var box = LegacyUiKit.CreateImage(panel, "Description Box", new Vector2(0, -82),
-                new Vector2(532, 144), LegacyUiKit.CellColor, 8);
+                new Vector2(0, 0), new Vector2(550, 28), 19, LegacyUiKit.Darker(LegacyUnitLooks.RarityColor(unit.Rarity), 0.85f), FontStyles.Bold, 2);
+            var box = LegacyUiKit.CreateImage(panel, "Description Box", new Vector2(0, -88),
+                new Vector2(532, 132), LegacyUiKit.CardInnerColor, 16);
             var description = LegacyUnitIntroductionUI.LongDescription(unit);
             var text = LegacyUiKit.CreateText(box.transform, "Description", description, Vector2.zero,
-                new Vector2(492, 116), 20, LegacyUiKit.TextColor);
+                new Vector2(492, 112), 20, LegacyUiKit.Ink);
             text.textWrappingMode = TextWrappingModes.Normal;
             text.alignment = TextAlignmentOptions.MidlineLeft;
             text.enableAutoSizing = true;
             text.fontSizeMin = 17;
             text.fontSizeMax = 20;
             var close = LegacyUiKit.CreateButton(panel, "Got It", new Vector2(0, -197),
-                new Vector2(240, 52), LegacyUiKit.NodeGreenColor, 6);
-            LegacyUiKit.CreateText(close.transform, "Label", "GOT IT", Vector2.zero,
-                new Vector2(232, 48), 22, Color.white, FontStyles.Bold);
+                new Vector2(240, 58), LegacyUiKit.NodeGreenColor, 14);
+            LegacyUiKit.CreateIcon(close.transform, "Check", "check", new Vector2(-62, 3), 34);
+            LegacyUiKit.CreateText(close.transform, "Label", "GOT IT", new Vector2(18, 3),
+                new Vector2(180, 48), 26, Color.white, FontStyles.Bold);
             close.onClick.AddListener(CloseUnitIntroduction);
             RefreshClaimCards();
         }
@@ -452,39 +455,38 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             LegacyUiKit.CreateCanvas(unitDetailsOverlay, 600, new Vector2(1280, 720), 0.5f);
             // Clicking the dimmed backdrop closes the panel, like tapping outside a popup.
             var backdrop = LegacyUiKit.CreateImage(unitDetailsOverlay.transform, "Input Blocker", Vector2.zero,
-                Vector2.zero, new Color(0, 0, 0, 0.78f));
+                Vector2.zero, LegacyUiKit.DimColor);
             LegacyUiKit.Stretch(backdrop.rectTransform);
             backdrop.raycastTarget = true;
             var backdropButton = backdrop.gameObject.AddComponent<Button>();
             backdropButton.transition = Selectable.Transition.None;
             backdropButton.onClick.AddListener(CloseUnitDetails);
 
-            var frame = LegacyUiKit.CreateImage(unitDetailsOverlay.transform, "Frame", Vector2.zero,
-                new Vector2(624, 524), rarityColor, 18).rectTransform;
+            var face = LegacyUiKit.CreateCard(unitDetailsOverlay.transform, "Frame", Vector2.zero,
+                new Vector2(624, 524), 24, LegacyUiKit.CardColor, rarityColor, 6);
+            var frame = (RectTransform)face.transform.parent;
+            LegacyUiKit.CreateShadow(frame);
             frame.GetComponent<Image>().raycastTarget = true;
-            var panel = LegacyUiKit.CreateImage(frame, "Panel", Vector2.zero,
-                new Vector2(620, 520), LegacyUiKit.PanelColor, 16).rectTransform;
-            panel.GetComponent<Image>().raycastTarget = true;
+            face.raycastTarget = true;
+            var panel = LegacyUiKit.CreateRect(frame, "Panel", Vector2.zero, new Vector2(620, 520));
 
-            LegacyUiKit.CreateCircle(panel, "Emblem Ring", new Vector2(-210, 170), 120, rarityColor);
-            var face = LegacyUiKit.CreateCircle(panel, "Emblem", new Vector2(-210, 170), 112, LegacyUiKit.PanelColor);
-            LegacyUnitIconUI.Create(face.transform, Vector2.zero, 120).SetType(unit.Role);
+            UnitDisc(panel, new Vector2(-210, 170), 128, unit);
 
             var name = LegacyUiKit.CreateText(panel, "Unit Name", $"{LegacyUnitLooks.Name(unit.Role)}  Lv.{unit.Level}",
-                new Vector2(60, 200), new Vector2(400, 40), 30, Color.white, FontStyles.Bold);
+                new Vector2(60, 200), new Vector2(400, 40), 34, LegacyUiKit.Ink, FontStyles.Bold);
             name.alignment = TextAlignmentOptions.Left;
             var rarity = LegacyUiKit.CreateText(panel, "Rarity", unit.Rarity.ToString().ToUpperInvariant(),
-                new Vector2(60, 164), new Vector2(400, 28), 19, rarityColor, FontStyles.Bold);
+                new Vector2(60, 164), new Vector2(400, 28), 20, LegacyUiKit.Darker(rarityColor, 0.85f), FontStyles.Bold, 2);
             rarity.alignment = TextAlignmentOptions.Left;
             var deployed = Preparation.IsDeployed(member.MemberId);
             var status = LegacyUiKit.CreateText(panel, "Availability", deployed ? "IN SQUAD" : "AVAILABLE",
-                new Vector2(60, 134), new Vector2(400, 24), 16, deployed ? LegacyUiKit.HighlightColor : LegacyUiKit.MutedColor);
+                new Vector2(60, 134), new Vector2(400, 24), 17, deployed ? LegacyUiKit.GreenDark : LegacyUiKit.InkMuted, FontStyles.Bold, 1);
             status.alignment = TextAlignmentOptions.Left;
 
             var box = LegacyUiKit.CreateImage(panel, "Description Box", new Vector2(0, 40),
-                new Vector2(572, 112), LegacyUiKit.CellColor, 8);
+                new Vector2(572, 112), LegacyUiKit.CardInnerColor, 16);
             var text = LegacyUiKit.CreateText(box.transform, "Description", LegacyUnitIntroductionUI.LongDescription(unit),
-                Vector2.zero, new Vector2(532, 96), 19, LegacyUiKit.TextColor);
+                Vector2.zero, new Vector2(532, 96), 19, LegacyUiKit.Ink);
             text.textWrappingMode = TextWrappingModes.Normal;
             text.alignment = TextAlignmentOptions.MidlineLeft;
             text.enableAutoSizing = true;
@@ -498,23 +500,61 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                 var column = i % 2;
                 var row = i / 2;
                 var position = new Vector2(column == 0 ? -146 : 146, -48 - row * 38);
-                var cellBg = LegacyUiKit.CreateImage(panel, "Stat " + stats[i].label, position, new Vector2(272, 32), LegacyUiKit.CellColor, 6);
+                var cellBg = LegacyUiKit.CreateImage(panel, "Stat " + stats[i].label, position, new Vector2(272, 32), LegacyUiKit.CardInnerColor, 10);
                 var label = LegacyUiKit.CreateText(cellBg.transform, "Label", stats[i].label, Vector2.zero, new Vector2(248, 28),
-                    15, LegacyUiKit.MutedColor, FontStyles.Bold, 2);
+                    16, LegacyUiKit.InkMuted, FontStyles.Bold, 2);
                 label.alignment = TextAlignmentOptions.Left;
                 var value = LegacyUiKit.CreateText(cellBg.transform, "Value", stats[i].value, Vector2.zero, new Vector2(248, 28),
-                    18, LegacyUiKit.TextColor, FontStyles.Bold);
+                    20, LegacyUiKit.Ink, FontStyles.Bold);
                 value.alignment = TextAlignmentOptions.Right;
             }
 
             var close = LegacyUiKit.CreateButton(panel, "Close", new Vector2(0, -214),
-                new Vector2(220, 52), LegacyUiKit.PanelLineColor, 6);
-            LegacyUiKit.CreateText(close.transform, "Label", "CLOSE", Vector2.zero,
-                new Vector2(212, 48), 21, Color.white, FontStyles.Bold);
+                new Vector2(220, 56), LegacyUiKit.ButtonSlate, 14);
+            LegacyUiKit.CreateText(close.transform, "Label", "CLOSE", new Vector2(0, 3),
+                new Vector2(212, 48), 24, Color.white, FontStyles.Bold);
             close.onClick.AddListener(CloseUnitDetails);
 
             GameAnalytics.Track("unit_details_open", ("role", unit.Role.ToString()), ("rarity", unit.Rarity.ToString()),
                 ("unit_level", unit.Level), ("deployed", deployed));
+        }
+
+        // Two cream boards like the Paint Squad Army screen: unit storage on the left, the squad on the right.
+        // They live on the scene canvas (same 1280x720 width-matched space as the squad screen), right above its
+        // backdrop, so the authored Start Wave button still draws over the storage board's corner.
+        private static void BuildPanels(Transform sceneCanvas)
+        {
+            if (sceneCanvas.Find("Storage Board") != null) return;
+            var storage = LegacyUiKit.CreateCard(sceneCanvas, "Storage Board", new Vector2(-165, 18), new Vector2(860, 566), 26);
+            var squad = LegacyUiKit.CreateCard(sceneCanvas, "Squad Board", new Vector2(465, 86), new Vector2(276, 366), 26);
+            var index = sceneCanvas.Find(PaintSquadSceneSkin.BackdropName) != null ? 1 : 0;
+            foreach (var board in new[] { (RectTransform)storage.transform.parent, (RectTransform)squad.transform.parent })
+            {
+                board.SetSiblingIndex(index++);
+                var shadow = LegacyUiKit.CreateShadow(board);
+                if (shadow != null) index++;
+            }
+        }
+
+        // A cream popup card with a title ribbon across its top edge; returns the content rect.
+        private static RectTransform PopupCard(Transform parent, Vector2 size, string title, Color ribbon)
+        {
+            var face = LegacyUiKit.CreateCard(parent, "Panel", Vector2.zero, size, 26, LegacyUiKit.CardColor, LegacyUiKit.CardRimColor, 6);
+            var card = (RectTransform)face.transform.parent;
+            LegacyUiKit.CreateShadow(card);
+            card.GetComponent<Image>().raycastTarget = true;
+            face.raycastTarget = true;
+            LegacyUiKit.CreateRibbon(card, "Title", title, new Vector2(0, size.y / 2 + 4), new Vector2(Mathf.Min(size.x + 60, 560), 76), ribbon, 34);
+            return card;
+        }
+
+        // The unit's portrait on a big rarity-colored disc with a white ring (Paint Squad mercenary cards).
+        private static void UnitDisc(Transform parent, Vector2 position, float diameter, UnitDefinition unit)
+        {
+            var rarity = LegacyUnitLooks.RarityColor(unit.Rarity);
+            LegacyUiKit.CreateCircle(parent, "Emblem Ring", position, diameter, rarity);
+            var disc = LegacyUiKit.CreateCircle(parent, "Emblem", position, diameter * 0.9f, Color.Lerp(rarity, Color.white, 0.55f));
+            LegacyUnitIconUI.Create(disc.transform, new Vector2(0, -diameter * 0.04f), diameter * 2.1f).SetType(unit.Role);
         }
 
         /// <summary>Only the stats that mean something for this role, so a Tank never shows a 0 ATK row.</summary>

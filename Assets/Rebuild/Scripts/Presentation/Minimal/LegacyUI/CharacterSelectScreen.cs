@@ -7,7 +7,8 @@ using UnityEngine.UI;
 namespace Team5.Rebuild.Presentation.LegacyUI
 {
     // "Choose your squad": shown by Start Game before the first battle of a run. Built at runtime with
-    // LegacyUiKit like the other screens. Tapping a card stores the set and continues.
+    // LegacyUiKit like the other screens, in the layout of Paint Squad Wars' team select. Tapping a card
+    // stores the set and continues.
     public sealed class CharacterSelectScreen : MonoBehaviour
     {
         public const string Title = "CHOOSE YOUR SQUAD";
@@ -59,58 +60,71 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         {
             Canvas = LegacyUiKit.CreateCanvas(gameObject, 50, Reference, 0.5f);
             var root = Canvas.transform;
-            var backdrop = LegacyUiKit.CreateImage(root, "Backdrop", Vector2.zero, Vector2.zero, new Color(0.05f, 0.07f, 0.11f, 0.97f));
-            LegacyUiKit.Stretch(backdrop.rectTransform);
-            backdrop.raycastTarget = true; // Blocks the title screen's buttons underneath.
+            // Opaque hex paper like the Paint Squad menu ground; it also blocks the title screen's buttons.
+            var backdrop = LegacyUiKit.CreateBackdrop(root, "Backdrop");
+            backdrop.raycastTarget = true;
 
-            LegacyUiKit.CreateText(root, "Title", Title, new Vector2(0, 425), new Vector2(1200, 80), 64,
-                LegacyUiKit.TextColor, FontStyles.Bold, 6);
-            LegacyUiKit.CreateText(root, "Subtitle", "Pick the look of your squad. Units and stats are the same.", new Vector2(0, 360),
-                new Vector2(1200, 40), 26, LegacyUiKit.MutedColor);
+            LegacyUiKit.CreateRibbon(root, "Title Ribbon", Title, new Vector2(0, 425), new Vector2(980, 118), LegacyUiKit.Slate, 58);
+            LegacyUiKit.CreateText(root, "Subtitle", "Pick the look of your squad. Units and stats are the same.", new Vector2(0, 340),
+                new Vector2(1200, 40), 28, LegacyUiKit.Ink);
 
             var catalogs = CharacterSetCatalogs.Instance;
             var current = CharacterSetSelection.Current;
             BuildCard(root, CharacterSet.PaintSquad, new Vector2(-CardSpacing, -40), catalogs, current);
             BuildCard(root, CharacterSet.Catgirl, new Vector2(CardSpacing, -40), catalogs, current);
 
-            var back = LegacyUiKit.CreateButton(root, "Back", new Vector2(-760, -455), new Vector2(220, 70), LegacyUiKit.PanelColor, 14);
-            LegacyUiKit.CreateText(back.transform, "Label", "BACK", Vector2.zero, new Vector2(220, 70), 28, LegacyUiKit.TextColor, FontStyles.Bold, 2);
+            var back = LegacyUiKit.CreateButton(root, "Back", new Vector2(-760, -455), new Vector2(220, 70), LegacyUiKit.ButtonSlate, 22);
+            var arrow = LegacyUiKit.CreateIcon(back.transform, "Arrow", "arrow_left", new Vector2(-62, 4), 40);
+            var backLabel = LegacyUiKit.CreateText(back.transform, "Label", "BACK", new Vector2(arrow != null ? 22 : 0, 4), new Vector2(150, 70), 32,
+                LegacyUiKit.TextColor, FontStyles.Bold, 2);
+            backLabel.raycastTarget = false;
             back.onClick.AddListener(Close);
         }
 
+        // Paint Squad team cards: white card, a big accent disc behind the Captain, the name in the accent
+        // color over an accent bar. The stored pick gets an accent rim and a green check badge.
         private void BuildCard(Transform root, CharacterSet set, Vector2 position, CharacterSetCatalogs catalogs, CharacterSet current)
         {
             CharacterSetEntry entry = null;
             if (catalogs != null) catalogs.TryGet(set, out entry);
             var picked = set == current;
-            var accent = picked ? LegacyUiKit.HighlightColor : LegacyUiKit.PanelLineColor;
+            var accent = Accent(set);
+            var accentDark = LegacyUiKit.Darker(accent, 0.75f);
 
-            var frame = LegacyUiKit.CreateImage(root, "Card " + set, position, CardSize + Vector2.one * 8, accent, 26);
+            var frame = LegacyUiKit.CreateImage(root, "Card " + set, position, CardSize + Vector2.one * 16, picked ? accent : LegacyUiKit.CardRimColor, 30);
+            LegacyUiKit.CreateShadow(frame.rectTransform, 26, 16, 0.28f);
             var button = LegacyUiKit.MakeButton(frame);
-            var colors = button.colors;
-            colors.highlightedColor = new Color(1.08f, 1.08f, 1.08f);
-            colors.pressedColor = new Color(0.8f, 0.8f, 0.8f);
-            button.colors = colors;
             button.onClick.AddListener(() => Choose(set));
 
-            var card = LegacyUiKit.CreateImage(frame.transform, "Face", Vector2.zero, CardSize, LegacyUiKit.PanelColor, 22);
-            var well = LegacyUiKit.CreateImage(card.transform, "Preview Well", new Vector2(0, 70), new Vector2(440, 440), LegacyUiKit.CellColor, 18);
+            var card = LegacyUiKit.CreateImage(frame.transform, "Face", new Vector2(0, 5), CardSize - new Vector2(4, 10), LegacyUiKit.CardColor, 24);
+            var well = LegacyUiKit.CreateCircle(card.transform, "Preview Well", new Vector2(0, 85), 410, accent);
+            LegacyUiKit.CreateCircle(well.transform, "Preview Ring", Vector2.zero, 372, Color.Lerp(accent, Color.white, 0.18f));
+            LegacyUiKit.CreateCircle(well.transform, "Preview Disc", Vector2.zero, 352, accent);
             if (entry != null && entry.captainPreview != null)
             {
-                var preview = LegacyUiKit.CreateImage(well.transform, "Captain Preview", Vector2.zero, new Vector2(420, 420), Color.white);
+                var preview = LegacyUiKit.CreateImage(well.transform, "Captain Preview", new Vector2(0, -6), new Vector2(430, 430), Color.white);
                 preview.sprite = entry.captainPreview;
                 preview.preserveAspect = true;
             }
 
             var name = entry != null && !string.IsNullOrEmpty(entry.displayName) ? entry.displayName : DefaultName(set);
-            LegacyUiKit.CreateText(card.transform, "Name", name.ToUpperInvariant(), new Vector2(0, -205), new Vector2(480, 56), 44,
-                LegacyUiKit.TextColor, FontStyles.Bold, 3);
+            LegacyUiKit.CreateText(card.transform, "Name", name.ToUpperInvariant(), new Vector2(0, -182), new Vector2(480, 64), 54,
+                accentDark, FontStyles.Bold, 3);
+            LegacyUiKit.CreateImage(card.transform, "Accent Bar", new Vector2(0, -224), new Vector2(150, 12), accent, 6);
             var tagline = entry != null ? entry.tagline : string.Empty;
-            LegacyUiKit.CreateText(card.transform, "Tagline", tagline, new Vector2(0, -255), new Vector2(480, 34), 24, LegacyUiKit.MutedColor);
+            LegacyUiKit.CreateText(card.transform, "Tagline", tagline, new Vector2(0, -268), new Vector2(480, 36), 27, LegacyUiKit.InkMuted);
             if (picked)
-                LegacyUiKit.CreateText(card.transform, "Selected", "SELECTED", new Vector2(0, 300), new Vector2(240, 30), 20,
-                    LegacyUiKit.HighlightColor, FontStyles.Bold, 4);
+            {
+                var badge = LegacyUiKit.CreateCircle(frame.transform, "Selected Badge", new Vector2(CardSize.x / 2 - 6, CardSize.y / 2 - 6), 84, LegacyUiKit.Green);
+                LegacyUiKit.Chunky(badge);
+                LegacyUiKit.CreateIcon(badge.transform, "Check", "check", new Vector2(0, 4), 54);
+                var tag = LegacyUiKit.CreatePill(frame.transform, "Selected Tag", new Vector2(0, CardSize.y / 2 + 6), new Vector2(190, 42), LegacyUiKit.Green);
+                LegacyUiKit.CreateText(tag.transform, "Selected", "SELECTED", new Vector2(0, 1), new Vector2(180, 40), 26,
+                    Color.white, FontStyles.Bold, 4);
+            }
         }
+
+        private static Color Accent(CharacterSet set) => set == CharacterSet.Catgirl ? LegacyUiKit.Hex(0xDB4793) : LegacyUiKit.Hex(0xDA4029);
 
         public static string DefaultName(CharacterSet set) => set == CharacterSet.Catgirl ? "Catgirl" : "Paint Squad";
 

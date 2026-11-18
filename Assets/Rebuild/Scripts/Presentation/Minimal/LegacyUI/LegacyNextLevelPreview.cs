@@ -17,8 +17,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         private static readonly Vector2 MapCenter = new Vector2(0f, 4f);
         private static readonly Vector2 MapSize = new Vector2(1072f, 480f);
         private static readonly Quaternion BoardRotation = Quaternion.Euler(90f, 0f, 0f);
-        private static readonly Color DimColor = new Color(0.024f, 0.035f, 0.06f, 0.74f);
-        private static readonly Color StartInk = new Color(0.196f, 0.196f, 0.196f);
+        private static readonly Color DimColor = LegacyUiKit.DimColor;
 
         private readonly List<TowerRangeView> ranges = new List<TowerRangeView>();
         private readonly List<Camera> strippedCameras = new List<Camera>();
@@ -64,13 +63,18 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             var dim = LegacyUiKit.CreateImage(transform, "Dim", Vector2.zero, Vector2.zero, DimColor);
             LegacyUiKit.Stretch(dim.rectTransform);
             dim.raycastTarget = true;
-            LegacyUiKit.CreateImage(transform, "Card Frame", Vector2.zero, CardSize + new Vector2(4f, 4f), LegacyUiKit.PanelLineColor, 17);
-            var card = LegacyUiKit.CreateImage(transform, "Card", Vector2.zero, CardSize, LegacyUiKit.PanelColor, 16).rectTransform;
+            // Cream Paint Squad board; the map sits in a recessed slate well.
+            var frame = LegacyUiKit.CreateImage(transform, "Card Frame", new Vector2(0f, -3f), CardSize + new Vector2(10f, 16f), LegacyUiKit.CardRimColor, 24);
+            LegacyUiKit.Panel(frame);
+            LegacyUiKit.CreateShadow(frame.rectTransform);
+            var card = LegacyUiKit.CreateImage(transform, "Card", Vector2.zero, CardSize, LegacyUiKit.CardColor, 20).rectTransform;
             BuildHeader(card);
-            LabeledButton(card, "Close", "X", new Vector2(514f, 282f), new Vector2(44f, 40f), LegacyUiKit.PanelLineColor, Color.white, 22, true)
-                .onClick.AddListener(Close);
-            LegacyUiKit.CreateImage(card, "Map Frame", MapCenter, MapSize + new Vector2(3f, 3f), LegacyUiKit.PanelLineColor, 11);
-            var panel = LegacyUiKit.CreateImage(card, "Map Panel", MapCenter, MapSize, LegacyUiKit.CellColor, 10);
+            var close = LegacyUiKit.MakeButton(LegacyUiKit.CreateCircle(card, "Close", new Vector2(514f, 282f), 48f, LegacyUiKit.ButtonSlate));
+            if (LegacyUiKit.CreateIcon(close.transform, "Icon", "close", new Vector2(0f, 2f), 28f) == null)
+                LegacyUiKit.CreateText(close.transform, "Label", "X", Vector2.zero, new Vector2(44f, 40f), 22, Color.white, FontStyles.Bold);
+            close.onClick.AddListener(Close);
+            LegacyUiKit.CreateImage(card, "Map Frame", MapCenter, MapSize + new Vector2(8f, 8f), LegacyUiKit.CardRimColor, 14);
+            var panel = LegacyUiKit.CreateImage(card, "Map Panel", MapCenter, MapSize, LegacyUiKit.SlateDark, 10);
             panel.gameObject.AddComponent<Mask>().showMaskGraphic = true;
             var map = new GameObject("Map", typeof(RectTransform), typeof(CanvasRenderer), typeof(RawImage));
             map.transform.SetParent(panel.transform, false);
@@ -82,24 +86,24 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             overlayRoot.gameObject.SetActive(false);
             status = LegacyUiKit.CreateText(panel.transform, "Status", "Loading map...", Vector2.zero, new Vector2(700f, 60f), 24, LegacyUiKit.MutedColor);
             NextMapOverlay.Legend(card, new Vector2(Left, -280f));
-            LabeledButton(card, "Back", "BACK", new Vector2(247f, -280f), new Vector2(130f, 52f), LegacyUiKit.PanelLineColor, Color.white, 20, true)
+            LabeledButton(card, "Back", "BACK", new Vector2(247f, -280f), new Vector2(130f, 52f), LegacyUiKit.ButtonSlate, Color.white, 22, true)
                 .onClick.AddListener(Close);
-            startButton = LabeledButton(card, "Start Wave", "Start Wave", new Vector2(431f, -280f), new Vector2(210f, 52f), Color.white, StartInk, 26, false);
+            startButton = LabeledButton(card, "Start Wave", "START WAVE", new Vector2(431f, -280f), new Vector2(210f, 52f), LegacyUiKit.Green, Color.white, 26, true);
             startButton.onClick.AddListener(StartWave);
         }
 
         private void BuildHeader(RectTransform card)
         {
             var name = BattleSceneFlow.IsTestRun ? "TEST LEVEL" : "LEVEL " + Mathf.Max(1, BattleSceneFlow.NextBattleLevelNumber);
-            var title = LeftText(card, "Title", name, Left, 282f, 32, Color.white, FontStyles.Bold);
+            var title = LeftText(card, "Title", name, Left, 282f, 34, LegacyUiKit.Ink, FontStyles.Bold);
             var x = Left + title.GetPreferredValues(name).x + 26f;
             LegacyUiKit.CreateHeartIcon(card, Vector2.zero, 0.8f);
             var heart = (RectTransform)card.Find("Heart Icon");
             heart.anchorMin = heart.anchorMax = heart.pivot = new Vector2(0.5f, 0.5f);
             heart.anchoredPosition = new Vector2(x, 282f);
             var lives = BattleSceneFlow.CurrentLevelLivesRemaining + "/" + BattleSession.DefaultLivesPerLevel;
-            var livesLabel = LeftText(card, "Lives", lives, x + 14f, 281f, 20, LegacyUiKit.TextColor, FontStyles.Bold);
-            facts = LeftText(card, "Facts", string.Empty, x + 14f + livesLabel.GetPreferredValues(lives).x + 22f, 281f, 18, LegacyUiKit.MutedColor, FontStyles.Normal);
+            var livesLabel = LeftText(card, "Lives", lives, x + 14f, 281f, 22, LegacyUiKit.Ink, FontStyles.Bold);
+            facts = LeftText(card, "Facts", string.Empty, x + 14f + livesLabel.GetPreferredValues(lives).x + 22f, 281f, 18, LegacyUiKit.InkMuted, FontStyles.Normal);
         }
 
         private static TMP_Text LeftText(Transform parent, string name, string text, float left, float y, float size, Color color, FontStyles style)
@@ -112,8 +116,8 @@ namespace Team5.Rebuild.Presentation.LegacyUI
 
         private static Button LabeledButton(Transform parent, string name, string text, Vector2 position, Vector2 size, Color fill, Color ink, float fontSize, bool bold)
         {
-            var button = LegacyUiKit.CreateButton(parent, name, position, size, fill, 8);
-            LegacyUiKit.CreateText(button.transform, "Label", text, Vector2.zero, size, fontSize, ink, bold ? FontStyles.Bold : FontStyles.Normal);
+            var button = LegacyUiKit.CreateButton(parent, name, position, size, fill, 14);
+            LegacyUiKit.CreateText(button.transform, "Label", text, new Vector2(0f, 3f), size, fontSize, ink, bold ? FontStyles.Bold : FontStyles.Normal);
             return button;
         }
 

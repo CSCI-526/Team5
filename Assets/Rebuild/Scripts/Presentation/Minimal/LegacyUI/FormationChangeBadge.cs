@@ -7,9 +7,9 @@ namespace Team5.Rebuild.Presentation.LegacyUI
     public sealed class FormationChangeBadge : MonoBehaviour
     {
         private const float ButtonReferenceSize = 56f;
-        private static readonly Color ChipColor = new Color(1f, 0.88f, 0.25f);
-        private static readonly Color SpentChipColor = new Color(0.235f, 0.263f, 0.322f);
-        private static readonly Color ChipInk = new Color(0.1f, 0.08f, 0f);
+        private static readonly Color ChipColor = LegacyUiKit.Gold;
+        private static readonly Color SpentChipColor = LegacyUiKit.SlateLight;
+        private static readonly Color ChipInk = LegacyUiKit.Ink;
         private static readonly Color VeilColor = new Color(0.04f, 0.05f, 0.08f, 0.62f);
 
         [SerializeField, Tooltip("Chip center relative to the squad button's top-right corner, in 1280-wide reference pixels.")]
@@ -39,6 +39,13 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             badge.budget = budget;
             var scale = ((RectTransform)squadButton.transform).sizeDelta.x / ButtonReferenceSize;
             badge.Build(scale, hud != null && hud.LivesLabel != null ? hud.LivesLabel.font : null);
+            // The spent veil takes the button's own shape (the round Paint Squad badge).
+            if (squadButton.image != null && squadButton.image.sprite != null)
+            {
+                badge.veil.sprite = squadButton.image.sprite;
+                badge.veil.type = squadButton.image.type;
+                badge.veil.preserveAspect = squadButton.image.preserveAspect;
+            }
             return badge;
         }
 
@@ -53,14 +60,13 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             rim = LegacyUiKit.CreateCircle(chip, "Rim", Vector2.zero, chipDiameter, LegacyUiKit.PanelColor);
             fill = LegacyUiKit.CreateCircle(chip, "Fill", Vector2.zero, chipDiameter - 2f * rimWidth, ChipColor);
             number = LegacyUiKit.CreateText(chip, "Count", string.Empty, Vector2.zero, Vector2.one * chipDiameter, numberSize, ChipInk, FontStyles.Bold);
-            if (font != null) number.font = font;
             defeatedLabel=LegacyUiKit.CreateText(transform,"Captain Defeated","CAPTAIN DEFEATED",Vector2.zero,
-                new Vector2(170,40)*scale,16*scale,new Color(1f,.35f,.3f),FontStyles.Bold);
+                new Vector2(170,40)*scale,16*scale,LegacyUiKit.Red,FontStyles.Bold);
+            LegacyUiKit.Outlined(defeatedLabel);
             defeatedLabel.rectTransform.anchorMin=defeatedLabel.rectTransform.anchorMax=new Vector2(1,.5f);
             defeatedLabel.rectTransform.pivot=new Vector2(0,.5f);
             defeatedLabel.rectTransform.anchoredPosition=new Vector2(12,0)*scale;
             defeatedLabel.alignment=TextAlignmentOptions.MidlineLeft;
-            if(font!=null)defeatedLabel.font=font;
             defeatedLabel.gameObject.SetActive(false);
             Render(FormationChangeRules.Unlimited);
         }

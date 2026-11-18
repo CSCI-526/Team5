@@ -6,6 +6,9 @@ namespace Team5.Rebuild.Presentation.LegacyUI
     // Keep the original scenes' persistent UnityEvent method names.
     public sealed class LegacySceneMenu : MonoBehaviour
     {
+        // Paint Squad look for the authored title and end screens (appearance only).
+        private void Start() => PaintSquadSceneSkin.StyleMenuScene(gameObject.scene);
+
         public void StartGame()
         {
             if (gameObject.scene.path == BattleSceneFlow.TestStartScene) BattleSceneFlow.BeginTestRun();

@@ -107,8 +107,8 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                 "Skill Tooltip",
                 Vector2.zero,
                 new Vector2(340f, 84f) * uiScale,
-                new Color(0.07f, 0.09f, 0.14f, 0.96f),
-                8
+                new Color(LegacyUiKit.Slate.r, LegacyUiKit.Slate.g, LegacyUiKit.Slate.b, 0.96f),
+                14
             );
 
             image.raycastTarget = false;
@@ -209,6 +209,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                 LegacyUiKit.PanelLineColor,
                 4
             );
+            LegacyUiKit.RoundButton(button.image);
 
             var rect = (RectTransform)button.transform;
 
@@ -240,8 +241,9 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                 "Cooldown Badge",
                 Vector2.zero,
                 27f * uiScale,
-                new Color(0.08f, 0.1f, 0.16f, 0.95f)
+                LegacyUiKit.Gold
             );
+            LegacyUiKit.Chunky(badge);
 
             badge.rectTransform.anchorMin = Vector2.one;
             badge.rectTransform.anchorMax = Vector2.one;
@@ -254,10 +256,11 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                 "",
                 Vector2.zero,
                 new Vector2(26f, 25f) * uiScale,
-                14f * uiScale,
+                15f * uiScale,
                 Color.white,
                 FontStyles.Bold
             );
+            cooldownText.rectTransform.anchoredPosition = new Vector2(0f, 1f * uiScale);
 
             cooldownText.alignment =
                 TextAlignmentOptions.Center;

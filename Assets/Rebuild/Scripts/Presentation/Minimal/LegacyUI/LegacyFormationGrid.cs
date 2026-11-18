@@ -47,17 +47,18 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                 grid.sourceSlots[slot] = slot;
                 // Native X/Z slots: +Z is the top row. Member IDs are not UI indices.
                 var position = new Vector2(slot % 3 - 1, slot / 3 - 1) * (cell + gap);
-                var image = LegacyUiKit.CreateImage(rect, "Cell " + slot, position, Vector2.one * cell, LegacyUiKit.CellColor, 8);
+                // Recessed slot on the cream boards; the outline turns green on the picked slot.
+                var image = LegacyUiKit.CreateImage(rect, "Cell " + slot, position, Vector2.one * cell, LegacyUiKit.CardInnerColor, 12);
                 image.raycastTarget = true;
                 var outline = image.gameObject.AddComponent<Outline>();
-                outline.effectColor = LegacyUiKit.PanelLineColor; outline.effectDistance = new Vector2(1.5f, -1.5f);
+                outline.effectColor = LegacyUiKit.CardRimColor; outline.effectDistance = new Vector2(2f, -2f);
                 image.gameObject.AddComponent<LegacyFormationCellUI>().Initialize(grid, slot);
                 grid.cells[slot] = image;
                 grid.icons[slot] = LegacyUnitIconUI.Create(image.transform, Vector2.zero, cell * 1.4f);
             }
-            LegacyUiKit.CreateText(rect, "Top", "TOP", new Vector2(0, size / 2 + 22), new Vector2(size, 18), 12,
-                LegacyUiKit.MutedColor, TMPro.FontStyles.Bold, 6);
-            LegacyUiKit.CreateText(rect, "Hint", "Drag to swap", new Vector2(0, -size / 2 - 26), new Vector2(size + 120, 22), 14, LegacyUiKit.MutedColor);
+            LegacyUiKit.CreateText(rect, "Top", "TOP", new Vector2(0, size / 2 + 22), new Vector2(size, 18), 14,
+                LegacyUiKit.InkMuted, TMPro.FontStyles.Bold, 6);
+            LegacyUiKit.CreateText(rect, "Hint", "Drag to swap", new Vector2(0, -size / 2 - 26), new Vector2(size + 120, 22), 15, LegacyUiKit.InkMuted);
             grid.Refresh(); return grid;
         }
         private UnitRole RoleAt(int slot) => preparation != null ? preparation.RoleAtSlot(slot) : roleAtSource(sourceSlots[slot]);
@@ -67,7 +68,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             {
                 icons[slot].SetType(RoleAt(slot));
                 icons[slot].gameObject.SetActive(dragFrom != slot);
-                cells[slot].GetComponent<Outline>().effectColor = selected == slot ? LegacyUiKit.DropColor : LegacyUiKit.PanelLineColor;
+                cells[slot].GetComponent<Outline>().effectColor = selected == slot ? LegacyUiKit.Green : LegacyUiKit.CardRimColor;
             }
         }
         public void HandleClick(int slot)

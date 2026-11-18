@@ -175,11 +175,10 @@ namespace Team5.Rebuild.Presentation.LegacyUI
     /// </summary>
     internal sealed class StorageTutorialView
     {
-        private static readonly Color Gold = new Color(1f, 0.84f, 0.25f);
-        private static readonly Color ChipInk = new Color(0.1f, 0.08f, 0f);
-        private static readonly Color BannerBg = new Color(0.08f, 0.11f, 0.17f, 0.96f);
-        private static readonly Color BannerOutline = new Color(0.3f, 0.85f, 0.4f, 1f);
-        private static readonly Color TitleGreen = new Color(0.35f, 0.95f, 0.45f);
+        private static readonly Color Gold = LegacyUiKit.Gold;
+        private static readonly Color ChipInk = LegacyUiKit.Ink;
+        private static readonly Color BannerBg = new Color(LegacyUiKit.Slate.r, LegacyUiKit.Slate.g, LegacyUiKit.Slate.b, 0.96f);
+        private static readonly Color TitleGold = LegacyUiKit.Gold;
 
         private CanvasGroup group;
         private RectTransform chip;
@@ -211,7 +210,8 @@ namespace Team5.Rebuild.Presentation.LegacyUI
 
         private void BuildBanner(RectTransform parent, UnityEngine.Events.UnityAction onGotIt)
         {
-            var panel = LegacyUiKit.CreateImage(parent, "Storage Tutorial Banner", Vector2.zero, new Vector2(760f, 130f), BannerBg, 10f);
+            var panel = LegacyUiKit.CreateImage(parent, "Storage Tutorial Banner", Vector2.zero, new Vector2(760f, 130f), BannerBg, 24f);
+            LegacyUiKit.Panel(panel);
             panel.raycastTarget = true;
             var banner = panel.rectTransform;
             banner.anchorMin = banner.anchorMax = new Vector2(0.5f, 0f);
@@ -221,12 +221,8 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             var bannerCanvasGroup = panel.gameObject.AddComponent<CanvasGroup>();
             bannerCanvasGroup.blocksRaycasts = true;
 
-            var outline = panel.gameObject.AddComponent<Outline>();
-            outline.effectColor = BannerOutline;
-            outline.effectDistance = new Vector2(2.5f, -2.5f);
-
             var title = LegacyUiKit.CreateText(banner, "Title", "STORAGE FULL — DISMISS UNITS", new Vector2(0f, 34f), new Vector2(700f, 32f),
-                24f, TitleGreen, FontStyles.Bold);
+                26f, TitleGold, FontStyles.Bold);
             title.alignment = TextAlignmentOptions.Center;
 
             var body = LegacyUiKit.CreateText(banner, "Body",
@@ -234,9 +230,12 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                 new Vector2(-65f, -14f), new Vector2(560f, 56f), 17f, Color.white);
             body.textWrappingMode = TextWrappingModes.Normal;
             body.alignment = TextAlignmentOptions.Center;
+            body.enableAutoSizing = true;
+            body.fontSizeMin = 12f;
+            body.fontSizeMax = 16f;
 
-            var gotItButton = LegacyUiKit.CreateButton(banner, "Got It", new Vector2(290f, -14f), new Vector2(124f, 40f), LegacyUiKit.NodeGreenColor, 6f);
-            LegacyUiKit.CreateText(gotItButton.transform, "Label", "GOT IT", Vector2.zero, new Vector2(116f, 36f), 17f, Color.white, FontStyles.Bold);
+            var gotItButton = LegacyUiKit.CreateButton(banner, "Got It", new Vector2(290f, -14f), new Vector2(124f, 44f), LegacyUiKit.NodeGreenColor, 12f);
+            LegacyUiKit.CreateText(gotItButton.transform, "Label", "GOT IT", new Vector2(0f, 2f), new Vector2(116f, 36f), 20f, Color.white, FontStyles.Bold);
             gotItButton.onClick.AddListener(onGotIt);
         }
 

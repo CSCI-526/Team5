@@ -724,15 +724,14 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             shade.raycastTarget = true;
             blocker = shade.gameObject;
 
-            var panel = LegacyUiKit.CreateImage(root, "Tutorial Banner", Vector2.zero, new Vector2(880f, 175f), new Color(0.08f, 0.11f, 0.17f, 0.96f));
+            // Paint Squad tutorial bar: dark slate plate, gold outlined title, white body.
+            var panel = LegacyUiKit.CreateImage(root, "Tutorial Banner", Vector2.zero, new Vector2(880f, 175f),
+                new Color(LegacyUiKit.Slate.r, LegacyUiKit.Slate.g, LegacyUiKit.Slate.b, 0.95f), 28f);
+            LegacyUiKit.Panel(panel);
             panel.raycastTarget = true;
             banner = panel.rectTransform;
 
-            var outline = panel.gameObject.AddComponent<Outline>();
-            outline.effectColor = new Color(0.3f, 0.85f, 0.4f, 1f);
-            outline.effectDistance = new Vector2(3f, -3f);
-
-            title = LegacyUiKit.CreateText(banner, "Title", "", Vector2.zero, Vector2.zero, 30f, new Color(0.35f, 0.95f, 0.45f), FontStyles.Bold);
+            title = LegacyUiKit.CreateText(banner, "Title", "", Vector2.zero, Vector2.zero, 30f, LegacyUiKit.Gold, FontStyles.Bold);
             title.enableAutoSizing = true;
             title.fontSizeMin = 26f;
             title.fontSizeMax = 30f;
@@ -744,20 +743,20 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             body.fontSizeMin = 18f;
             body.fontSizeMax = 23f;
 
-            var skip = LegacyUiKit.CreateButton(banner, "Skip Tutorial", Vector2.zero, new Vector2(110f, 30f), Color.white, 0f);
+            var skip = LegacyUiKit.CreateButton(banner, "Skip Tutorial", Vector2.zero, new Vector2(110f, 34f), LegacyUiKit.CardColor, 10f);
             var skipRect = (RectTransform)skip.transform;
             skipRect.anchorMin = skipRect.anchorMax = new Vector2(0f, 0f);
             skipRect.pivot = new Vector2(0f, 0.5f);
             skipRect.anchoredPosition = new Vector2(24f, 22f);
-            LegacyUiKit.CreateText(skip.transform, "Label", "SKIP", Vector2.zero, new Vector2(100f, 28f), 18f, new Color(0.196f, 0.196f, 0.196f));
+            LegacyUiKit.CreateText(skip.transform, "Label", "SKIP", new Vector2(0f, 2f), new Vector2(100f, 28f), 19f, LegacyUiKit.Ink, FontStyles.Bold, 1f);
             skip.onClick.AddListener(onSkip);
 
-            nextButton = LegacyUiKit.CreateButton(banner, "Continue", Vector2.zero, new Vector2(144f, 30f), new Color(0.2f, 0.6f, 0.2f), 0f);
+            nextButton = LegacyUiKit.CreateButton(banner, "Continue", Vector2.zero, new Vector2(144f, 34f), LegacyUiKit.Green, 10f);
             var nextRect = (RectTransform)nextButton.transform;
             nextRect.anchorMin = nextRect.anchorMax = new Vector2(1f, 0f);
             nextRect.pivot = new Vector2(1f, 0.5f);
             nextRect.anchoredPosition = new Vector2(-24f, 22f);
-            LegacyUiKit.CreateText(nextButton.transform, "Label", "CONTINUE", Vector2.zero, new Vector2(138f, 28f), 18f, Color.white);
+            LegacyUiKit.CreateText(nextButton.transform, "Label", "CONTINUE", new Vector2(0f, 2f), new Vector2(138f, 28f), 19f, Color.white, FontStyles.Bold, 1f);
             nextButton.onClick.AddListener(onContinue);
 
             LayoutBanner(false);
