@@ -115,3 +115,16 @@ Note: `Tools/Rebuild/port_paint_squad_art.py` copies the source (dynamic) font a
 Test: `PaintSquadLevelDressingTests` (EditMode). Screenshots: `PaintSquadScreenTour.CaptureEveryLevel` (explicit Play Mode test) writes `<prefix>-level<N>.png` and `<prefix>-level<N>-overview.png`.
 
 Note: Unity reserializes the level scenes on save (default values for newer fields). The committed scenes keep the original text for existing objects and only add the dressing objects.
+
+## Verification (Task 6)
+
+- **Tests** (2026-11-18, branch `feature/minion-visuals`): EditMode 201 total, 196 pass, 5 fail; PlayMode 41 total, 31 pass, 8 fail, 2 skipped (the two explicit `PaintSquadScreenTour` tests). Every failure is pre-existing on `origin/main`: EditMode `AnalyticsTests.SettingsAssetShipsWithoutAnEndpoint`, `AnalyticsTests.VictoryAttemptReportsOneLevelEndAndTowerRows`, `Level3MapCompatibilityTests.SavedLevel3CanBeReadValidatedAndAppliedWithoutChangingTowerData`, `UpgradePreparationTests.StageGoldRewardsUseAuthoredValuesAndNewFallbackWithoutGrantingUnits`, `UpgradePreparationTests.SummonPoolAdvancesWithStageProgressAndRejectsUnaffordablePurchases`; PlayMode seven `TestSceneFlowTests` cases and `WebSpriteRenderingTests.MobileWorldZSpritesNeedDepthAndRenderWithCpuDeformation`. Run PlayMode without `-nographics`.
+- **Screenshots for both sets**: `PaintSquadScreenTour` reads `PAINT_SQUAD_CAPTURE_SET` (`PaintSquad` or `Catgirl`, default `PaintSquad`) and pins it through `CharacterSetPrefsScope`, restoring the previous value afterwards:
+
+```
+PAINT_SQUAD_CAPTURE_PREFIX=task6-catgirl PAINT_SQUAD_CAPTURE_SET=Catgirl Unity -batchmode -projectPath ~/Team5 \
+  -runTests -testPlatform PlayMode -testFilter Team5.Rebuild.Tests.PaintSquadScreenTour -testResults Logs/tour.xml
+```
+
+  This writes every screen plus `level<N>` and `level<N>-overview` for Levels 1 to 7. `Logs/PaintSquadScreens/INDEX.md` lists every capture.
+- **WebGL compile check**: `Unity -batchmode -nographics -projectPath ~/Team5 -executeMethod Team5.Rebuild.Editor.WebGLBuild.BuildCheck -logFile Logs/webgl.log` builds the same scenes and options as `BuildBeta` into the gitignored `Logs/WebGLCheck` (about 4 minutes, about 70 MB) and exits 0 on success. It never touches `docs/`.

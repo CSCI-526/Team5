@@ -23,17 +23,20 @@ namespace Team5.Rebuild.Tests
     //   Unity -batchmode -projectPath ~/Team5 -runTests -testPlatform PlayMode
     //     -testFilter Team5.Rebuild.Tests.PaintSquadScreenTour -testResults Logs/tour.xml
     // (no -nographics). The prefix comes from the PAINT_SQUAD_CAPTURE_PREFIX environment variable (default "tour").
+    // PAINT_SQUAD_CAPTURE_SET=Catgirl tours with the Catgirl set instead (default PaintSquad).
     [Explicit("Screenshot tour; run on demand."), Category("PaintSquadCapture")]
     public sealed class PaintSquadScreenTour
     {
         private const string Scenes = "Assets/Rebuild/Scenes/";
         private CharacterSetPrefsScope prefs;
         private string prefix;
+        private CharacterSet set;
 
         [SetUp]
         public void Pin()
         {
-            prefs = new CharacterSetPrefsScope(CharacterSet.PaintSquad);
+            set = CharacterSetSelection.Parse(Environment.GetEnvironmentVariable("PAINT_SQUAD_CAPTURE_SET") ?? "");
+            prefs = new CharacterSetPrefsScope(set);
             prefix = Environment.GetEnvironmentVariable("PAINT_SQUAD_CAPTURE_PREFIX");
             if (string.IsNullOrEmpty(prefix)) prefix = "tour";
             Time.timeScale = 1;
@@ -132,7 +135,7 @@ namespace Team5.Rebuild.Tests
             Find<LegacySceneMenu>().StartGame();
             yield return Frames(3);
             yield return Shot("select");
-            CharacterSelectScreen.Active.Choose(CharacterSet.PaintSquad);
+            CharacterSelectScreen.Active.Choose(set);
             yield return WaitForScene("Level1GridBattle");
             yield return Seconds(1.5f);
             yield return Shot("tutorial");

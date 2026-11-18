@@ -26,19 +26,25 @@ namespace Team5.Rebuild.Editor
             if (Application.isBatchMode) EditorApplication.Exit(summary.result == BuildResult.Succeeded ? 0 : 1);
         }
 
+        // Compile check only: same scenes and options as BuildBeta, written to the gitignored Logs/WebGLCheck.
+        // CLI: -executeMethod Team5.Rebuild.Editor.WebGLBuild.BuildCheck
+        public static void BuildCheck() => Build("Logs/WebGLCheck");
+
         [MenuItem("Team5/Rebuild/Build WebGL Beta (docs/beta)")]
-        public static void BuildBeta()
+        public static void BuildBeta() => Build(OutputPath);
+
+        private static void Build(string outputPath)
         {
             var scenes = EditorBuildSettings.scenes.Where(scene => scene.enabled).Select(scene => scene.path).ToArray();
             var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
             {
                 scenes = scenes,
-                locationPathName = OutputPath,
+                locationPathName = outputPath,
                 target = BuildTarget.WebGL,
                 options = BuildOptions.None
             });
             var summary = report.summary;
-            Debug.Log($"WebGL build {summary.result}: {summary.totalErrors} errors, {summary.totalSize / (1024 * 1024)} MB, {summary.totalTime}");
+            Debug.Log($"WebGL build to {outputPath} {summary.result}: {summary.totalErrors} errors, {summary.totalSize / (1024 * 1024)} MB, {summary.totalTime}");
             if (Application.isBatchMode) EditorApplication.Exit(summary.result == BuildResult.Succeeded ? 0 : 1);
         }
     }
