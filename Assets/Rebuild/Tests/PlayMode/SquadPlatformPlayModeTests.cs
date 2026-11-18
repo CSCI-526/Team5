@@ -19,7 +19,7 @@ namespace Team5.Rebuild.Tests
     {
         private Scene initial, opened;
         [UnityTest]
-        public IEnumerator TutorialWaitsForVisibleSwapBeforeShowingPositioningResult()
+        public IEnumerator TutorialShowsVisibleGroundSwapBeforePositioningResult()
         {
             initial = SceneManager.GetActiveScene(); Time.timeScale = 1;
             typeof(LevelOneTutorial).GetField("hasPlayedTutorial", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static).SetValue(null, false);
@@ -40,10 +40,10 @@ namespace Team5.Rebuild.Tests
             Assert.That(hud.FormationEditor, Is.Not.Null);
             var captain = session.Simulation.Units.Single(u => u.Role == UnitRole.Captain);
             Assert.That(owner.TryGetView(captain.Id, out var view), Is.True);
-            var platform = owner.GetComponent<SquadPlatformView>(); var originalSlot = captain.SlotId;
+            Assert.That(owner.GetComponent<SquadPlatformView>(),Is.Null); var originalSlot = captain.SlotId;
             hud.FormationEditor.Grid.HandleClick(originalSlot); hud.FormationEditor.Grid.HandleClick(7);
             Assert.That(hud.FormationEditor.ApplyAndResume(), Is.True);
-            var pausedTime = session.Simulation.ElapsedTime; var platformPosition = platform.RenderAnchor;
+            var pausedTime = session.Simulation.ElapsedTime;
             bool ResultVisible() => Object.FindObjectsByType<TMPro.TMP_Text>(FindObjectsSortMode.None).Any(t => t.text.Contains("POSITIONING AVOIDS DAMAGE"));
             for (var i = 0; i < 100 && !ResultVisible(); i++)
             {
@@ -53,102 +53,47 @@ namespace Team5.Rebuild.Tests
             }
             Assert.That(ResultVisible(), Is.True);
             Assert.That(view.IsPlatformRepositioning, Is.False, "Result hint must wait for the visual position, not just SlotId.");
-            Assert.That(Vector3.Distance(view.PlatformRelativeOffset,captain.FormationOffset), Is.LessThan(.001f));
-            Assert.That(Vector3.Distance(platform.RenderAnchor,platformPosition), Is.LessThan(.0001f));
+            Assert.That(Vector3.Distance(view.transform.position,captain.Position), Is.LessThan(.001f));
+            Assert.That(view.IsRidingPlatform,Is.False);
             Assert.That(session.Simulation.IsPaused, Is.True); Assert.That(session.Simulation.ElapsedTime, Is.EqualTo(pausedTime));
             tutorial.Skip();
         }
         [UnityTest]
-        public IEnumerator Level1PlatformCarriesSquadAndSwapsOnlyWithinDeck()
+        public IEnumerator Level1WalksOnGroundAndKeepsFixedFormation()
         {
-            initial = SceneManager.GetActiveScene(); Time.timeScale = 1;
-            EditorSceneManager.LoadSceneInPlayMode("Assets/Rebuild/Scenes/Level1GridBattle.unity", new LoadSceneParameters(LoadSceneMode.Additive));
-            yield return null; yield return null;
-            opened = SceneManager.GetSceneByPath("Assets/Rebuild/Scenes/Level1GridBattle.unity"); SceneManager.SetActiveScene(opened);
-            foreach (var guide in opened.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<LevelOneTutorial>())) guide.Skip();
-            var owner = opened.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<BattlePresentation>()).Single();
-            var session = owner.Session;
-            // Test-only two-passenger fixture; never saved to the authored scene.
-            var fixture = new SerializedObject(session);
-            fixture.FindProperty("initialRoster").objectReferenceValue = null;
-            var members = fixture.FindProperty("members"); members.arraySize = 2;
-            for (var i = 0; i < 2; i++)
-            {
-                var member = members.GetArrayElementAtIndex(i);
-                member.FindPropertyRelative("enabled").boolValue = true;
-                member.FindPropertyRelative("memberId").intValue = 110 + i;
-                member.FindPropertyRelative("slotId").intValue = i == 0 ? 4 : 3;
-                member.FindPropertyRelative("role").intValue = (int)(i == 0 ? UnitRole.Captain : UnitRole.Attack);
-                member.FindPropertyRelative("spawnTime").floatValue = 0;
-            }
-            fixture.ApplyModifiedPropertiesWithoutUndo();
-            session.StartBattle();
-            foreach (var guide in opened.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<LevelOneTutorial>())) guide.Skip();
-            session.Simulation.SetPaused(false); session.AdvancePlaybackFrame(.05f);
-            yield return null; yield return null;
-            var platform = owner.GetComponent<SquadPlatformView>();
-            Assert.That(platform.IsPlatformMode, Is.True); Assert.That(session.ContinuousSquadMovement, Is.False);
-            Assert.That(platform.Model.GetComponentsInChildren<Collider>(), Is.Empty);
-            var body = platform.Model.Find("Raised Body");
-            var bounds = body.GetComponentsInChildren<Renderer>().First().bounds;
-            foreach (var renderer in body.GetComponentsInChildren<Renderer>()) bounds.Encapsulate(renderer.bounds);
-            Assert.That(Vector3.Distance(bounds.size, new Vector3(3,SquadPlatformView.DeckThickness,3)), Is.LessThan(.001f));
-            Assert.That(bounds.min.y-platform.RenderAnchor.y,Is.EqualTo(SquadPlatformView.BodyLift).Within(.001f));
-            var wheelRig = platform.Model.Find("Wheel Rig");
-            Assert.That(wheelRig, Is.Not.Null);
-            var wheels = wheelRig.Cast<Transform>().Where(t => t.name.StartsWith("Wheel ")).ToArray();
-            Assert.That(wheels.Length, Is.EqualTo(12), "Two axles on each of three tracks; one wheel on each rail.");
-            foreach(var wheel in wheels)
-                Assert.That(wheel.localPosition.y-SquadPlatformView.WheelRadius,Is.EqualTo(.012f).Within(.001f));
-            Assert.That(owner.TryGetView(110, out var captain), Is.True);
-            Assert.That(owner.TryGetView(111, out var attack), Is.True);
-            var character = captain.GetComponent<FWUnitVisual>();
-            Assert.That(character, Is.Not.Null); Assert.That(attack.GetComponent<FWUnitVisual>(), Is.Not.Null);
-            Assert.That(captain.transform.Find("Body"), Is.Null, "The old block soldier must not overlap the Catgirl.");
-            void AssertOnDeck(UnitView view)
-            {
-                Assert.That(view.IsRidingPlatform, Is.True);
-                Assert.That(Vector3.Distance(view.transform.position, platform.RenderAnchor + view.PlatformRelativeOffset + Vector3.up*SquadPlatformView.DeckHeight), Is.LessThan(.001f));
-                Assert.That(Mathf.Abs(view.PlatformRelativeOffset.x), Is.LessThanOrEqualTo(1.001f));
-                Assert.That(Mathf.Abs(view.PlatformRelativeOffset.z), Is.LessThanOrEqualTo(1.001f));
-            }
-            AssertOnDeck(captain); AssertOnDeck(attack);
-            var start = platform.RenderAnchor;
-            var wheelRotation = wheels[0].localRotation;
-            session.AdvancePlaybackFrame(.5f); yield return new WaitForSecondsRealtime(.06f); yield return null;
-            Assert.That(Vector3.Distance(platform.RenderAnchor,start), Is.GreaterThan(.1f));
-            Assert.That(Quaternion.Angle(wheels[0].localRotation,wheelRotation),Is.GreaterThan(.1f));
-            AssertOnDeck(captain); AssertOnDeck(attack); Assert.That(captain.IsPlatformRepositioning, Is.False);
-            Assert.That(character.IsMoving,Is.False,"Riding the platform must keep the character in Idle.");
-            session.Simulation.SetPaused(true); yield return new WaitForSecondsRealtime(.06f);
-            var stopped = platform.RenderAnchor; var pausedWheel = wheels[0].localRotation; yield return new WaitForSecondsRealtime(.08f);
-            Assert.That(platform.RenderAnchor, Is.EqualTo(stopped));
-            Assert.That(Quaternion.Angle(wheels[0].localRotation,pausedWheel),Is.LessThan(.001f));
-            var oldOffset = captain.PlatformRelativeOffset;
-            var slots = Enumerable.Range(0,9).ToArray(); slots[0] = 4; slots[4] = 0;
-            Assert.That(session.Simulation.TryApplyFormation(slots), Is.True);
-            Assert.That(captain.State.SlotId, Is.Zero);
-            Assert.That(captain.PlatformRelativeOffset, Is.EqualTo(oldOffset), "Changing slots must not instantly teleport the displayed passenger.");
-            session.Simulation.SetPaused(false);
-            yield return null; yield return null;
-            Assert.That(character.IsMoving,Is.True,"Walking between platform slots must play Run.");
-            yield return new WaitForSecondsRealtime(.5f); yield return null;
-            Assert.That(captain.IsPlatformRepositioning, Is.False); AssertOnDeck(captain); AssertOnDeck(attack);
-            Assert.That(character.IsMoving,Is.False);
-            Directory.CreateDirectory("Logs/SquadPlatform"); Capture();
-            // Scene 1 keeps its free-squad movement mode and has no platform component.
-            EditorSceneManager.LoadSceneInPlayMode("Assets/Rebuild/Scenes/1.unity", new LoadSceneParameters(LoadSceneMode.Additive));
-            yield return null;
-            var free = SceneManager.GetSceneByPath("Assets/Rebuild/Scenes/1.unity");
-            Assert.That(free.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<SquadPlatformView>()).Any(), Is.False);
-            Assert.That(free.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<BattleSession>()).Single().ContinuousSquadMovement, Is.True);
-            yield return SceneManager.UnloadSceneAsync(free);
+            initial=SceneManager.GetActiveScene();Time.timeScale=1;
+            const string path="Assets/Rebuild/Scenes/Level1GridBattle.unity";
+            EditorSceneManager.LoadSceneInPlayMode(path,new LoadSceneParameters(LoadSceneMode.Additive));
+            yield return null;yield return null;
+            opened=SceneManager.GetSceneByPath(path);SceneManager.SetActiveScene(opened);
+            foreach(var guide in opened.GetRootGameObjects().SelectMany(g=>g.GetComponentsInChildren<LevelOneTutorial>()))guide.Skip();
+            var owner=opened.GetRootGameObjects().SelectMany(g=>g.GetComponentsInChildren<BattlePresentation>()).Single();
+            var session=owner.Session;
+            Assert.That(owner.GetComponent<SquadPlatformView>(),Is.Null);
+            Assert.That(opened.GetRootGameObjects().Any(g=>g.name=="Railway Path Artwork"),Is.False);
+            Assert.That(session.ContinuousSquadMovement,Is.False);Assert.That(session.Route.RequiredWidth,Is.EqualTo(3));
+            session.Simulation.SetPaused(false);session.AdvancePlaybackFrame(.05f);
+            yield return new WaitForSecondsRealtime(.08f);
+            var unit=session.Simulation.Units.First(u=>u.IsAlive);Assert.That(owner.TryGetView(unit.Id,out var view),Is.True);
+            Assert.That(view.IsRidingPlatform,Is.False);Assert.That(view.GetComponent<FWUnitVisual>().IsMoving,Is.True);
+            Assert.That(view.transform.position.y,Is.EqualTo(unit.Position.y).Within(.001f));
+            var before=view.transform.position;var oldSlot=unit.SlotId;
+            session.AdvancePlaybackFrame(.2f);yield return new WaitForSecondsRealtime(.05f);
+            Assert.That(Vector3.Distance(view.transform.position,before),Is.GreaterThan(.01f));
+            session.Simulation.SetPaused(true);yield return null;yield return null;
+            var stopped=view.transform.position;yield return new WaitForSecondsRealtime(.05f);
+            Assert.That(Vector3.Distance(view.transform.position,stopped),Is.LessThan(.001f));
+            Assert.That(view.GetComponent<FWUnitVisual>().IsMoving,Is.False);
+            var destination=oldSlot==7?4:7;var permutation=Enumerable.Range(0,9).ToArray();permutation[oldSlot]=destination;permutation[destination]=oldSlot;
+            Assert.That(session.Simulation.TryApplyFormation(permutation),Is.True);yield return null;
+            Assert.That(unit.SlotId,Is.EqualTo(destination));Assert.That(Vector3.Distance(view.transform.position,unit.Position),Is.LessThan(.001f));
+            Directory.CreateDirectory("Logs/RemoveEarlyRailPlatforms");Capture();
         }
         private static void Capture()
         {
             var camera = Camera.main; var old = camera.targetTexture; var active = RenderTexture.active;
             var target = new RenderTexture(1600,1000,24); var image = new Texture2D(1600,1000,TextureFormat.RGBA32,false);
-            try { camera.targetTexture=target; camera.Render(); RenderTexture.active=target; image.ReadPixels(new Rect(0,0,1600,1000),0,0); image.Apply(); File.WriteAllBytes("Logs/SquadPlatform/Platform.png",image.EncodeToPNG()); }
+            try { camera.targetTexture=target; camera.Render(); RenderTexture.active=target; image.ReadPixels(new Rect(0,0,1600,1000),0,0); image.Apply(); File.WriteAllBytes("Logs/RemoveEarlyRailPlatforms/Level1.png",image.EncodeToPNG()); }
             finally { camera.targetTexture=old; RenderTexture.active=active; target.Release(); Object.Destroy(target); Object.Destroy(image); }
         }
         [UnityTearDown] public IEnumerator Close()
