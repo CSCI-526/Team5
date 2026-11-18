@@ -118,7 +118,11 @@ namespace Team5.Rebuild.Tests
             Assert.That(font.material.shader, Is.Not.Null, path);
             Assert.That(ShaderUtil.ShaderHasError(font.material.shader), Is.False, path);
             Assert.That(font.atlasTexture, Is.Not.Null, path);
-            Assert.That(AssetDatabase.GetAssetPath(font.sourceFontFile), Does.StartWith(Root + "Fonts/"), path);
+            // Static font assets (baked by PaintSquadUiSkinBuilder) drop the runtime font file reference and keep its GUID.
+            var source = font.atlasPopulationMode == AtlasPopulationMode.Static
+                ? AssetDatabase.GUIDToAssetPath(new SerializedObject(font).FindProperty("m_SourceFontFileGUID").stringValue)
+                : AssetDatabase.GetAssetPath(font.sourceFontFile);
+            Assert.That(source, Does.StartWith(Root + "Fonts/"), path);
         }
 
         [Test]

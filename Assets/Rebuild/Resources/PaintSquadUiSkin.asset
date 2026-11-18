@@ -1,0 +1,124 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 181060442b2d24dc8b23426e4f05a1a2, type: 3}
+  m_Name: PaintSquadUiSkin
+  m_EditorClassIdentifier: Team5.Rebuild.Presentation::Team5.Rebuild.Presentation.LegacyUI.PaintSquadUiSkin
+  bodyFont: {fileID: 11400000, guid: 18315bb4464d74f9395cdf3a45967fec, type: 2}
+  headingFont: {fileID: 11400000, guid: 63d1375ae8c5647ec9539627c79e4bcf, type: 2}
+  headingOutline: {fileID: 2100000, guid: 3c7e8dad887a44d2bb222e6362bd86df, type: 2}
+  headingOutlineThin: {fileID: 2100000, guid: 9123d9c064d584bd2ae1f2b4edf374b0, type: 2}
+  bodyOutline: {fileID: 2100000, guid: 642f32372d616424d992b5155bd21b58, type: 2}
+  rounded: {fileID: 21300000, guid: d7ceade61c57243d1a0bc00a25800020, type: 3}
+  button: {fileID: 21300000, guid: 5c8fe20a9ede944bfab0350b577df111, type: 3}
+  buttonCircle: {fileID: 21300000, guid: 7efbb9812467546a79833f077c0a8737, type: 3}
+  panel: {fileID: 21300000, guid: 8c7ed54b9ab594d45ac570ecd78f8fd0, type: 3}
+  circle: {fileID: 21300000, guid: 6d9984e7c4de145078a6fa242e1121cd, type: 3}
+  ring: {fileID: 21300000, guid: 0adb6e66699ab4b0682037834ad4d7b2, type: 3}
+  pill: {fileID: 21300000, guid: 22c42f398e8b14e6b9ca548bd3c50ef5, type: 3}
+  ribbon: {fileID: 21300000, guid: 07d6a1252617e4b078336f7db9a5796c, type: 3}
+  softShadow: {fileID: 21300000, guid: ca2ed80383180437eb4db49fc3d42909, type: 3}
+  hexPaper: {fileID: 21300000, guid: 63012be9729c04284b5ea32eb60f34b1, type: 3}
+  glow: {fileID: 21300000, guid: 198005d88e48c45d295693f857e4ea21, type: 3}
+  white: {fileID: 21300000, guid: 46d8fc8e184e943b7a05148a660d7205, type: 3}
+  icons:
+  - name: arrow_left
+    sprite: {fileID: 21300000, guid: aea6314dc77714975965c195118dec89, type: 3}
+  - name: arrow_right
+    sprite: {fileID: 21300000, guid: 5a1b3cf28f95c43418445704f60e0d9f, type: 3}
+  - name: arrow_up
+    sprite: {fileID: 21300000, guid: 38ef2a4a79e5f4ea5a8b2012d025ca92, type: 3}
+  - name: boot
+    sprite: {fileID: 21300000, guid: 06471053899b347f6bbd51d4e2c72f82, type: 3}
+  - name: check
+    sprite: {fileID: 21300000, guid: f6400e00285814df885f097028f663a6, type: 3}
+  - name: clock
+    sprite: {fileID: 21300000, guid: 3a2ce64a383e244d6ae6fd5766de9819, type: 3}
+  - name: close
+    sprite: {fileID: 21300000, guid: 59f735dfe20564d8f801f39534040949, type: 3}
+  - name: coin
+    sprite: {fileID: 21300000, guid: 31fbbd7b94e5f47bcb11c2a3a9b343e0, type: 3}
+  - name: crown
+    sprite: {fileID: 21300000, guid: 992e83da56f5f457092ca8eeff3a20a6, type: 3}
+  - name: fast_forward
+    sprite: {fileID: 21300000, guid: 5ddd5110a3ccc4d4282189be8d040954, type: 3}
+  - name: finger
+    sprite: {fileID: 21300000, guid: 78c578f616498417e80a314436632f38, type: 3}
+  - name: flag
+    sprite: {fileID: 21300000, guid: 0f3caf4cffcd34534a4072ae5afb3891, type: 3}
+  - name: flask
+    sprite: {fileID: 21300000, guid: 29f075eadfc65418198a02629f9246bd, type: 3}
+  - name: gear
+    sprite: {fileID: 21300000, guid: 0baf88dd7a36d4336ab134c0613c3671, type: 3}
+  - name: globe
+    sprite: {fileID: 21300000, guid: 205bdd2c8cd8e435c86641d94a9d12b4, type: 3}
+  - name: grid
+    sprite: {fileID: 21300000, guid: 51e42472a1b934e75b84bbc19bd7bc22, type: 3}
+  - name: heart
+    sprite: {fileID: 21300000, guid: 112d2607a7d624eb7b30aae2fe7dad98, type: 3}
+  - name: home
+    sprite: {fileID: 21300000, guid: e7a99c83c4a4e4749bf33758504be3c5, type: 3}
+  - name: info
+    sprite: {fileID: 21300000, guid: 0fa7ba4dd6ee642b687f14fb1899d32b, type: 3}
+  - name: lightning
+    sprite: {fileID: 21300000, guid: 2e09ec8a6fd2048c18f37174dafbad4a, type: 3}
+  - name: lock
+    sprite: {fileID: 21300000, guid: 393633dbdfec14da49a786b0f0b84645, type: 3}
+  - name: medal
+    sprite: {fileID: 21300000, guid: c1a53e8bed747451483643811963f0a5, type: 3}
+  - name: mercenary
+    sprite: {fileID: 21300000, guid: 51b829a3a313549d1af3dbae5c82f2f0, type: 3}
+  - name: minus
+    sprite: {fileID: 21300000, guid: e2a474663a52242a3bd3e273c464ace5, type: 3}
+  - name: move
+    sprite: {fileID: 21300000, guid: 36edd31ec70fb44b79118bc596606bd7, type: 3}
+  - name: music
+    sprite: {fileID: 21300000, guid: c1496a83b0ee94a79ba5694706f323e5, type: 3}
+  - name: pause
+    sprite: {fileID: 21300000, guid: 5057967b1c4a6484c945a4fefec7448e, type: 3}
+  - name: pencil
+    sprite: {fileID: 21300000, guid: e32b6aa236d2443d2a695cb24563db8f, type: 3}
+  - name: play
+    sprite: {fileID: 21300000, guid: e8559935b242242eaa302c837a332b03, type: 3}
+  - name: plus
+    sprite: {fileID: 21300000, guid: 6d5b0fb5ebfed49a1b10860f82442bf6, type: 3}
+  - name: pow
+    sprite: {fileID: 21300000, guid: ec32b80aef31546ae8738111eb91e11c, type: 3}
+  - name: prism
+    sprite: {fileID: 21300000, guid: b80740301581f406c9025c4db787b986, type: 3}
+  - name: replay
+    sprite: {fileID: 21300000, guid: a9facb3c39591433f8f14d1dae1aa0df, type: 3}
+  - name: rotate
+    sprite: {fileID: 21300000, guid: afe08906d88f74f1c82a14f2c12d209e, type: 3}
+  - name: save
+    sprite: {fileID: 21300000, guid: c30fa42eadb1d4382b9e951d9bfc258f, type: 3}
+  - name: shield
+    sprite: {fileID: 21300000, guid: 7dfe14f093f154de78f00fe6e3a35072, type: 3}
+  - name: skull
+    sprite: {fileID: 21300000, guid: 7d8984e6d33a84eb88d2dda03bb39786, type: 3}
+  - name: soldier
+    sprite: {fileID: 21300000, guid: 6caad1794dd154a9e823260a66860384, type: 3}
+  - name: sound
+    sprite: {fileID: 21300000, guid: 3d90c4a6ff0b646a282065e3d82ca10f, type: 3}
+  - name: star
+    sprite: {fileID: 21300000, guid: d37ae01dcd964433b81c2ec5740e8502, type: 3}
+  - name: sword
+    sprite: {fileID: 21300000, guid: 3af2f11ecacda41738c4b7dd61260f95, type: 3}
+  - name: target
+    sprite: {fileID: 21300000, guid: f179f1ecff176478399b977608f2fbde, type: 3}
+  - name: trash
+    sprite: {fileID: 21300000, guid: 078342e1011864e0bb2be186400096ea, type: 3}
+  - name: trophy
+    sprite: {fileID: 21300000, guid: e2cc56d0e88224f3495ffe8dee1fc165, type: 3}
+  - name: users
+    sprite: {fileID: 21300000, guid: 4d6852109416d4d1793a6f6f41a15557, type: 3}
+  - name: xp
+    sprite: {fileID: 21300000, guid: afd8b6807ec594bd7a043e56ed891886, type: 3}
