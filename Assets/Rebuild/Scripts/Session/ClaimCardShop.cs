@@ -67,23 +67,19 @@ namespace Team5.Rebuild.Session
             return (stage + rarityBonus, stage + 1 + rarityBonus);
         }
 
-        // Frontloads Commons early and keeps high rarities genuinely scarce
+        // Higher legendary availability throughout the campaign; no duplicate unique legends.
         public (int common, int rare, int epic, int legendary) GetRarityWeights()
         {
-            var weights = HighestStageCleared switch
-            {
-                <= 1 => (90, 10, 0, 0),
-                2 => (80, 20, 0, 0),
-                3 => (70, 30, 0, 0),
-                4 => (50, 45, 5, 0),
-                5 => (40, 50, 9, 1),
-                6 => (25, 55, 16, 4),
-                _ => (0, 70, 24, 6)
-            };
+            var weights = GetRarityWeightsForTier(HighestStageCleared);
             foreach (var role in LegendaryRoles)
                 if (!preparation.HasOwnedRole(role)) return weights;
             return (weights.Item1, weights.Item2, weights.Item3 + weights.Item4, 0);
         }
+
+        // Kept for existing callers, but the canonical weights live in Simulation.
+        // The simulation cannot depend back on this campaign/shop layer.
+        public static (int common, int rare, int epic, int legendary) GetRarityWeightsForTier(int tier)
+            => SquadCombatRules.GetRarityWeightsForTier(tier);
 
         private static string RarityBox(string hex) =>
             $"<size=72%><voffset=0.12em><mark=#{hex}FF><color=#{hex}>M</color></mark></voffset></size>";

@@ -8,9 +8,16 @@ using UnityEngine.SceneManagement;
 
 namespace Team5.Rebuild.Presentation.LegacyUI
 {
+    public readonly struct NextMapThreat
+    {
+        public readonly Vector3 Position;
+        public readonly bool IsSentry;
+        public NextMapThreat(Vector3 position, bool isSentry) { Position = position; IsSentry = isSentry; }
+    }
+
     public sealed class NextMapData
     {
-        private NextMapData(NextMapRoute route, IReadOnlyList<NextMapTower> towers, IReadOnlyList<MinionPlacement> minions, Bounds cells, bool hasCells, Vector3 spawn, Vector3 goal)
+        private NextMapData(NextMapRoute route, IReadOnlyList<NextMapTower> towers, IReadOnlyList<MinionPlacement> minions, Bounds cells, bool hasCells, Vector3 spawn, Vector3 goal, IReadOnlyList<NextMapThreat> threats)
         {
             Route = route;
             Towers = towers;
@@ -19,6 +26,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             HasCells = hasCells;
             Spawn = spawn;
             Goal = goal;
+            Threats = threats;
         }
 
         public NextMapRoute Route { get; }
@@ -28,6 +36,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         public bool HasCells { get; }
         public Vector3 Spawn { get; }
         public Vector3 Goal { get; }
+        public IReadOnlyList<NextMapThreat> Threats { get; }
         public bool HasMap => HasCells && Route.Count >= 2;
 
         public static NextMapData Capture(Scene scene)
@@ -36,12 +45,16 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             SceneRoute sceneRoute = null;
             var cells = new List<BattleCell>();
             var sceneTowers = new List<BattleTower>();
+            var threats = new List<NextMapThreat>();
             foreach (var root in scene.GetRootGameObjects())
             {
                 if (session == null) session = root.GetComponentInChildren<BattleSession>(true);
                 if (sceneRoute == null) sceneRoute = root.GetComponentInChildren<SceneRoute>(true);
                 cells.AddRange(root.GetComponentsInChildren<BattleCell>(true));
                 sceneTowers.AddRange(root.GetComponentsInChildren<BattleTower>(true));
+                foreach (var threat in root.GetComponentsInChildren<Team5.Rebuild.Presentation.OpenStageThreat>(true))
+                    threats.Add(new NextMapThreat(threat.transform.position,
+                        threat.Kind == Team5.Rebuild.Presentation.OpenStageThreat.ThreatKind.Sentry));
             }
             if (session != null && session.Route != null) sceneRoute = session.Route;
 
@@ -72,7 +85,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                 towers.Add(new NextMapTower(tower.CaptureDefinition(towers.Count + 1), model, hasModel));
             }
             var minions = new List<MinionPlacement>();
-            if (session != null && MinionRules.HasMinions(session.DisplayedLevelNumber))
+            if (threats.Count == 0 && session != null && MinionRules.HasMinions(session.DisplayedLevelNumber))
             {
                 var definitions = new List<TowerDefinition>();
                 foreach (var tower in towers) definitions.Add(tower.Definition);
@@ -83,7 +96,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             var end = route.Count > 0 ? route[route.Count - 1] : Vector3.zero;
             return new NextMapData(route, towers, minions, cellBounds, hasCells,
                 spawnCount > 0 ? spawnSum / spawnCount : start,
-                goalCount > 0 ? goalSum / goalCount : end);
+                goalCount > 0 ? goalSum / goalCount : end, threats);
         }
 
         private static Vector3[] CaptureRoute(SceneRoute route)

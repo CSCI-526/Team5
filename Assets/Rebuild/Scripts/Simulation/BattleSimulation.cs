@@ -17,6 +17,7 @@ namespace Team5.Rebuild.Simulation
         private bool stepping;
         private double healTimer;
         private int projectileSequence;
+        private int extraMemberSequence;
         private List<Vector3> manualRoute;
         public const int ManualRouteStep = 3;
         public bool ManualMovement => manualRoute != null;
@@ -68,7 +69,8 @@ namespace Team5.Rebuild.Simulation
         public BattleObjective Objective => definition.Objective;
         public bool IsPaused { get; private set; }
         public int SpawnedCount { get; private set; }
-        public int PendingSpawnCount => definition.UnitCount - SpawnedCount;
+        public int PendingSpawnCount => definition.Members != null
+            ? definition.Members.Count - spawnedMembers.Count : definition.UnitCount - SpawnedCount;
         public int KilledCount { get; private set; }
         public int ReachedGoalCount { get; private set; }
         public int TowersDestroyedCount { get; private set; }
@@ -118,6 +120,7 @@ namespace Team5.Rebuild.Simulation
             copy.manualRoute = manualRoute == null ? null : new List<Vector3>(manualRoute);
             if (continuous != null) copy.continuous = continuous.Copy(copy);
             copy.time = time; copy.healTimer = healTimer; copy.projectileSequence = projectileSequence;
+            copy.extraMemberSequence = extraMemberSequence;
             copy.Outcome = Outcome; copy.IsPaused = IsPaused;
             copy.SpawnedCount = SpawnedCount; copy.KilledCount = KilledCount; copy.ReachedGoalCount = ReachedGoalCount;
             copy.TowersDestroyedCount = TowersDestroyedCount; copy.TowerBountyGoldEarned = TowerBountyGoldEarned;
@@ -129,6 +132,7 @@ namespace Team5.Rebuild.Simulation
             this.definition = definition ?? throw new ArgumentNullException(nameof(definition));
             foreach (var tower in definition.Towers) towers.Add(new TowerState(tower));
             Units = units.AsReadOnly(); Towers = towers.AsReadOnly(); Projectiles = projectiles.AsReadOnly();
+            extraMemberSequence = definition.Members != null ? 1000000 : definition.UnitCount + 1000000;
             if (definition.WalkableCells == null) return;
             walkable = new HashSet<Vector3Int>(definition.WalkableCells);
             for (var i = 1; i < definition.Waypoints.Count; i++)
@@ -171,6 +175,30 @@ namespace Team5.Rebuild.Simulation
             var affected = 0;
             switch (caster.Role)
             {
+                case UnitRole.Captain:
+                    // A RANDOM ordinary role at the campaign's currently unlocked summoning tier.
+                    // Roll only after checking capacity; failed casts must not advance RNG or spend cooldown.
+                    if (HasFreeReinforcementSlot() && TrySpawnExtra(RollCaptainReinforcement(), caster.Position)) affected++;
+                    else
+                    {
+                        TowerState nearest = null;
+                        var best = LegendarySkillRules.CaptainStrikeRange * LegendarySkillRules.CaptainStrikeRange;
+                        foreach (var tower in towers)
+                        {
+                            if (!tower.IsAlive || tower.Definition.IsWoodenGate) continue;
+                            if (tower.Definition.RequiresExplosiveDamage) continue;
+                            var distance = HorizontalDistanceSquared(tower.Position, caster.Position);
+                            if (distance >= best) continue;
+                            nearest = tower; best = distance;
+                        }
+                        if (nearest != null)
+                        {
+                            DamageTower(caster.Id, nearest, LegendarySkillRules.CaptainStrikeDamage + caster.Definition.Level,
+                                AttackDamageType.Normal);
+                            affected++;
+                        }
+                    }
+                    break;
                 case UnitRole.Frostweaver:
                     foreach (var tower in towers)
                     {
@@ -230,52 +258,10 @@ namespace Team5.Rebuild.Simulation
             }
         }
 
-        public bool TryApplyFormation(IReadOnlyList<int> sourceSlots)
-        {
-            if (stepping || (continuous == null && !IsPaused) || Outcome != BattleOutcome.Running || definition.FormationSize != 3 ||
-                sourceSlots == null || sourceSlots.Count != 9 || PendingSpawnCount != 0) return false;
-            // The Captain owns this skill. Keep legacy Captain-less simulations usable by tests/tools.
-            if (definition.Members != null)
-                foreach (var member in definition.Members)
-                    if (member.Unit.Role == UnitRole.Captain &&
-                        !units.Exists(unit => unit.IsAlive && unit.Role == UnitRole.Captain)) return false;
-            var seen = new HashSet<int>();
-            var destinations = new int[9];
-            for (var destination = 0; destination < 9; destination++)
-            {
-                var source = sourceSlots[destination];
-                if (source < 0 || source > 8 || !seen.Add(source)) return false;
-                destinations[source] = destination;
-            }
-            if (continuous != null) return continuous.ApplyFormation(destinations);
-            foreach (var unit in units)
-            {
-                if (!unit.IsAlive) continue;
-                var offset = SquadCombatRules.Offset(destinations[unit.SlotId]);
-                var from = unit.AnchorPosition + offset;
-                if (!CanStand(from)) return false;
-                if (!ManualMovement) continue;
-                // An edit must also fit the untravelled portion of the manually planned route.
-                for (var next = unit.NextWaypoint; next < Waypoints.Count; next++)
-                {
-                    var to = Waypoints[next] + offset;
-                    foreach (var cell in FormationClearance.SweptCells(from, to))
-                        if ((walkable != null && !walkable.Contains(cell)) || HasTowerFootprint(cell)) return false;
-                    from = to;
-                }
-            }
-            foreach (var unit in units)
-            {
-                if (!unit.IsAlive) continue;
-                var anchor = unit.AnchorPosition;
-                var destination = destinations[unit.SlotId];
-                unit.FormationSlot = SquadCombatRules.Slot(destination);
-                unit.FormationOffset = SquadCombatRules.Offset(destination);
-                unit.Position = anchor + unit.FormationOffset;
-            }
-            FormationChanged?.Invoke();
-            return true;
-        }
+        // Formations are locked after deployment; changes are made only in preparation.
+        public bool TryApplyFormation(IReadOnlyList<int> sourceSlots) => false;
+
+
 
         public void Step(float deltaTime)
         {
@@ -308,6 +294,8 @@ namespace Team5.Rebuild.Simulation
                     }
                 }
                 time += deltaTime;
+                CheckContinuousGoal();
+                if (Outcome != BattleOutcome.Running) return;
                 if (Objective == BattleObjective.ReachGoal)
                 {
                     if (PendingSpawnCount == 0 && AliveCount == 0) End(BattleOutcome.Defeat);
@@ -334,6 +322,8 @@ namespace Team5.Rebuild.Simulation
                     units.Add(unit); SpawnedCount++;
                     if (continuous != null) continuous.Spawn(unit);
                     UnitSpawned?.Invoke(new UnitSpawnedEvent(unit));
+                    for (var extra = 1; extra < SquadCombatRules.StartingSummonCount(member.Unit.Role); extra++)
+                        TrySpawnExtra(member.Unit, unit.Position);
                 }
                 return;
             }
@@ -351,6 +341,92 @@ namespace Team5.Rebuild.Simulation
                     units.Add(unit); UnitSpawned?.Invoke(new UnitSpawnedEvent(unit));
                 }
             }
+        }
+
+        private bool HasFreeReinforcementSlot()
+        {
+            if (units.FindAll(u => u.IsAlive).Count >= LegendarySkillRules.CaptainBattlefieldCapacity) return false;
+            var occupied = new HashSet<int>();
+            foreach (var unit in units) if (unit.IsAlive) occupied.Add(unit.SlotId);
+            if (definition.Members != null)
+                foreach (var planned in definition.Members)
+                    if (!spawnedMembers.Contains(planned.MemberId)) occupied.Add(planned.SlotId);
+            return occupied.Count < LegendarySkillRules.CaptainBattlefieldCapacity;
+        }
+
+        private static readonly UnitRole[] CaptainPool =
+        { UnitRole.Attack, UnitRole.Tank, UnitRole.Heal, UnitRole.Sniper, UnitRole.Vanguard, UnitRole.Demolisher };
+
+        private UnitDefinition RollCaptainReinforcement()
+        {
+            var tier = definition.SummonTier;
+            var (common, rare, epic, _) = SquadCombatRules.GetRarityWeightsForTier(tier);
+            // Unique legendary supports are deliberately excluded from reinforcements.
+            var roll = UnityEngine.Random.Range(0, common + rare + epic);
+            var rarity = roll < common ? UnitRarity.Common : roll < common + rare ? UnitRarity.Rare : UnitRarity.Epic;
+            var role = CaptainPool[UnityEngine.Random.Range(0, CaptainPool.Length)];
+            return SquadCombatRules.Create(role, rarity, tier);
+        }
+
+        // One physical unit per formation slot. Extras never change the six-card deployment.
+        private bool TrySpawnExtra(UnitDefinition definition, Vector3 near)
+        {
+            if (units.FindAll(u => u.IsAlive).Count >= LegendarySkillRules.CaptainBattlefieldCapacity) return false;
+            var reserved = new HashSet<int>();
+            if (this.definition.Members != null)
+                foreach (var planned in this.definition.Members)
+                    if (!spawnedMembers.Contains(planned.MemberId)) reserved.Add(planned.SlotId);
+            foreach (var existing in units) if (existing.IsAlive) reserved.Add(existing.SlotId);
+            var prefer = new[] { 4, 1, 3, 5, 7, 0, 2, 6, 8 };
+            foreach (var slot in prefer)
+            {
+                if (reserved.Contains(slot) || continuous != null && !continuous.CanSpawnInSlot(slot)) continue;
+                var position = continuous != null ? continuous.Reference + SquadCombatRules.Offset(slot) *
+                    continuous.FormationSpacing : near - (units.Count > 0 ? units[0].FormationOffset : Vector3.zero) + SquadCombatRules.Offset(slot);
+                // For tight open maps, let continuous movement repair the initial shape later.
+                var unit = new UnitState(++extraMemberSequence, definition, position, 1,
+                    SquadCombatRules.Slot(slot), SquadCombatRules.Offset(slot));
+                units.Add(unit); SpawnedCount++;
+                if (continuous != null) continuous.Spawn(unit);
+                UnitSpawned?.Invoke(new UnitSpawnedEvent(unit));
+                return true;
+            }
+            return false;
+        }
+
+        public bool TryApplyEnvironmentalDamage(Vector3 location, float radius, float damage)
+        {
+            if (stepping || IsPaused || Outcome != BattleOutcome.Running || radius <= 0 || damage <= 0) return false;
+            var hit = false;
+            foreach (var unit in units)
+            {
+                if (!unit.IsAlive || HorizontalDistanceSquared(unit.Position, location) > radius * radius) continue;
+                DamageUnit(-1, unit, damage);
+                hit = true;
+            }
+            if (PendingSpawnCount == 0 && AliveCount == 0) End(BattleOutcome.Defeat);
+            return hit;
+        }
+
+        public void ForceTimeLimitDefeat()
+        {
+            if (!stepping && Outcome == BattleOutcome.Running) End(BattleOutcome.Defeat);
+        }
+
+        private void CheckContinuousGoal()
+        {
+            if (continuous == null || Objective != BattleObjective.ReachGoal ||
+                Outcome != BattleOutcome.Running || PendingSpawnCount > 0 || continuous.Moving) return;
+            var goal = definition.Waypoints[definition.Waypoints.Count - 1];
+            if (HorizontalDistanceSquared(continuous.Reference, goal) > 1.1f * 1.1f) return;
+            foreach (var unit in units)
+            {
+                if (!unit.IsAlive) continue;
+                unit.LifeState = UnitLifeState.ReachedGoal;
+                ReachedGoalCount++;
+                UnitReachedGoal?.Invoke(new UnitEndedEvent(unit));
+            }
+            End(BattleOutcome.Victory);
         }
 
         private float SpawnProgress(float speed)
@@ -512,7 +588,7 @@ namespace Team5.Rebuild.Simulation
                 Position = tower.Position,
                 Origin = tower.Position,
                 Damage = tower.Definition.Damage,
-                Straight = tower.Definition.Area != AttackArea.Square,
+                Straight = SquadCombatRules.IsLaser(tower.Definition.Area),
                 Direction = SquadCombatRules.Direction(tower.Definition.Area),
                 Range = tower.Definition.Range,
                 Width = tower.Definition.AttackWidth

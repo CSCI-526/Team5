@@ -137,12 +137,14 @@ namespace Team5.Rebuild.Simulation
         public BattleObjective Objective { get; private set; }
         public ReadOnlyCollection<MemberSpawnDefinition> Members { get; private set; }
         public ReadOnlyCollection<Vector3Int> WalkableCells { get; private set; }
+        public int SummonTier { get; private set; } = 1;
 
         public BattleDefinition(IEnumerable<Vector3> waypoints, IEnumerable<TowerDefinition> towers,
-            IEnumerable<MemberSpawnDefinition> members, IEnumerable<Vector3Int> walkableCells = null)
+            IEnumerable<MemberSpawnDefinition> members, IEnumerable<Vector3Int> walkableCells = null, int summonTier = 1)
             : this(waypoints, towers, FirstUnit(members, out var captured), captured.Count, 1, 1, 3)
         {
             Objective = BattleObjective.ReachGoal;
+            SummonTier = Math.Max(1, summonTier);
             var ids = new HashSet<int>();
             var slots = new HashSet<int>();
             foreach (var member in captured)

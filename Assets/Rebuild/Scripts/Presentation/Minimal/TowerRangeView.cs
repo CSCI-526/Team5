@@ -1,9 +1,12 @@
+using System.Collections.Generic;
 using Team5.Rebuild.Simulation;
 using UnityEngine;
 using UnityEngine.Rendering;
 
 namespace Team5.Rebuild.Presentation
 {
+    // Exactly mirrors the simulation's circle, 76-degree cone, and narrow laser strip hitboxes.
+    // All normal towers use Circle or Cone; straight beams are telegraphed precision towers.
     public sealed class TowerRangeView : MonoBehaviour
     {
         private TowerState tower;
@@ -12,51 +15,15 @@ namespace Team5.Rebuild.Presentation
         private MeshRenderer fill;
         private LineRenderer border;
         private Material fillMaterial, borderMaterial;
-        private Vector3[] corners;
         private bool visible = true;
+        private AttackArea lastArea = (AttackArea)(-1);
+        private float lastRange = -1, lastWidth = -1;
+        private Vector3[] points = System.Array.Empty<Vector3>();
         public Bounds DisplayBounds { get; private set; }
         public int TowerId => tower?.Id ?? 0;
 
-        public void Bind(TowerState state)
-        {
-            tower = state;
-            previewDefinition = null;
-            EnsureGeometry();
-            Refresh();
-        }
-
-        public void BindPreview(TowerDefinition definition)
-        {
-            tower = null;
-            previewDefinition = definition;
-            EnsureGeometry();
-            Refresh();
-        }
-
-        private void EnsureGeometry()
-        {
-            if (mesh == null)
-            {
-                mesh = new Mesh { name = "Tower Range XZ Quad" };
-                gameObject.AddComponent<MeshFilter>().sharedMesh = mesh;
-                fill = gameObject.AddComponent<MeshRenderer>();
-                fillMaterial = CreateMaterial(new Color(0.25f, 0.55f, 1, 0.15f));
-                borderMaterial = CreateMaterial(new Color(0.25f, 0.55f, 1, 0.7f));
-                fill.sharedMaterial = fillMaterial;
-                fill.shadowCastingMode = ShadowCastingMode.Off;
-                fill.receiveShadows = false;
-                border = new GameObject("Border").AddComponent<LineRenderer>();
-                border.transform.SetParent(transform, false);
-                border.sharedMaterial = borderMaterial;
-                border.loop = true;
-                border.useWorldSpace = true;
-                border.positionCount = 4;
-                border.widthMultiplier = 0.035f;
-                border.shadowCastingMode = ShadowCastingMode.Off;
-                border.receiveShadows = false;
-            }
-        }
-
+        public void Bind(TowerState state) { tower = state; previewDefinition = null; EnsureGeometry(); Refresh(); }
+        public void BindPreview(TowerDefinition definition) { tower = null; previewDefinition = definition; EnsureGeometry(); Refresh(); }
         public void SetVisible(bool value) { visible = value; Refresh(); }
         private void LateUpdate() => Refresh();
         private void OnEnable() => Refresh();
@@ -66,56 +33,119 @@ namespace Team5.Rebuild.Presentation
             if (border != null) border.enabled = false;
         }
 
+        private void EnsureGeometry()
+        {
+            if (mesh != null) return;
+            mesh = new Mesh { name = "Tower Attack Shape XZ" };
+            gameObject.AddComponent<MeshFilter>().sharedMesh = mesh;
+            fill = gameObject.AddComponent<MeshRenderer>();
+            fillMaterial = CreateMaterial(new Color(.22f, .6f, 1f, .10f));
+            borderMaterial = CreateMaterial(new Color(.22f, .6f, 1f, .58f));
+            fill.sharedMaterial = fillMaterial;
+            fill.shadowCastingMode = ShadowCastingMode.Off;
+            fill.receiveShadows = false;
+            border = new GameObject("Range Outline").AddComponent<LineRenderer>();
+            border.transform.SetParent(transform, false);
+            border.sharedMaterial = borderMaterial;
+            border.loop = true;
+            border.useWorldSpace = false;
+            border.widthMultiplier = .035f;
+            border.shadowCastingMode = ShadowCastingMode.Off;
+            border.receiveShadows = false;
+        }
+
         private void Refresh()
         {
             var definition = tower != null ? tower.Definition : previewDefinition;
             if (definition == null || fill == null || border == null) return;
-            fill.enabled = border.enabled = isActiveAndEnabled && visible && !definition.IsWall && (tower == null || tower.IsAlive);
+            var active = isActiveAndEnabled && visible && !definition.IsWall && (tower == null || tower.IsAlive);
+            fill.enabled = border.enabled = active;
+            if (!active) return;
 
-            // Tint AOE towers orange-red with a subtle pulse
-            if (definition.IsAoe)
-            {
-                var pulse = 0.14f + 0.08f * Mathf.Sin(Time.time * 4f);
-                fillMaterial.SetColor("_BaseColor", new Color(1f, 0.36f, 0.12f, pulse));
-                borderMaterial.SetColor("_BaseColor", new Color(1f, 0.45f, 0.15f, 0.85f));
-            }
-            else
-            {
-                fillMaterial.SetColor("_BaseColor", new Color(0.25f, 0.55f, 1f, 0.15f));
-                borderMaterial.SetColor("_BaseColor", new Color(0.25f, 0.55f, 1f, 0.7f));
-            }
+            var color = SquadCombatRules.IsLaser(definition.Area)
+                ? new Color(1f, .16f, .14f)
+                : definition.IsAoe ? new Color(1f, .46f, .16f) : new Color(.27f, .6f, 1f);
+            fillMaterial.SetColor("_BaseColor", new Color(color.r, color.g, color.b, .10f));
+            borderMaterial.SetColor("_BaseColor", new Color(color.r, color.g, color.b, .72f));
 
             var position = tower != null ? tower.Position : definition.Position;
-            var bounds = SquadCombatRules.AreaBounds(position, definition.Area, definition.Range, definition.AttackWidth);
-            transform.SetPositionAndRotation(bounds.center + Vector3.up * 0.035f, Quaternion.identity);
+            transform.SetPositionAndRotation(position + Vector3.up * .035f, Quaternion.identity);
             transform.localScale = Vector3.one;
-            if (DisplayBounds != bounds || mesh.vertexCount == 0)
+            DisplayBounds = SquadCombatRules.AreaBounds(position, definition.Area, definition.Range, definition.AttackWidth);
+            if (definition.Area != lastArea || !Mathf.Approximately(definition.Range, lastRange) ||
+                !Mathf.Approximately(definition.AttackWidth, lastWidth))
             {
-                var half = bounds.extents;
-                corners = new[] { new Vector3(-half.x, 0, -half.z), new Vector3(-half.x, 0, half.z),
-                    new Vector3(half.x, 0, half.z), new Vector3(half.x, 0, -half.z) };
-                mesh.vertices = corners;
-                mesh.triangles = new[] { 0, 1, 2, 0, 2, 3 };
-                mesh.RecalculateBounds();
+                lastArea = definition.Area; lastRange = definition.Range; lastWidth = definition.AttackWidth;
+                CreatePolygon(definition.Area, definition.Range, definition.AttackWidth);
             }
-            DisplayBounds = bounds;
-            for (var i = 0; i < 4; i++) border.SetPosition(i, transform.TransformPoint(corners[i]));
+        }
+
+        private void CreatePolygon(AttackArea area, float range, float width)
+        {
+            var outline = new List<Vector3>();
+            if (SquadCombatRules.IsCircle(area))
+            {
+                for (var i = 0; i < 48; i++)
+                {
+                    var radians = i * Mathf.PI * 2f / 48f;
+                    outline.Add(new Vector3(Mathf.Cos(radians) * range, 0f, Mathf.Sin(radians) * range));
+                }
+            }
+            else if (SquadCombatRules.IsCone(area))
+            {
+                outline.Add(Vector3.zero);
+                var dir = SquadCombatRules.Direction(area);
+                var origin = Mathf.Atan2(dir.z, dir.x);
+                for (var i = 0; i <= 24; i++)
+                {
+                    var angle = origin + Mathf.Lerp(-SquadCombatRules.ConeHalfAngleDegrees,
+                        SquadCombatRules.ConeHalfAngleDegrees, i / 24f) * Mathf.Deg2Rad;
+                    outline.Add(new Vector3(Mathf.Cos(angle) * range, 0f, Mathf.Sin(angle) * range));
+                }
+            }
+            else if (SquadCombatRules.IsLaser(area))
+            {
+                var forward = SquadCombatRules.Direction(area);
+                var side = new Vector3(-forward.z, 0f, forward.x) * (width * .5f);
+                outline.Add(-side); outline.Add(forward * range - side);
+                outline.Add(forward * range + side); outline.Add(side);
+            }
+            else // legacy Square geometry is retained only for older scenes/test levels.
+            {
+                outline.Add(new Vector3(-range, 0, -range)); outline.Add(new Vector3(-range, 0, range));
+                outline.Add(new Vector3(range, 0, range)); outline.Add(new Vector3(range, 0, -range));
+            }
+            points = outline.ToArray();
+            var vertices = new Vector3[points.Length + 1];
+            vertices[0] = Vector3.zero;
+            for (var i = 0; i < points.Length; i++) vertices[i + 1] = points[i];
+            var triangles = new int[points.Length * 3];
+            for (var i = 0; i < points.Length; i++)
+            {
+                triangles[i * 3] = 0;
+                triangles[i * 3 + 1] = i + 1;
+                triangles[i * 3 + 2] = ((i + 1) % points.Length) + 1;
+            }
+            mesh.Clear(); mesh.vertices = vertices; mesh.triangles = triangles; mesh.RecalculateBounds();
+            border.positionCount = points.Length;
+            for (var i = 0; i < points.Length; i++) border.SetPosition(i, points[i]);
         }
 
         private static Material CreateMaterial(Color color)
         {
-            var material = new Material(Shader.Find("Universal Render Pipeline/Unlit")) { name = "Tower Range (Runtime)", renderQueue = 3000 };
-            material.SetColor("_BaseColor", color);
-            material.SetFloat("_Surface", 1);
-            material.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
-            material.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
-            material.SetFloat("_ZWrite", 0);
-            material.SetFloat("_Cull", (float)CullMode.Off);
+            var shader = Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Unlit/Color") ?? Shader.Find("Standard");
+            var material = new Material(shader) { name = "Tower Range (Runtime)", renderQueue = 3000 };
+            if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", color);
+            if (material.HasProperty("_Color")) material.SetColor("_Color", color);
+            if (material.HasProperty("_Surface")) material.SetFloat("_Surface", 1);
+            if (material.HasProperty("_SrcBlend")) material.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
+            if (material.HasProperty("_DstBlend")) material.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
+            if (material.HasProperty("_ZWrite")) material.SetFloat("_ZWrite", 0);
+            if (material.HasProperty("_Cull")) material.SetFloat("_Cull", (float)CullMode.Off);
             material.SetOverrideTag("RenderType", "Transparent");
             material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
             return material;
         }
-
         private void OnDestroy()
         {
             if (mesh != null) Destroy(mesh);

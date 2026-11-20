@@ -50,27 +50,31 @@ namespace Team5.Rebuild.Presentation
         {
             if (owner == null || !owner.isActiveAndEnabled || IsInputSuppressed) return;
             if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame) CloseInspection();
-            if (Mouse.current == null || !Mouse.current.leftButton.wasPressedThisFrame) return;
-            var point = Mouse.current.position.ReadValue();
+            var mouse = Mouse.current;
+            if (mouse == null) return;
+            var move = mouse.leftButton.wasPressedThisFrame;
+            var inspect = mouse.rightButton.wasPressedThisFrame;
+            if (!move && !inspect) return;
+            var point = mouse.position.ReadValue();
             if (PointerOverUI(point)) return;
-            if (owner.GetComponent<SiegeRamFleet>()?.TryBeginReplanningAt(point) == true) return;
-            if (TrySelectAt(point)) return;
-            if (owner.Session.ContinuousSquadMovement && selected == null && !squadSelected)
+            var sim = owner.Session.Simulation;
+            if (move && sim != null && sim.ContinuousMovementEnabled)
             {
-                var sim = owner.Session.Simulation;
+                if (sim.IsPaused || sim.Outcome != BattleOutcome.Running) return;
+                if (selected != null || squadSelected) CloseImmediately();
                 var camera = Camera.main;
-                if (sim != null && camera != null && !sim.IsPaused)
-                {
-                    var ray = camera.ScreenPointToRay(point);
-                    var plane = new Plane(Vector3.up, sim.SquadReferencePosition);
-                    if (plane.Raycast(ray, out var distance))
-                    {
-                        var target = ray.GetPoint(distance);
-                        var accepted = sim.RequestMovement(new MovementRequest(target));
-                        owner.GetComponent<ContinuousMovementView>()?.ShowDestination(accepted ? sim.SquadDestination : target, accepted);
-                    }
-                }
+                if (camera == null) return;
+                var ray = camera.ScreenPointToRay(point);
+                var plane = new Plane(Vector3.up, sim.SquadReferencePosition);
+                if (!plane.Raycast(ray, out var distance)) return;
+                var target = ray.GetPoint(distance);
+                var accepted = sim.RequestMovement(new MovementRequest(target));
+                owner.GetComponent<ContinuousMovementView>()?.ShowDestination(accepted ? sim.SquadDestination : target, accepted);
+                return;
             }
+            if (inspect && TrySelectAt(point)) return;
+            if (move && owner.GetComponent<SiegeRamFleet>()?.TryBeginReplanningAt(point) == true) return;
+            if (move && TrySelectAt(point)) return;
             CloseInspection();
         }
 

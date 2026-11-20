@@ -7,7 +7,10 @@ namespace Team5.Rebuild.Simulation
     public enum UnitRole { Test, Attack, Tank, Heal, Captain, Sniper, Vanguard, Demolisher, Frostweaver, Warcaller, Aegis }
     public enum UnitRarity { Common = 0, Rare = 1, Epic = 2, Legendary = 3 }
     public enum BattleObjective { DefendGoal, ReachGoal }
-    public enum AttackArea { Square = 0, PositiveX = 1, NegativeX = 2, PositiveZ = 3, NegativeZ = 4 }
+    // Keep numeric values 0..4 stable for existing serialized Unity scenes.
+    // 1..4 are precision beam / laser strips; normal towers use Circle or Cone variants.
+    public enum AttackArea { Square = 0, PositiveX = 1, NegativeX = 2, PositiveZ = 3, NegativeZ = 4,
+        Circle = 5, ConePositiveX = 6, ConeNegativeX = 7, ConePositiveZ = 8, ConeNegativeZ = 9 }
     public enum ProjectileTargetKind { Tower, FormationSlot }
 
     public readonly struct RoleBaseStats
@@ -34,7 +37,7 @@ namespace Team5.Rebuild.Simulation
 
     public static class SquadCombatRules
     {
-        public const float Speed = 0.5f;
+        public const float Speed = 0.75f; // Faster traversal keeps rebuilt 20-35 tile stages below two minutes.
         public const float AttackInterval = 1f;
         public const float AttackRange = 2.5f;
         public const float ProjectileSpeed = 8f;
@@ -55,6 +58,33 @@ namespace Team5.Rebuild.Simulation
             { UnitRole.Frostweaver, new RoleBaseStats(maxHp: 9.0f, defense: 0.10f) },
             { UnitRole.Warcaller,   new RoleBaseStats(maxHp: 10.0f, defense: 0.10f) },
             { UnitRole.Aegis,       new RoleBaseStats(maxHp: 11.0f, defense: 0.20f) }
+        };
+
+        // Shared summon rarity table. Keep this in the dependency-free simulation layer
+        // so both the campaign shop and Captain reinforcements use identical odds.
+        // The Captain excludes unique legendary support roles from its own pool.
+        public static (int common, int rare, int epic, int legendary) GetRarityWeightsForTier(int tier) => tier switch
+        {
+            <= 1 => (75, 19, 3, 3),
+            2 => (66, 26, 4, 4),
+            3 => (58, 30, 7, 5),
+            4 => (44, 39, 10, 7),
+            5 => (35, 40, 15, 10),
+            6 => (25, 42, 21, 12),
+            _ => (15, 42, 28, 15)
+        };
+
+        // Deployment capacity stays six cards; battlefield unit output depends on role.
+        // The first unit uses the deployed slot; extra units fill available slots.
+        public static int StartingSummonCount(UnitRole role) => role switch
+        {
+            UnitRole.Attack => 2,
+            UnitRole.Vanguard => 2,
+            UnitRole.Sniper => 1,
+            UnitRole.Tank => 1,
+            UnitRole.Heal => 1,
+            UnitRole.Demolisher => 1,
+            _ => 1
         };
 
         public static bool IsLegendaryRole(UnitRole role) => role == UnitRole.Captain ||
@@ -141,31 +171,46 @@ namespace Team5.Rebuild.Simulation
         public static bool AreNeighbors(int first, int second) =>
             first != second && Math.Abs(first % 3 - second % 3) <= 1 && Math.Abs(first / 3 - second / 3) <= 1;
 
+        public const float ConeHalfAngleDegrees = 38f;
+        public static bool IsCircle(AttackArea area) => area == AttackArea.Circle;
+        public static bool IsCone(AttackArea area) => area >= AttackArea.ConePositiveX && area <= AttackArea.ConeNegativeZ;
+        public static bool IsLaser(AttackArea area) => area >= AttackArea.PositiveX && area <= AttackArea.NegativeZ;
+
         public static Vector3 Direction(AttackArea area) => area switch
         {
-            AttackArea.PositiveX => Vector3.right,
-            AttackArea.NegativeX => Vector3.left,
-            AttackArea.PositiveZ => Vector3.forward,
-            AttackArea.NegativeZ => Vector3.back,
+            AttackArea.PositiveX or AttackArea.ConePositiveX => Vector3.right,
+            AttackArea.NegativeX or AttackArea.ConeNegativeX => Vector3.left,
+            AttackArea.PositiveZ or AttackArea.ConePositiveZ => Vector3.forward,
+            AttackArea.NegativeZ or AttackArea.ConeNegativeZ => Vector3.back,
             _ => Vector3.zero
         };
 
+        // Gameplay hit-testing and range visuals use the same geometry.
         public static bool Contains(Vector3 offset, AttackArea area, float range, float width)
         {
+            var sqr = offset.x * offset.x + offset.z * offset.z;
+            if (IsCircle(area)) return sqr <= range * range + .00001f;
             if (area == AttackArea.Square) return Mathf.Abs(offset.x) <= range && Mathf.Abs(offset.z) <= range;
             var direction = Direction(area);
             var forward = Vector3.Dot(offset, direction);
-            var side = Vector3.Dot(offset, new Vector3(-direction.z, 0, direction.x));
-            return forward >= 0 && forward <= range && Mathf.Abs(side) <= width / 2;
+            if (forward < 0 || forward > range) return false;
+            var side = Mathf.Abs(Vector3.Dot(offset, new Vector3(-direction.z, 0, direction.x)));
+            if (IsCone(area))
+                return sqr <= range * range + .00001f && side <= forward * Mathf.Tan(ConeHalfAngleDegrees * Mathf.Deg2Rad) + .00001f;
+            return side <= width * .5f; // precision laser beam, never the default tower
         }
 
         public static Bounds AreaBounds(Vector3 position, AttackArea area, float range, float width)
         {
-            if (area == AttackArea.Square) return new Bounds(position, new Vector3(range * 2, 0, range * 2));
+            if (IsCircle(area) || area == AttackArea.Square)
+                return new Bounds(position, new Vector3(range * 2f, 0, range * 2f));
             var direction = Direction(area);
             var alongX = direction.x != 0;
-            return new Bounds(position + direction * (range / 2), new Vector3(alongX ? range : width, 0, alongX ? width : range));
+            var lateral = IsCone(area) ? range * Mathf.Sin(ConeHalfAngleDegrees * Mathf.Deg2Rad) * 2f : width;
+            return new Bounds(position + direction * (range * .5f),
+                new Vector3(alongX ? range : lateral, 0, alongX ? lateral : range));
         }
+
     }
 
     public sealed class MemberSpawnDefinition

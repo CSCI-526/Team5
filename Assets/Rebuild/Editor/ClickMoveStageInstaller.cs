@@ -1,0 +1,491 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using Team5.Rebuild.Editor.LevelAuthoring;
+using Team5.Rebuild.Presentation;
+using Team5.Rebuild.Presentation.LegacyUI;
+using Team5.Rebuild.Session;
+using Team5.Rebuild.Simulation;
+using Team5.Rebuild.World;
+using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+using Object = UnityEngine.Object;
+
+namespace Team5.Rebuild.Editor
+{
+    // The catalog contains all authored geometry and encounters. The editor applies it to actual
+    // campaign .unity scenes; this source patch does not pretend to include those scene assets.
+    public static class ClickMoveStageInstaller
+    {
+        private const string CatalogPath = "Assets/Rebuild/Editor/StageV3StageCatalog.json";
+        private const string BackupFolder = "Logs/StageV3Backups";
+        private const string EncounterRoot = "Stage V3 Encounters";
+        private const string LandmarkRoot = "Stage V3 Landmarks";
+        private static readonly string[] Scenes =
+        {
+            BattleSceneFlow.BattleScene, BattleSceneFlow.LevelTwoScene,
+            BattleSceneFlow.LevelThreeScene, BattleSceneFlow.LevelFourScene,
+            BattleSceneFlow.LevelFiveScene, BattleSceneFlow.LevelSixScene,
+            BattleSceneFlow.LevelSevenScene
+        };
+
+        [Serializable] private sealed class StageCatalog { public StagePlan[] stages; }
+        [Serializable] private sealed class StagePlan
+        {
+            public int stage, width, height;
+            public string name;
+            public bool corridor;
+            public int[] route, cover;
+            public TowerPlan[] towers;
+            public ThreatPlan[] hazards;
+        }
+        [Serializable] private sealed class TowerPlan
+        {
+            public int x, z;
+            public string shape;
+            public float range, damage, interval, hp;
+        }
+        [Serializable] private sealed class ThreatPlan
+        {
+            public int x, z;
+            public string kind;
+            public float radius, damage, interval;
+        }
+
+        [MenuItem("Team5/Rebuild/Build Playable Stages V3 (1-7)")]
+        public static void Apply()
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode) throw new InvalidOperationException("Leave Play Mode before rebuilding levels.");
+            if (!Application.isBatchMode && !EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+            var catalog = ReadCatalog();
+            Directory.CreateDirectory(BackupFolder);
+            var completed = 0;
+            for (var stage = 1; stage <= 7; stage++)
+            {
+                try
+                {
+                    var plan = catalog.stages.Single(p => p.stage == stage);
+                    ApplyStage(plan);
+                    completed++;
+                }
+                catch (Exception error) { Debug.LogError("Stage V3 " + stage + " failed. Its scene was not saved: " + error); }
+            }
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log($"Stage V3 completed {completed}/7 stages. Review all scene errors and Play Mode behavior before shipping.");
+        }
+
+        private static StageCatalog ReadCatalog()
+        {
+            if (!File.Exists(CatalogPath)) throw new FileNotFoundException("Stage V3 layout catalog not installed", CatalogPath);
+            var data = JsonUtility.FromJson<StageCatalog>(File.ReadAllText(CatalogPath));
+            if (data == null || data.stages == null || data.stages.Length != 7 ||
+                data.stages.Select(p => p.stage).Distinct().Count() != 7)
+                throw new InvalidDataException("Stage V3 catalog must contain exactly one layout for stages 1-7.");
+            return data;
+        }
+
+        private static void ApplyStage(StagePlan plan)
+        {
+            var path = Scenes[plan.stage - 1];
+            var existing = File.Exists(path);
+            if (existing)
+            {
+                var backup = BackupFolder + "/" + Path.GetFileName(path);
+                if (!File.Exists(backup)) File.Copy(path, backup);
+            }
+            var draft = BuildDraft(plan);
+            try
+            {
+                Scene scene;
+                BattleSession session;
+                if (existing)
+                {
+                    scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Single);
+                    try { session = MapBuilderUtility.ApplyToScene(draft, scene); }
+                    catch (Exception error)
+                    {
+                        // Multi-layer legacy maps cannot be edited in place. Build from the standard
+                        // BattleRig ONLY after preserving the original scene, and report that fact.
+                        Debug.LogWarning($"Stage {plan.stage}: incompatible legacy scene ({error.Message}). " +
+                            "Using a fresh BattleRig; preserve scene-specific artwork from the backup if needed.");
+                        scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+                        session = MapBuilderUtility.Populate(draft, scene);
+                    }
+                }
+                else
+                {
+                    scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+                    session = MapBuilderUtility.Populate(draft, scene);
+                }
+                ConfigureSession(session, plan.stage);
+                ConfigureTowers(scene, session, plan);
+                ClearLegacyDecor(scene);
+                ReplaceRoadArtwork(scene);
+                if (plan.stage <= 2) RemoveRailArtwork(scene);
+                CreateEncounters(scene, draft, plan);
+                CreateLandmarks(scene, draft, plan);
+                ConfigureCamera(scene, session, draft, plan.stage);
+                ConfigureTutorial(session, plan.stage);
+                var errors = session.ValidateConfiguration();
+                errors.AddRange(LevelValidation.Validate(scene).Where(issue => issue.IsError).Select(issue => issue.Message));
+                if (errors.Count != 0)
+                    throw new InvalidOperationException("Generated stage validation failed: " + string.Join(" | ", errors.Take(15)));
+                EditorSceneManager.MarkSceneDirty(scene);
+                if (!EditorSceneManager.SaveScene(scene, path)) throw new IOException("Unable to save scene " + path);
+                Debug.Log($"Stage V3 {plan.stage} ({plan.name}): {draft.width}x{draft.length}, " +
+                    $"{session.Towers.Count} towers, {plan.hazards.Length} hazards. Saved {path}");
+            }
+            finally { Object.DestroyImmediate(draft); }
+        }
+
+        // Allows NUnit EditMode validation against the EXACT geometry from the shipped JSON file.
+        public static List<string> ValidateCatalogGeometry(int stage)
+        {
+            var plan = ReadCatalog().stages.Single(p => p.stage == stage);
+            var draft = BuildDraft(plan);
+            try
+            {
+                var errors = new List<string>();
+                var start = draft.route.First();
+                var goal = draft.route.Last();
+                var seen = new HashSet<Vector2Int> { start };
+                var queue = new Queue<Vector2Int>(); queue.Enqueue(start);
+                while (queue.Count > 0)
+                {
+                    var current = queue.Dequeue();
+                    foreach (var adjacent in new[] { Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right })
+                    {
+                        var next = current + adjacent;
+                        if (seen.Contains(next) || !Clearance(draft, next)) continue;
+                        seen.Add(next); queue.Enqueue(next);
+                    }
+                }
+                if (!seen.Contains(goal)) errors.Add($"Level {stage}: goal cannot be reached by a 3x3 squad.");
+                foreach (var planTower in plan.towers)
+                    if (draft.Tile(new Vector2Int(planTower.x, planTower.z)) != (int)CellKind.TowerPlatform)
+                        errors.Add($"Level {stage}: tower overlaps the route.");
+                foreach (var danger in plan.hazards)
+                    if (!Passable(draft.Tile(new Vector2Int(danger.x, danger.z))))
+                        errors.Add($"Level {stage}: hazard is in a wall.");
+                return errors;
+            }
+            finally { Object.DestroyImmediate(draft); }
+        }
+
+        private static bool Passable(int tile) => tile == (int)CellKind.Road || tile == (int)CellKind.Ground ||
+            tile == (int)CellKind.Spawn || tile == (int)CellKind.Goal;
+        private static bool Clearance(MapDraft draft, Vector2Int pos)
+        {
+            for (var z = -1; z <= 1; z++) for (var x = -1; x <= 1; x++)
+                if (!Passable(draft.Tile(pos + new Vector2Int(x, z)))) return false;
+            return true;
+        }
+
+        private static MapDraft BuildDraft(StagePlan plan)
+        {
+            if (plan == null || plan.route == null || plan.route.Length < 4 || plan.route.Length % 2 != 0 ||
+                plan.cover == null || plan.cover.Length % 4 != 0 || plan.towers == null || plan.hazards == null)
+                throw new InvalidDataException("Incomplete Stage V3 catalog entry.");
+            var draft = ScriptableObject.CreateInstance<MapDraft>();
+            draft.hideFlags = HideFlags.HideAndDontSave;
+            try
+            {
+                draft.ResetGrid(plan.width, plan.height);
+                draft.levelNumber = plan.stage;
+                for (var z = 0; z < plan.height; z++) for (var x = 0; x < plan.width; x++)
+                    draft.tiles[z * plan.width + x] = x == 0 || z == 0 || x == plan.width - 1 || z == plan.height - 1 || plan.corridor
+                        ? (int)CellKind.Obstacle : (int)CellKind.Ground;
+                var turns = new List<Vector2Int>();
+                for (var i = 0; i < plan.route.Length; i += 2) turns.Add(new Vector2Int(plan.route[i], plan.route[i + 1]));
+                foreach (var turn in turns)
+                    if (!draft.Inside(turn)) throw new InvalidDataException($"Stage {plan.stage}: waypoint outside map.");
+                // L1/2 are five-cell-wide corridors, accommodating visible separated squad members.
+                if (plan.corridor)
+                    foreach (var p in FollowSegments(turns))
+                        for (var z = -2; z <= 2; z++) for (var x = -2; x <= 2; x++)
+                        {
+                            var c = p + new Vector2Int(x, z);
+                            if (c.x > 0 && c.y > 0 && c.x < plan.width - 1 && c.y < plan.height - 1)
+                                draft.tiles[c.y * plan.width + c.x] = (int)CellKind.Ground;
+                        }
+                for (var i = 0; i < plan.cover.Length; i += 4)
+                    for (var z = plan.cover[i + 1]; z <= plan.cover[i + 3]; z++)
+                        for (var x = plan.cover[i]; x <= plan.cover[i + 2]; x++)
+                        {
+                            var point = new Vector2Int(x, z);
+                            if (!draft.Inside(point) || x == 0 || z == 0 || x == plan.width - 1 || z == plan.height - 1)
+                                throw new InvalidDataException($"Stage {plan.stage}: cover exceeds playable arena.");
+                            draft.tiles[z * plan.width + x] = (int)CellKind.Obstacle;
+                        }
+                // Author a legal 3x3 SceneRoute for Unity's simulator, but do not draw a line in preview.
+                foreach (var p in FollowSegments(turns))
+                    for (var z = -1; z <= 1; z++) for (var x = -1; x <= 1; x++)
+                    {
+                        var c = p + new Vector2Int(x, z);
+                        if (!draft.Inside(c) || draft.Tile(c) == (int)CellKind.Obstacle)
+                            throw new InvalidDataException($"Stage {plan.stage}: 3x3 route hits obstacle at {c}.");
+                        draft.tiles[c.y * plan.width + c.x] = (int)CellKind.Road;
+                    }
+                var start = turns[0]; var goal = turns[turns.Count - 1];
+                for (var z = -1; z <= 1; z++) for (var x = -1; x <= 1; x++)
+                {
+                    var a = start + new Vector2Int(x, z); var b = goal + new Vector2Int(x, z);
+                    draft.tiles[a.y * draft.width + a.x] = (int)CellKind.Spawn;
+                    draft.tiles[b.y * draft.width + b.x] = (int)CellKind.Goal;
+                }
+                foreach (var turn in turns) draft.AppendRoute(turn);
+                var towerPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(MapBuilderUtility.Kit + "Towers/Tower_Attack_1x1.prefab");
+                if (towerPrefab == null) throw new FileNotFoundException("Missing standard 1x1 tower prefab.");
+                foreach (var tower in plan.towers)
+                {
+                    var p = new Vector2Int(tower.x, tower.z);
+                    if (!draft.Inside(p) || Passable(draft.Tile(p)) && draft.Tile(p) != (int)CellKind.Ground)
+                        throw new InvalidDataException($"Stage {plan.stage}: tower on authored route at {p}.");
+                    if (tower.range < 1 || tower.damage <= 0 || tower.interval <= 0 || tower.hp <= 0)
+                        throw new InvalidDataException($"Stage {plan.stage}: invalid tower balance at {p}.");
+                    var area = (AttackArea)Enum.Parse(typeof(AttackArea), tower.shape);
+                    if (area == AttackArea.Square || (SquadCombatRules.IsLaser(area) && plan.stage < 6))
+                        throw new InvalidDataException($"Stage {plan.stage}: only later bosses can use precision lasers; squares are obsolete.");
+                    draft.tiles[p.y * plan.width + p.x] = (int)CellKind.TowerPlatform;
+                    draft.PlaceTower(p, towerPrefab, area, false, 20 + plan.stage * 4);
+                }
+                foreach (var threat in plan.hazards)
+                    if (!Passable(draft.Tile(new Vector2Int(threat.x, threat.z))))
+                        throw new InvalidDataException($"Stage {plan.stage}: threat in solid cover.");
+                return draft;
+            }
+            catch { Object.DestroyImmediate(draft); throw; }
+        }
+
+        private static IEnumerable<Vector2Int> FollowSegments(IReadOnlyList<Vector2Int> turns)
+        {
+            for (var i = 1; i < turns.Count; i++)
+            {
+                var a = turns[i - 1]; var b = turns[i];
+                if (a.x != b.x && a.y != b.y) throw new InvalidDataException("Stage routes must turn at right angles.");
+                var step = new Vector2Int(Math.Sign(b.x - a.x), Math.Sign(b.y - a.y));
+                for (var p = i == 1 ? a : a + step; ; p += step)
+                { yield return p; if (p == b) break; }
+            }
+        }
+
+        private static void ConfigureSession(BattleSession session, int stage)
+        {
+            // ApplyToScene preserves legacy route width; explicitly upgrade it to the 3x3 squad.
+            var route = new SerializedObject(session.Route);
+            var requiredWidth = route.FindProperty("requiredWidth");
+            if (requiredWidth != null) requiredWidth.intValue = 3;
+            route.ApplyModifiedPropertiesWithoutUndo();
+            var data = new SerializedObject(session);
+            Bool(data, "squadCombat", true); Int(data, "formationSize", 3); Int(data, "unitCount", 6);
+            Bool(data, "manualSquadMovement", false); Bool(data, "continuousSquadMovement", true);
+            Bool(data, "compactSquadMovement", false); Float(data, "continuousFormationSpacing", .96f);
+            Float(data, "continuousSoldierRadius", .2f); Float(data, "continuousVisualFootprint", .43f);
+            Float(data, "levelTimeMultiplier", 1.16f); Int(data, "displayedLevelNumber", stage);
+            data.ApplyModifiedPropertiesWithoutUndo();
+            foreach (var owner in session.gameObject.scene.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<BattlePresentation>(true)))
+                if (owner.Session == session)
+                {
+                    var view = new SerializedObject(owner);
+                    Bool(view, "showUnitLevels", false);
+                    Bool(view, "showTowerRanges", true);
+                    view.ApplyModifiedPropertiesWithoutUndo();
+                }
+        }
+
+        private static void ConfigureTowers(Scene scene, BattleSession session, StagePlan plan)
+        {
+            var found = session.Towers.Where(t => t != null && !t.IsWall).ToArray();
+            if (found.Length != plan.towers.Length) throw new InvalidOperationException("Tower count mismatch after map build.");
+            for (var i = 0; i < found.Length; i++)
+            {
+                var tower = found[i]; var stat = plan.towers[i]; var data = new SerializedObject(tower);
+                Float(data, "range", stat.range); Float(data, "damage", stat.damage);
+                Float(data, "attackInterval", stat.interval); Float(data, "maxHp", stat.hp);
+                Float(data, "attackWidth", .60f); Bool(data, "isAoe", false);
+                Int(data, "attackArea", (int)(AttackArea)Enum.Parse(typeof(AttackArea), stat.shape));
+                Int(data, "goldBounty", 20 + plan.stage * 4);
+                data.ApplyModifiedPropertiesWithoutUndo();
+                foreach (var child in tower.GetComponentsInChildren<Transform>(true).Where(t => t != tower.transform && t.name == "Stage V3 Threat Class").ToArray())
+                    Object.DestroyImmediate(child.gameObject);
+                var mark = new GameObject("Stage V3 Threat Class"); mark.transform.SetParent(tower.transform, false);
+                mark.transform.localPosition = new Vector3(0, .80f, 0);
+                var isLaser = SquadCombatRules.IsLaser((AttackArea)Enum.Parse(typeof(AttackArea), stat.shape));
+                var isCone = SquadCombatRules.IsCone((AttackArea)Enum.Parse(typeof(AttackArea), stat.shape));
+                var cap = GameObject.CreatePrimitive(isLaser ? PrimitiveType.Cylinder : PrimitiveType.Sphere);
+                cap.transform.SetParent(mark.transform, false);
+                cap.transform.localScale = isLaser ? new Vector3(.21f, .45f, .21f) : Vector3.one * .42f;
+                Object.DestroyImmediate(cap.GetComponent<Collider>());
+                cap.GetComponent<Renderer>().sharedMaterial = AccentMaterial(isLaser ? "Laser" : isCone ? "Cone" : "Circle");
+            }
+        }
+
+        private static void ClearLegacyDecor(Scene scene)
+        {
+            foreach (var obj in scene.GetRootGameObjects().ToArray())
+                if (obj.name == "Open Stage Hazards" || obj.name == "Stage V2 Encounters" ||
+                    obj.name == EncounterRoot || obj.name == LandmarkRoot) Object.DestroyImmediate(obj);
+        }
+        private static void RemoveRailArtwork(Scene scene)
+        {
+            foreach (var root in scene.GetRootGameObjects().ToArray())
+                if (root.name == "Railway Path Artwork" || root.name == "Track Artwork" ||
+                    root.name == "Rail Tracks" || root.name == "Carriage") Object.DestroyImmediate(root);
+            foreach (var child in scene.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<Transform>(true)).ToArray())
+            {
+                if (child == null || child.parent == null) continue;
+                var label = child.name.ToLowerInvariant();
+                if (!(label.Contains("railway") || label.Contains("rail track") || label.Contains("carriage") || label.Contains("trolley"))) continue;
+                if (child.GetComponentInChildren<BattleCell>(true) != null || child.GetComponentInChildren<BattleTower>(true) != null) continue;
+                Object.DestroyImmediate(child.gameObject);
+            }
+            foreach (var platform in scene.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<SquadPlatformView>(true)).ToArray())
+            {
+                if (platform.Model != null && platform.Model.gameObject.scene == scene) Object.DestroyImmediate(platform.Model.gameObject);
+                Object.DestroyImmediate(platform);
+            }
+        }
+
+        // Retain Road Cell components for SceneRoute and AI. Swap VISUALS only, removing the
+        // misleading stripe/rail geometry; obstacles and START/GOAL tiles provide the route cue.
+        private static void ReplaceRoadArtwork(Scene scene)
+        {
+            var groundPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(MapBuilderUtility.Kit + "Tiles/Ground_Cell.prefab");
+            if (groundPrefab == null) return;
+            var groundMesh = groundPrefab.GetComponentInChildren<MeshFilter>(true);
+            var groundRenderer = groundPrefab.GetComponentInChildren<MeshRenderer>(true);
+            var groundSprite = groundPrefab.GetComponentInChildren<SpriteRenderer>(true);
+            foreach (var cell in scene.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<BattleCell>(true)))
+            {
+                if (cell.Kind != CellKind.Road) continue;
+                var meshes = cell.GetComponentsInChildren<MeshRenderer>(true);
+                for (var i = 0; i < meshes.Length; i++)
+                {
+                    meshes[i].enabled = i == 0;
+                    if (i != 0 || groundRenderer == null) continue;
+                    meshes[i].sharedMaterials = groundRenderer.sharedMaterials;
+                    var filter = meshes[i].GetComponent<MeshFilter>();
+                    if (filter != null && groundMesh != null) filter.sharedMesh = groundMesh.sharedMesh;
+                }
+                var sprites = cell.GetComponentsInChildren<SpriteRenderer>(true);
+                for (var i = 0; i < sprites.Length; i++)
+                {
+                    sprites[i].enabled = i == 0;
+                    if (i == 0 && groundSprite != null)
+                    { sprites[i].sprite = groundSprite.sprite; sprites[i].sharedMaterial = groundSprite.sharedMaterial; }
+                }
+            }
+        }
+
+        private static void CreateEncounters(Scene scene, MapDraft draft, StagePlan plan)
+        {
+            if (plan.hazards.Length == 0) return;
+            var host = new GameObject(EncounterRoot);
+            SceneManager.MoveGameObjectToScene(host, scene);
+            foreach (var h in plan.hazards)
+            {
+                var sentry = h.kind == "Sentry";
+                if (!sentry && h.kind != "Trap") throw new InvalidDataException("Unknown hazard: " + h.kind);
+                var go = new GameObject(sentry ? "Sentry" : "Pulse Trap");
+                go.transform.SetParent(host.transform, false);
+                go.transform.position = draft.Position(new Vector2Int(h.x, h.z)) + Vector3.up * (sentry ? .50f : .035f);
+                var threat = go.AddComponent<OpenStageThreat>();
+                threat.Configure(sentry ? OpenStageThreat.ThreatKind.Sentry : OpenStageThreat.ThreatKind.GroundTrap,
+                    h.radius, h.damage, h.interval);
+                var model = GameObject.CreatePrimitive(sentry ? PrimitiveType.Capsule : PrimitiveType.Cylinder);
+                model.transform.SetParent(go.transform, false);
+                model.transform.localScale = sentry ? new Vector3(.42f, .40f, .42f) : new Vector3(.52f, .09f, .52f);
+                Object.DestroyImmediate(model.GetComponent<Collider>());
+                model.GetComponent<Renderer>().sharedMaterial = AccentMaterial(sentry ? "Sentry" : "Trap");
+            }
+        }
+        private static void CreateLandmarks(Scene scene, MapDraft draft, StagePlan plan)
+        {
+            var turns = plan.route;
+            var host = new GameObject(LandmarkRoot);
+            SceneManager.MoveGameObjectToScene(host, scene);
+            CreateBeacon(host.transform, "START", draft.Position(new Vector2Int(turns[0], turns[1])), "Start");
+            CreateBeacon(host.transform, "GOAL", draft.Position(new Vector2Int(turns[turns.Length - 2], turns[turns.Length - 1])), "Goal");
+        }
+        private static void CreateBeacon(Transform parent, string name, Vector3 position, string color)
+        {
+            var go = new GameObject(name + " Beacon"); go.transform.SetParent(parent, false);
+            go.transform.position = position + Vector3.up * .35f;
+            var cap = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            cap.transform.SetParent(go.transform, false);
+            cap.transform.localScale = Vector3.one * .54f;
+            Object.DestroyImmediate(cap.GetComponent<Collider>());
+            cap.GetComponent<Renderer>().sharedMaterial = AccentMaterial(color);
+        }
+        private static Material AccentMaterial(string type)
+        {
+            var folder = "Assets/Rebuild/Materials";
+            if (!AssetDatabase.IsValidFolder(folder)) AssetDatabase.CreateFolder("Assets/Rebuild", "Materials");
+            var path = folder + "/StageV3_" + type + ".mat";
+            var existing = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (existing != null) return existing;
+            var shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+            var material = new Material(shader);
+            var tint = type switch
+            {
+                "Laser" => new Color(.98f, .14f, .18f),
+                "Cone" => new Color(1f, .58f, .20f),
+                "Sentry" => new Color(.90f, .18f, .22f),
+                "Trap" => new Color(1f, .48f, .12f),
+                "Start" => new Color(.24f, .87f, .48f),
+                "Goal" => new Color(.13f, .8f, 1f),
+                _ => new Color(.24f, .58f, 1f)
+            };
+            if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", tint);
+            else material.color = tint;
+            AssetDatabase.CreateAsset(material, path);
+            return material;
+        }
+        private static void ConfigureTutorial(BattleSession session, int stage)
+        {
+            var old = session.GetComponent<LevelOneTutorial>();
+            if (old != null) old.enabled = false;
+            if (stage != 1) return;
+            var quick = session.GetComponent<ClickMoveTutorial>() ?? session.gameObject.AddComponent<ClickMoveTutorial>();
+            var data = new SerializedObject(quick);
+            var binding = data.FindProperty("session");
+            if (binding != null) binding.objectReferenceValue = session;
+            data.ApplyModifiedPropertiesWithoutUndo();
+        }
+        private static void ConfigureCamera(Scene scene, BattleSession session, MapDraft draft, int stage)
+        {
+            var camera = scene.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<Camera>(true))
+                .FirstOrDefault(c => c.CompareTag("MainCamera"));
+            if (camera == null) return;
+            var center = new Vector3((draft.width - 1) * .5f, .25f, (draft.length - 1) * .5f);
+            var half = new Vector3(draft.width * .5f, 1.5f, draft.length * .5f);
+            var inv = Quaternion.Inverse(camera.transform.rotation);
+            var tan = Mathf.Tan(camera.fieldOfView * Mathf.Deg2Rad * .5f);
+            float distance = 12, ortho = 1;
+            for (var x = -1; x <= 1; x += 2) for (var y = -1; y <= 1; y += 2) for (var z = -1; z <= 1; z += 2)
+            {
+                var p = inv * Vector3.Scale(half, new Vector3(x, y, z));
+                distance = Mathf.Max(distance, Mathf.Abs(p.x) / (tan * (16f / 9f)) - p.z, Mathf.Abs(p.y) / tan - p.z);
+                ortho = Mathf.Max(ortho, Mathf.Abs(p.y), Mathf.Abs(p.x) * 9f / 16f);
+            }
+            camera.transform.position = center - camera.transform.forward * (distance * 1.1f + 2);
+            if (camera.orthographic) camera.orthographicSize = ortho * 1.1f;
+            camera.farClipPlane = Mathf.Max(camera.farClipPlane, distance + half.magnitude + 15);
+            if (stage < 3) return;
+            var follow = camera.GetComponent<Level3SquadCamera>() ?? camera.gameObject.AddComponent<Level3SquadCamera>();
+            var data = new SerializedObject(follow);
+            var owner = data.FindProperty("owner");
+            if (owner != null) owner.objectReferenceValue = scene.GetRootGameObjects()
+                .SelectMany(r => r.GetComponentsInChildren<BattlePresentation>(true)).FirstOrDefault(p => p.Session == session);
+            var zoom = data.FindProperty("zoomFactor"); if (zoom != null) zoom.floatValue = 1.5f;
+            data.ApplyModifiedPropertiesWithoutUndo();
+        }
+        private static void Float(SerializedObject so, string name, float value) { var p = so.FindProperty(name); if (p != null) p.floatValue = value; }
+        private static void Int(SerializedObject so, string name, int value) { var p = so.FindProperty(name); if (p != null) p.intValue = value; }
+        private static void Bool(SerializedObject so, string name, bool value) { var p = so.FindProperty(name); if (p != null) p.boolValue = value; }
+    }
+}

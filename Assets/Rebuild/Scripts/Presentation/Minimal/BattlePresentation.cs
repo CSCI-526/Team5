@@ -20,7 +20,7 @@ namespace Team5.Rebuild.Presentation
         [Tooltip("Optional role-based visuals for summoned members, independent of MemberId and rarity.")]
         [SerializeField] private UnitRoleVisualSet roleVisuals;
         [SerializeField] private bool showTowerRanges = true;
-        [SerializeField] private bool showUnitLevels = true;
+        [SerializeField] private bool showUnitLevels = false; // Levels remain available in inspection; no overlapping world badges.
         [Header("Optional single-member visual test (disabled in production scenes)")]
         [SerializeField] private bool useTestUnitVisual;
         [SerializeField] private int testVisualMemberId;

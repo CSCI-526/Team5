@@ -51,8 +51,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                 return false;
             }
         }
-        public bool CanEditFormation => isActiveAndEnabled && bound != null && bound.Outcome == BattleOutcome.Running &&
-            HasLivingCaptain && bound.PendingSpawnCount == 0 && !HasOpenEditor && (FormationBudget == null || FormationBudget.HasChangesLeft);
+        public bool CanEditFormation => false; // Formation locked when the battle begins.
 
         private void OnEnable()
         {
@@ -77,7 +76,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             EnsureLevelLabel();
             EnsurePauseButton();
             EnsureSquadButtons();
-            FormationBudget = FormationChangeBudget.Attach(this, squadButtons[0]);
+            FormationBudget = null; // No mid-battle formation budget or edit UI.
             LegendarySkillPanel.Attach(this);
             var barsRoot = LegacyUiKit.CreateRect(transform, "World Health Bars", Vector2.zero, Vector2.zero);
             LegacyUiKit.Stretch(barsRoot);
@@ -111,7 +110,8 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             speedSlider.interactable = bound != null && bound.Outcome == BattleOutcome.Running && !HasOpenEditor && !session.IsUnitInspectionActive && (!TutorialOwnsPause || TutorialAllowsSpeed);
             pauseButton.interactable = bound != null && bound.Outcome == BattleOutcome.Running && !HasOpenEditor && !TutorialOwnsPause;
             pauseLabel.text = bound != null && bound.IsPaused ? "Resume" : "Pause";
-            squadButtons[0].interactable = CanEditFormation || (inspection != null && inspection.IsSquadSelected);
+            squadButtons[0].interactable = false;
+            squadButtons[0].gameObject.SetActive(false);
             UnitState captain = null;
             if (bound != null)
                 foreach (var unit in bound.Units)
@@ -121,7 +121,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         }
         private void EnsureSquadButtons()
         {
-            if (squadButtons[0] != null) { foreach (var button in squadButtons) button.gameObject.SetActive(true); return; }
+            if (squadButtons[0] != null) return;
             var scaler = canvas.GetComponent<CanvasScaler>();
             var scale = scaler != null && scaler.uiScaleMode == CanvasScaler.ScaleMode.ScaleWithScreenSize ? scaler.referenceResolution.x / 1280f : 1f;
             for (var i = 0; i < squadButtons.Length; i++)

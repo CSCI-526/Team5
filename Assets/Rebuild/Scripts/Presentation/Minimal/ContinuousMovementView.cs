@@ -18,8 +18,8 @@ namespace Team5.Rebuild.Presentation
             if (ui != null) return;
             ui = new GameObject("Free movement hints", typeof(RectTransform)); ui.transform.SetParent(transform, false);
             LegacyUiKit.CreateCanvas(ui, 10, new Vector2(1280, 720), .5f);
-            hint = LegacyUiKit.CreateText(ui.transform, "Instructions", "Click ground to move | Click a unit to inspect | Squad icon: edit formation",
-                new Vector2(0, -325), new Vector2(1180, 35), 17, Color.white);
+            hint = LegacyUiKit.CreateText(ui.transform, "Instructions", "Click ground to move  •  Inspect a unit to see its level and abilities",
+                new Vector2(0, -325), new Vector2(1100, 35), 16, Color.white);
             hint.raycastTarget = false;
             marker = new GameObject("Move destination").AddComponent<LineRenderer>();
             marker.transform.SetParent(transform, false); marker.useWorldSpace = true; marker.loop = true;
@@ -47,12 +47,12 @@ namespace Team5.Rebuild.Presentation
             {
                 marker.enabled = false; invalidUntil = 0;
                 hint.text = owner.Session.Simulation.IsSquadMoving ? "Following previous destination — click ground to change it" :
-                    "Click ground to move | Click a unit to inspect | Squad icon: edit formation";
+                    "Click ground to move  •  Inspect a unit to see its level and abilities";
             }
             if (!owner.Session.Simulation.IsSquadMoving)
             {
                 marker.enabled = false;
-                hint.text = "Click ground to move | Click a unit to inspect | Squad icon: edit formation";
+                hint.text = "Click ground to move  •  Inspect a unit to see its level and abilities";
             }
         }
         private void OnEnable() { if (ui != null) ui.SetActive(true); }

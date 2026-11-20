@@ -204,7 +204,9 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             lightSource.shadows = LightShadows.None;
             lightObject.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
             var count = data.Towers.Count;
-            facts.text = count + (count == 1 ? " tower" : " towers") + "  |  road " + data.Route.Count + " tiles" + FormationChangeRules.NextLevelFact();
+            facts.text = count + (count == 1 ? " tower" : " towers") +
+                (BattleSceneFlow.NextBattleLevelNumber >= 3 ? "  |  OPEN ARENA" : "  |  CORRIDOR") +
+                "  |  CLICK TO MOVE";
             overlayRoot.gameObject.SetActive(true);
             overlayRoot.gameObject.AddComponent<NextMapOverlay>().Build(data, projection, ranges);
             overlayRoot.gameObject.SetActive(false);

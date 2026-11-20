@@ -84,6 +84,7 @@ namespace Team5.Rebuild.Session
         internal void RestoreFailedAttempts(int count) => failedAttempts = Math.Max(0, count);
         private readonly List<BattleTower> runtimeTowers = new List<BattleTower>();
         private bool advancing;
+        private float activeBattleRealSeconds;
         public BattleGrid Grid => grid;
         public SceneRoute Route => route;
         // Unity leaves a null list entry when an authored tower is deleted from the Scene.
@@ -254,8 +255,10 @@ namespace Team5.Rebuild.Session
                 var spawns = CaptureSquadMembers();
                 var passable = new List<Vector3Int>();
                 foreach (var cell in grid.SceneCells)
-                    if ((cell.IsRouteSurface || (manualSquadMovement || continuousSquadMovement) && cell.Kind == CellKind.Ground) && grid.HasClearTop(cell)) passable.Add(cell.Occupancy);
-                return new BattleDefinition(route.CaptureTopCenters(), towerDefinitions, spawns, passable);
+                    if ((cell.IsRouteSurface || (manualSquadMovement || continuousSquadMovement) && displayedLevelNumber >= 3 && cell.Kind == CellKind.Ground) && grid.HasClearTop(cell)) passable.Add(cell.Occupancy);
+                var tier = BattleSceneFlow.CardShop != null ? BattleSceneFlow.CardShop.GetLevelRange().minLevel :
+                    Mathf.Max(1, displayedLevelNumber - 1);
+                return new BattleDefinition(route.CaptureTopCenters(), towerDefinitions, spawns, passable, tier);
             }
             return new BattleDefinition(route.CaptureTopCenters(), towerDefinitions,
                 new UnitDefinition(unitHp, unitSpeed), unitCount, spawnInterval, goalLives, formationSize);
@@ -276,6 +279,7 @@ namespace Team5.Rebuild.Session
                 Debug.LogError("Battle configuration invalid:\n" + string.Join("\n", errors), this);
                 return;
             }
+            activeBattleRealSeconds = 0f;
             var next = new BattleSimulation(CaptureDefinition());
             if (continuousSquadMovement) next.EnableContinuousMovement(continuousFormationSpacing, continuousSoldierRadius, compactSquadMovement);
             else if (manualSquadMovement) next.EnableManualMovement();
@@ -307,6 +311,15 @@ namespace Team5.Rebuild.Session
             SimulationCreated?.Invoke(Simulation);
         }
 
+        // All seven short stages use a 120-second real-play cap, excluding pauses.
+        private void Update()
+        {
+            if (BattleSceneFlow.IsTestRun || Simulation == null ||
+                Simulation.Outcome != BattleOutcome.Running || Simulation.IsPaused) return;
+            activeBattleRealSeconds += Time.unscaledDeltaTime;
+            if (activeBattleRealSeconds >= 120f) Simulation.ForceTimeLimitDefeat();
+        }
+
         public void Advance(float deltaTime)
         {
             if (Simulation == null) throw new InvalidOperationException("Start the battle first.");
@@ -318,6 +331,9 @@ namespace Team5.Rebuild.Session
                 for (var i = 0; i < runtimeTowers.Count; i++)
                     if (runtimeTowers[i] != null) Simulation.SetTowerPosition(i + 1, runtimeTowers[i].transform.position);
                 Simulation.Step(deltaTime);
+                if (!BattleSceneFlow.IsTestRun &&
+                    Simulation.ElapsedTime >= 120f && Simulation.Outcome == BattleOutcome.Running)
+                    Simulation.ForceTimeLimitDefeat();
             }
             finally { advancing = false; }
         }

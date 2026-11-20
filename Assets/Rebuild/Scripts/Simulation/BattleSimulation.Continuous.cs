@@ -48,6 +48,7 @@ namespace Team5.Rebuild.Simulation
             private List<Vector3> referencePath = new List<Vector3>();
             private readonly Dictionary<int, Travel> travels = new Dictionary<int, Travel>();
             private readonly float Spacing, Radius;
+            public float FormationSpacing => Spacing;
             private readonly bool Compact;
             private bool reforming, pendingReform, continueAfterReform;
             private Dictionary<int, Vector3> previousOffsets = new Dictionary<int, Vector3>();
@@ -85,6 +86,9 @@ namespace Team5.Rebuild.Simulation
                 copy.previousOffsets = new Dictionary<int, Vector3>(previousOffsets);
                 return copy;
             }
+            // Spawned reinforcements must fit a free formation slot at the CURRENT squad anchor.
+            // This is checked before TrySpawnExtra creates a UnitState, so failed calls are harmless.
+            public bool CanSpawnInSlot(int slot) => Stand(Reference + SquadCombatRules.Offset(slot) * Spacing, Radius);
             public void Spawn(UnitState unit)
             {
                 unit.ContinuousPosition = true;

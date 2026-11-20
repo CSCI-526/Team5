@@ -1,4 +1,3 @@
-
 using System.Collections.Generic;
 using Team5.Rebuild.Analytics;
 using Team5.Rebuild.Simulation;
@@ -50,6 +49,12 @@ namespace Team5.Rebuild.Presentation.LegacyUI
 
             panel.Bind(hud);
             return panel;
+        }
+
+        public Button ButtonForRole(UnitRole role)
+        {
+            foreach (var icon in icons) if (icon.Role == role) return icon.Button;
+            return null;
         }
 
         private void Bind(LegacyBattleHud owner)

@@ -69,15 +69,15 @@ namespace Team5.Rebuild.Tests
             Assert.That(preparation.Members.Count, Is.EqualTo(1));
             var funded = new ClaimCardShop(new CampaignWallet(100), preparation, 3, 1);
             funded.SetStageProgress(2);
-            Assert.That(funded.GetRarityWeights(), Is.EqualTo((50, 35, 15, 0)));
-            Assert.That(funded.BeginOffer().All(unit => unit.Level >= 2 && unit.Level <= 3), Is.True);
+            Assert.That(funded.GetRarityWeights(), Is.EqualTo((66, 26, 4, 4)));
+            Assert.That(funded.BeginOffer().All(unit => unit.Level >= 2 && unit.Level <= 6), Is.True);
             funded.SetStageProgress(3);
-            Assert.That(funded.GetRarityWeights(), Is.EqualTo((30, 40, 25, 5)));
+            Assert.That(funded.GetRarityWeights(), Is.EqualTo((58, 30, 7, 5)));
             funded.SetStageProgress(4);
             funded.SetStageProgress(1);
             Assert.That(funded.HighestStageCleared, Is.EqualTo(4));
-            Assert.That(funded.GetRarityWeights(), Is.EqualTo((15, 35, 35, 15)));
-            Assert.That(funded.BeginOffer().All(unit => unit.Level >= 4 && unit.Level <= 5), Is.True);
+            Assert.That(funded.GetRarityWeights(), Is.EqualTo((44, 39, 10, 7)));
+            Assert.That(funded.BeginOffer().All(unit => unit.Level >= 4 && unit.Level <= 8), Is.True);
         }
 
         [Test]

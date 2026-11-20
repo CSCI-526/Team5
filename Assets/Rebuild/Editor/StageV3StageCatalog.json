@@ -1,0 +1,535 @@
+{
+  "stages": [
+    {
+      "stage": 1,
+      "name": "First Steps",
+      "width": 21,
+      "height": 15,
+      "corridor": true,
+      "route": [
+        3,
+        7,
+        17,
+        7
+      ],
+      "cover": [],
+      "towers": [
+        {
+          "x": 10,
+          "z": 4,
+          "shape": "Circle",
+          "range": 3.5,
+          "damage": 0.22,
+          "interval": 2.8,
+          "hp": 9
+        }
+      ],
+      "hazards": []
+    },
+    {
+      "stage": 2,
+      "name": "Garden Bend",
+      "width": 23,
+      "height": 17,
+      "corridor": true,
+      "route": [
+        3,
+        7,
+        7,
+        7,
+        7,
+        11,
+        15,
+        11,
+        15,
+        8,
+        19,
+        8
+      ],
+      "cover": [],
+      "towers": [
+        {
+          "x": 11,
+          "z": 9,
+          "shape": "Circle",
+          "range": 3.6,
+          "damage": 0.25,
+          "interval": 2.8,
+          "hp": 10
+        },
+        {
+          "x": 12,
+          "z": 14,
+          "shape": "ConeNegativeZ",
+          "range": 4.2,
+          "damage": 0.31,
+          "interval": 2.8,
+          "hp": 11
+        }
+      ],
+      "hazards": []
+    },
+    {
+      "stage": 3,
+      "name": "Forked Gardens",
+      "width": 27,
+      "height": 21,
+      "corridor": false,
+      "route": [
+        3,
+        10,
+        7,
+        10,
+        7,
+        5,
+        20,
+        5,
+        20,
+        10,
+        23,
+        10
+      ],
+      "cover": [
+        11,
+        8,
+        15,
+        12,
+        3,
+        2,
+        5,
+        3,
+        20,
+        16,
+        22,
+        17
+      ],
+      "towers": [
+        {
+          "x": 12,
+          "z": 3,
+          "shape": "Circle",
+          "range": 3.8,
+          "damage": 0.3,
+          "interval": 2.7,
+          "hp": 11
+        },
+        {
+          "x": 14,
+          "z": 15,
+          "shape": "ConeNegativeX",
+          "range": 4.2,
+          "damage": 0.36,
+          "interval": 2.6,
+          "hp": 12
+        },
+        {
+          "x": 23,
+          "z": 14,
+          "shape": "Circle",
+          "range": 3.4,
+          "damage": 0.32,
+          "interval": 2.7,
+          "hp": 12
+        }
+      ],
+      "hazards": [
+        {
+          "x": 16,
+          "z": 6,
+          "kind": "Sentry",
+          "radius": 1.2,
+          "damage": 0.28,
+          "interval": 3.1
+        },
+        {
+          "x": 11,
+          "z": 15,
+          "kind": "Trap",
+          "radius": 1.25,
+          "damage": 0.3,
+          "interval": 3.5
+        }
+      ]
+    },
+    {
+      "stage": 4,
+      "name": "Lower Bypass",
+      "width": 27,
+      "height": 21,
+      "corridor": false,
+      "route": [
+        3,
+        10,
+        7,
+        10,
+        7,
+        16,
+        20,
+        16,
+        20,
+        10,
+        23,
+        10
+      ],
+      "cover": [
+        11,
+        8,
+        15,
+        12,
+        3,
+        4,
+        5,
+        6,
+        20,
+        3,
+        22,
+        5
+      ],
+      "towers": [
+        {
+          "x": 11,
+          "z": 14,
+          "shape": "Circle",
+          "range": 4.0,
+          "damage": 0.37,
+          "interval": 2.65,
+          "hp": 12
+        },
+        {
+          "x": 15,
+          "z": 6,
+          "shape": "ConeNegativeZ",
+          "range": 4.4,
+          "damage": 0.43,
+          "interval": 2.7,
+          "hp": 12
+        },
+        {
+          "x": 23,
+          "z": 14,
+          "shape": "Circle",
+          "range": 3.6,
+          "damage": 0.37,
+          "interval": 2.6,
+          "hp": 13
+        }
+      ],
+      "hazards": [
+        {
+          "x": 14,
+          "z": 16,
+          "kind": "Trap",
+          "radius": 1.2,
+          "damage": 0.34,
+          "interval": 3.4
+        },
+        {
+          "x": 17,
+          "z": 5,
+          "kind": "Sentry",
+          "radius": 1.2,
+          "damage": 0.3,
+          "interval": 3.2
+        }
+      ]
+    },
+    {
+      "stage": 5,
+      "name": "Two Chambers",
+      "width": 27,
+      "height": 21,
+      "corridor": false,
+      "route": [
+        3,
+        10,
+        7,
+        10,
+        7,
+        5,
+        13,
+        5,
+        13,
+        15,
+        20,
+        15,
+        20,
+        10,
+        23,
+        10
+      ],
+      "cover": [
+        9,
+        8,
+        11,
+        12,
+        16,
+        9,
+        18,
+        13,
+        4,
+        15,
+        6,
+        17
+      ],
+      "towers": [
+        {
+          "x": 10,
+          "z": 7,
+          "shape": "Circle",
+          "range": 4.0,
+          "damage": 0.42,
+          "interval": 2.55,
+          "hp": 13
+        },
+        {
+          "x": 17,
+          "z": 17,
+          "shape": "ConeNegativeX",
+          "range": 4.4,
+          "damage": 0.47,
+          "interval": 2.75,
+          "hp": 14
+        },
+        {
+          "x": 19,
+          "z": 5,
+          "shape": "Circle",
+          "range": 3.6,
+          "damage": 0.39,
+          "interval": 2.65,
+          "hp": 14
+        },
+        {
+          "x": 23,
+          "z": 14,
+          "shape": "ConeNegativeX",
+          "range": 4.2,
+          "damage": 0.46,
+          "interval": 2.65,
+          "hp": 14
+        }
+      ],
+      "hazards": [
+        {
+          "x": 10,
+          "z": 6,
+          "kind": "Trap",
+          "radius": 1.3,
+          "damage": 0.38,
+          "interval": 3.4
+        },
+        {
+          "x": 15,
+          "z": 15,
+          "kind": "Sentry",
+          "radius": 1.25,
+          "damage": 0.33,
+          "interval": 3.0
+        }
+      ]
+    },
+    {
+      "stage": 6,
+      "name": "Crossfire",
+      "width": 27,
+      "height": 21,
+      "corridor": false,
+      "route": [
+        3,
+        10,
+        7,
+        10,
+        7,
+        5,
+        20,
+        5,
+        20,
+        10,
+        23,
+        10
+      ],
+      "cover": [
+        10,
+        8,
+        12,
+        12,
+        16,
+        8,
+        18,
+        12,
+        4,
+        15,
+        6,
+        17
+      ],
+      "towers": [
+        {
+          "x": 12,
+          "z": 3,
+          "shape": "Circle",
+          "range": 4.0,
+          "damage": 0.46,
+          "interval": 2.6,
+          "hp": 14
+        },
+        {
+          "x": 15,
+          "z": 14,
+          "shape": "ConeNegativeZ",
+          "range": 4.6,
+          "damage": 0.5,
+          "interval": 2.7,
+          "hp": 15
+        },
+        {
+          "x": 23,
+          "z": 14,
+          "shape": "Circle",
+          "range": 3.8,
+          "damage": 0.45,
+          "interval": 2.6,
+          "hp": 15
+        },
+        {
+          "x": 23,
+          "z": 5,
+          "shape": "NegativeX",
+          "range": 6.2,
+          "damage": 1.25,
+          "interval": 3.95,
+          "hp": 18
+        }
+      ],
+      "hazards": [
+        {
+          "x": 15,
+          "z": 6,
+          "kind": "Sentry",
+          "radius": 1.25,
+          "damage": 0.36,
+          "interval": 3.1
+        },
+        {
+          "x": 21,
+          "z": 12,
+          "kind": "Trap",
+          "radius": 1.3,
+          "damage": 0.39,
+          "interval": 3.4
+        }
+      ]
+    },
+    {
+      "stage": 7,
+      "name": "Final Crossing",
+      "width": 27,
+      "height": 21,
+      "corridor": false,
+      "route": [
+        3,
+        10,
+        7,
+        10,
+        7,
+        16,
+        20,
+        16,
+        20,
+        11,
+        23,
+        11
+      ],
+      "cover": [
+        10,
+        7,
+        12,
+        12,
+        16,
+        8,
+        18,
+        13,
+        4,
+        3,
+        6,
+        5,
+        21,
+        4,
+        23,
+        6
+      ],
+      "towers": [
+        {
+          "x": 11,
+          "z": 14,
+          "shape": "Circle",
+          "range": 4.0,
+          "damage": 0.49,
+          "interval": 2.65,
+          "hp": 15
+        },
+        {
+          "x": 14,
+          "z": 6,
+          "shape": "ConePositiveZ",
+          "range": 4.5,
+          "damage": 0.54,
+          "interval": 2.75,
+          "hp": 16
+        },
+        {
+          "x": 24,
+          "z": 13,
+          "shape": "Circle",
+          "range": 3.8,
+          "damage": 0.47,
+          "interval": 2.7,
+          "hp": 16
+        },
+        {
+          "x": 18,
+          "z": 3,
+          "shape": "ConePositiveZ",
+          "range": 4.4,
+          "damage": 0.49,
+          "interval": 2.7,
+          "hp": 16
+        },
+        {
+          "x": 23,
+          "z": 16,
+          "shape": "NegativeX",
+          "range": 6.6,
+          "damage": 1.3,
+          "interval": 4.0,
+          "hp": 20
+        }
+      ],
+      "hazards": [
+        {
+          "x": 13,
+          "z": 16,
+          "kind": "Sentry",
+          "radius": 1.3,
+          "damage": 0.37,
+          "interval": 3.1
+        },
+        {
+          "x": 21,
+          "z": 12,
+          "kind": "Trap",
+          "radius": 1.3,
+          "damage": 0.42,
+          "interval": 3.4
+        },
+        {
+          "x": 14,
+          "z": 4,
+          "kind": "Sentry",
+          "radius": 1.2,
+          "damage": 0.34,
+          "interval": 3.2
+        }
+      ]
+    }
+  ]
+}
