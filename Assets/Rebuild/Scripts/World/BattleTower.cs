@@ -22,6 +22,8 @@ namespace Team5.Rebuild.World
         [SerializeField] private bool isWoodenGate;
         [SerializeField] private bool wallAlongZ;
         [SerializeField] private bool isMinion;
+        [SerializeField, Min(0), Tooltip("Id of the tower this minion shields while it lives; 0 shields nothing.")] private int shieldsTowerId;
+        [SerializeField, Range(0.01f, 1f), Tooltip("Damage multiplier on the shielded tower while this minion lives.")] private float shieldDamageScale = 1f;
         public bool IsWall => isWall || isMinion;
         public bool IsMinion => isMinion;
         public Vector2Int Footprint => isMinion ? Vector2Int.one : isWall ? WallFootprintForYaw(wallAlongZ, transform.eulerAngles.y) : new Vector2Int(FootprintSize, FootprintSize);
@@ -43,7 +45,7 @@ namespace Team5.Rebuild.World
         public float CurrentCooldown => RuntimeState?.CooldownRemaining ?? 0;
 
         public TowerDefinition CaptureDefinition(int id) =>
-            new TowerDefinition(id, transform.position, Range, IsWall && !isMinion ? 0 : damage, attackInterval, targetRule, FootprintSize, maxHp, attackArea, attackWidth, IsAoe, GoldBounty, IsWall, Footprint.y == 3, isMinion: isMinion, isWoodenGate: IsWoodenGate);
+            new TowerDefinition(id, transform.position, Range, IsWall && !isMinion ? 0 : damage, attackInterval, targetRule, FootprintSize, maxHp, attackArea, attackWidth, IsAoe, GoldBounty, IsWall, Footprint.y == 3, isMinion: isMinion, isWoodenGate: IsWoodenGate, shieldsTowerId: shieldsTowerId, shieldDamageScale: shieldDamageScale);
 
         public void BindRuntimeState(TowerState state) => RuntimeState = state;
 
@@ -51,7 +53,8 @@ namespace Team5.Rebuild.World
             (isWall || (float.IsFinite(damage) && damage > 0)) && float.IsFinite(attackInterval) && attackInterval > 0 &&
             float.IsFinite(transform.position.x) && float.IsFinite(transform.position.y) && float.IsFinite(transform.position.z) &&
             Enum.IsDefined(typeof(TargetRule), targetRule) && float.IsFinite(maxHp) && maxHp > 0 &&
-            float.IsFinite(attackWidth) && attackWidth > 0 && Enum.IsDefined(typeof(AttackArea), attackArea);
+            float.IsFinite(attackWidth) && attackWidth > 0 && Enum.IsDefined(typeof(AttackArea), attackArea) &&
+            shieldsTowerId >= 0 && float.IsFinite(shieldDamageScale) && shieldDamageScale > 0 && shieldDamageScale <= 1;
 
         public void CollectFootprintErrors(BattleGrid grid, HashSet<Vector3Int> occupied, List<string> errors)
         {
@@ -75,7 +78,7 @@ namespace Team5.Rebuild.World
                 {
                     var key = center + new Vector3Int(x, 0, z);
                     if (!occupied.Add(key)) errors.Add($"{name}: tower footprint overlap at {key}.");
-                    if (!grid.TryGetCell(key, out var support) || (isWall ? support.Kind != CellKind.Road : support.Kind != CellKind.TowerPlatform) ||
+                    if (!grid.TryGetCell(key, out var support) || (isWall ? support.Kind != CellKind.Road && !(isMinion && support.Kind == CellKind.Ground) : support.Kind != CellKind.TowerPlatform) ||
                         !grid.HasClearTop(support) || Mathf.Abs(position.y - support.TopCenter.y) > 0.001f)
                         errors.Add($"{name}: footprint {key} needs a clear, equal-height support surface (Road for walls, TowerPlatform for towers).");
                 }

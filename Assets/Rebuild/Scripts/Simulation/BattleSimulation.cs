@@ -714,11 +714,24 @@ namespace Team5.Rebuild.Simulation
             return false;
         }
 
+        public float TowerDamageScale(int towerId)
+        {
+            var scale = 1f;
+            if (towerId <= 0) return scale;
+            foreach (var guard in towers)
+                if (guard.IsAlive && guard.FrozenRemaining <= 0 && guard.Definition.ShieldsTowerId == towerId)
+                    scale = Mathf.Min(scale, guard.Definition.ShieldDamageScale);
+            return scale;
+        }
+
+        public bool IsTowerShielded(int towerId) => TowerDamageScale(towerId) < 1f;
+
         private void DamageTower(int sourceId, TowerState tower, float rawDamage, AttackDamageType damageType, bool siegeRamContact = false)
         {
             if (!tower.IsAlive) return;
             if (tower.Definition.IsWoodenGate && !siegeRamContact) return;
             if (tower.Definition.RequiresExplosiveDamage && damageType != AttackDamageType.Explosive) return;
+            rawDamage *= TowerDamageScale(tower.Id);
             var applied = Math.Min(tower.Hp, rawDamage);
             tower.Hp = Math.Max(0, tower.Hp - applied);
             // Active suppression: hitting a tower slightly delays its next shot

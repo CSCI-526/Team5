@@ -91,11 +91,16 @@ namespace Team5.Rebuild.Simulation
         public bool IsAoe { get; }
         public int GoldBounty { get; }
         public bool IsMinion { get; }
+        public int ShieldsTowerId { get; }
+        public float ShieldDamageScale { get; }
 
         public TowerDefinition(int id, Vector3 position, float range, float damage, float attackInterval, TargetRule targetRule,
             int footprintSize = 1, float maxHp = 20, AttackArea area = AttackArea.Square, float attackWidth = 0.3f,
-            bool isAoe = false, int goldBounty = 20, bool isWall = false, bool wallAlongZ = false, bool isMinion = false, bool isWoodenGate = false)
+            bool isAoe = false, int goldBounty = 20, bool isWall = false, bool wallAlongZ = false, bool isMinion = false, bool isWoodenGate = false,
+            int shieldsTowerId = 0, float shieldDamageScale = 1f)
         {
+            if (shieldsTowerId < 0 || !BattleNumbers.Finite(shieldDamageScale) || shieldDamageScale <= 0 || shieldDamageScale > 1)
+                throw new ArgumentOutOfRangeException(nameof(shieldDamageScale));
             isWall = isWall || isMinion;
             if (!BattleNumbers.Finite(position) || !BattleNumbers.Finite(range) || range < 0 ||
                 !BattleNumbers.Finite(damage) || (isWall ? damage < 0 : damage <= 0) || !BattleNumbers.Finite(attackInterval) || attackInterval <= 0)
@@ -121,6 +126,8 @@ namespace Team5.Rebuild.Simulation
             IsWoodenGate = isWall && !isMinion && isWoodenGate;
             Footprint = isMinion ? Vector2Int.one : isWall ? (wallAlongZ ? new Vector2Int(1, 3) : new Vector2Int(3, 1)) : new Vector2Int(footprintSize, footprintSize);
             GoldBounty = isWall ? 0 : Math.Max(0, goldBounty);
+            ShieldsTowerId = isMinion ? shieldsTowerId : 0;
+            ShieldDamageScale = isMinion ? shieldDamageScale : 1f;
         }
     }
 
