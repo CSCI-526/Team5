@@ -1,35 +1,51 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Team5.Rebuild.Presentation.LegacyUI
 {
     public static class MinionRules
     {
-        public const float StopDistance = 1.94f;
-        public const float MaxTowerDistance = 3.5f;
-        public const int EdgeCells = 3;
-        public const int MinSpacing = 4;
-        public const float AttackRange = 1.5f;
-        public const float AttackInterval = 1f;
+        public const float BearerRange = 3.6f;
+        public const float BearerInterval = 2f;
+        public const float ShieldDamageScale = 0.3f;
+        public const float LobberInterval = 1f;
+        public const float BombInterval = 4f;
+        public const float BombWarning = 1.8f;
+        public const float BombRadius = 1f;
+        public const float BombReach = 7f;
+        public const float BombFirstDelay = 0.8f;
+        public const float ThreatMargin = 0.5f;
+        public const float ThreatBody = 0.6f;
+        public const int MaxBearersPerTower = 2;
 
-        private static readonly int[][] countsByLevel =
+        private static readonly MinionKind[][] kindsByLevel =
         {
-            new int[0], new int[0], new[] { 1, 1 }, new[] { 1, 2 }, new[] { 2, 2 }, new[] { 2, 2, 2 }, new[] { 2, 2, 3 }, new[] { 3, 3, 3, 3 }
+            new MinionKind[0],
+            new MinionKind[0],
+            new[] { MinionKind.Bearer },
+            new[] { MinionKind.Lobber },
+            new[] { MinionKind.Bearer, MinionKind.Lobber },
+            new[] { MinionKind.Bearer, MinionKind.Lobber },
+            new[] { MinionKind.Bearer, MinionKind.Lobber, MinionKind.Bearer },
+            new[] { MinionKind.Bearer, MinionKind.Lobber, MinionKind.Bearer, MinionKind.Lobber }
         };
-        private static readonly float[] hpByLevel = { 0f, 0f, 8f, 6f, 8f, 6f, 15f, 24f };
-        private static readonly float[] damageByLevel = { 0f, 0f, 0.5f, 0.7f, 0.5f, 0.8f, 1f, 2.5f };
+        private static readonly float[] bearerHp = { 0f, 0f, 6f, 7f, 8f, 8f, 9f, 10f };
+        private static readonly float[] bearerDamage = { 0f, 0f, 0.3f, 0.34f, 0.4f, 0.44f, 0.48f, 0.52f };
+        private static readonly float[] lobberHp = { 0f, 0f, 5f, 5f, 6f, 6f, 7f, 8f };
+        private static readonly float[] bombDamage = { 0f, 0f, 0.5f, 0.5f, 0.6f, 0.65f, 0.7f, 0.8f };
 
-        public static bool HasMinions(int level) => level >= 2;
+        public static bool HasMinions(int level) => kindsByLevel[Row(level)].Length > 0;
 
-        public static int CountAt(int level, int spot)
-        {
-            var counts = countsByLevel[Row(level)];
-            return counts.Length == 0 ? 0 : counts[Mathf.Clamp(spot, 0, counts.Length - 1)];
-        }
+        public static IReadOnlyList<MinionKind> Kinds(int level) => kindsByLevel[Row(level)];
 
-        public static float Hp(int level) => hpByLevel[Row(level)];
+        public static int Count(MinionKind kind, int level) => kind == MinionKind.Bearer && level >= 6 ? MaxBearersPerTower : 1;
 
-        public static float Damage(int level) => damageByLevel[Row(level)];
+        public static float Hp(MinionKind kind, int level) => kind == MinionKind.Bearer ? bearerHp[Row(level)] : lobberHp[Row(level)];
 
-        private static int Row(int level) => Mathf.Clamp(level, 0, hpByLevel.Length - 1);
+        public static float BearerDamage(int level) => bearerDamage[Row(level)];
+
+        public static float BombDamage(int level) => bombDamage[Row(level)];
+
+        private static int Row(int level) => Mathf.Clamp(level, 0, kindsByLevel.Length - 1);
     }
 }

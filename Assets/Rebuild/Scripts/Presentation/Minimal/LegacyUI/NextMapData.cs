@@ -85,11 +85,11 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                 towers.Add(new NextMapTower(tower.CaptureDefinition(towers.Count + 1), model, hasModel));
             }
             var minions = new List<MinionPlacement>();
-            if (threats.Count == 0 && session != null && MinionRules.HasMinions(session.DisplayedLevelNumber))
+            if (session != null && MinionRules.HasMinions(session.DisplayedLevelNumber))
             {
                 var definitions = new List<TowerDefinition>();
                 foreach (var tower in towers) definitions.Add(tower.Definition);
-                minions = MinionPlanner.Plan(routePoints, definitions, session.DisplayedLevelNumber);
+                minions = MinionPlanner.Plan(routePoints, definitions, session.DisplayedLevelNumber, MinionSiteScan.Scan(session));
             }
 
             var start = route.Count > 0 ? route[0] : Vector3.zero;

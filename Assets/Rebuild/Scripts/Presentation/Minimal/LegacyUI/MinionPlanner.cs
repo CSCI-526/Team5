@@ -6,74 +6,102 @@ namespace Team5.Rebuild.Presentation.LegacyUI
 {
     public static class MinionPlanner
     {
-        public static List<MinionPlacement> Plan(IReadOnlyList<Vector3> route, IReadOnlyList<TowerDefinition> towers, int level)
+        public static List<MinionPlacement> Plan(IReadOnlyList<Vector3> route, IReadOnlyList<TowerDefinition> towers, int level, MinionSites sites)
         {
-            var spots = new List<MinionPlacement>();
-            if (!MinionRules.HasMinions(level) || route == null || towers == null || route.Count <= 2 * MinionRules.EdgeCells) return spots;
-            var fronts = new SortedDictionary<int, TowerDefinition>();
-            foreach (var tower in towers)
+            var placements = new List<MinionPlacement>();
+            var kinds = MinionRules.Kinds(level);
+            if (kinds.Count == 0 || route == null || route.Count < 2 || towers == null || sites == null) return placements;
+            var taken = new HashSet<Vector2Int>();
+            var next = 0;
+            foreach (var tower in Order(route, towers))
             {
-                var index = FrontCell(route, tower);
-                if (index < 0) continue;
-                if (!fronts.TryGetValue(index, out var current) || Facing(route, index, tower) > Facing(route, index, current)) fronts[index] = tower;
+                if (next >= kinds.Count) break;
+                var kind = kinds[next];
+                var cells = Cells(route, tower, kind, MinionRules.Count(kind, level), sites, taken);
+                if (cells.Count == 0) continue;
+                placements.Add(new MinionPlacement(kind, tower.Id, tower.Position, cells));
+                next++;
             }
-            var last = -MinionRules.MinSpacing;
-            foreach (var pair in fronts)
-            {
-                var index = pair.Key;
-                if (index - last < MinionRules.MinSpacing) continue;
-                var approach = Flat(route[index] - route[index - 1]);
-                if (approach.sqrMagnitude < 0.0001f) continue;
-                last = index;
-                var count = MinionRules.CountAt(level, spots.Count);
-                spots.Add(new MinionPlacement(index, route[index], approach.normalized, Line(route, index, pair.Value, count)));
-            }
-            return spots;
+            return placements;
         }
 
-        private static int FrontCell(IReadOnlyList<Vector3> route, TowerDefinition tower)
+        private static List<TowerDefinition> Order(IReadOnlyList<Vector3> route, IReadOnlyList<TowerDefinition> towers)
         {
-            if (tower == null || tower.IsWall || tower.IsAoe || tower.Area == AttackArea.Square) return -1;
-            var best = -1;
+            var path = new NextMapRoute(route);
+            var candidates = new List<TowerDefinition>();
+            var contact = new Dictionary<TowerDefinition, float>();
+            var distance = new Dictionary<TowerDefinition, float>();
+            foreach (var tower in towers)
+            {
+                if (tower == null || tower.IsWall || tower.Damage <= 0f) continue;
+                candidates.Add(tower);
+                contact[tower] = NextMapRules.FirstContact(path, tower);
+                distance[tower] = Flat(route[Nearest(route, tower.Position)] - tower.Position).magnitude;
+            }
+            candidates.Sort((a, b) =>
+            {
+                var compare = contact[a].CompareTo(contact[b]);
+                if (compare != 0) return compare;
+                compare = distance[a].CompareTo(distance[b]);
+                return compare != 0 ? compare : a.Id.CompareTo(b.Id);
+            });
+            return candidates;
+        }
+
+        private static List<Vector3> Cells(IReadOnlyList<Vector3> route, TowerDefinition tower, MinionKind kind, int count, MinionSites sites, HashSet<Vector2Int> taken)
+        {
+            var result = new List<Vector3>();
+            var index = Nearest(route, tower.Position);
+            var toward = Axis(Flat(route[index] - tower.Position), Vector3.forward);
+            var travel = Flat(route[Mathf.Min(index + 1, route.Count - 1)] - route[Mathf.Max(index - 1, 0)]);
+            var side = new Vector3(toward.z, 0f, toward.x);
+            var up = Vector3.Dot(side, -travel) >= 0f ? side : -side;
+            var down = -up;
+            var back = -toward;
+            var pattern = kind == MinionKind.Bearer
+                ? new[] { toward, toward + up, toward + down, up, down, back + up, back + down, back }
+                : new[] { back, back + down, back + up, down, up, back * 2f, back * 2f + down, back * 2f + up };
+            var origin = new Vector2Int(Mathf.RoundToInt(tower.Position.x), Mathf.RoundToInt(tower.Position.z));
+            for (var pass = 0; pass < 2 && result.Count < count; pass++)
+                foreach (var step in pattern)
+                {
+                    if (result.Count >= count) break;
+                    var cell = origin + new Vector2Int(Mathf.RoundToInt(step.x), Mathf.RoundToInt(step.z));
+                    if (taken.Contains(cell) || !sites.CanHost(cell) || (pass == 0 && !sites.IsClean(cell)) || Seals(cell, sites, taken)) continue;
+                    taken.Add(cell);
+                    result.Add(sites.Top(cell));
+                }
+            return result;
+        }
+
+        private static bool Seals(Vector2Int cell, MinionSites sites, HashSet<Vector2Int> taken)
+        {
+            if (!sites.IsWalkable(cell)) return false;
+            var blockedX = !Open(cell + Vector2Int.left, sites, taken) && !Open(cell + Vector2Int.right, sites, taken);
+            var blockedZ = !Open(cell + Vector2Int.down, sites, taken) && !Open(cell + Vector2Int.up, sites, taken);
+            return blockedX || blockedZ;
+        }
+
+        private static bool Open(Vector2Int cell, MinionSites sites, HashSet<Vector2Int> taken) => sites.IsWalkable(cell) && !taken.Contains(cell);
+
+        private static int Nearest(IReadOnlyList<Vector3> route, Vector3 position)
+        {
+            var best = 0;
             var bestDistance = float.MaxValue;
             for (var i = 0; i < route.Count; i++)
             {
-                var distance = Flat(route[i] - tower.Position).magnitude;
-                if (distance < bestDistance)
-                {
-                    bestDistance = distance;
-                    best = i;
-                }
+                var distance = Flat(route[i] - position).sqrMagnitude;
+                if (distance >= bestDistance) continue;
+                bestDistance = distance;
+                best = i;
             }
-            if (best < MinionRules.EdgeCells || best > route.Count - 1 - MinionRules.EdgeCells || bestDistance > MinionRules.MaxTowerDistance) return -1;
-            return SquadCombatRules.Contains(Flat(route[best] - tower.Position), tower.Area, tower.Range, tower.AttackWidth) ? best : -1;
+            return best;
         }
 
-        private static float Facing(IReadOnlyList<Vector3> route, int index, TowerDefinition tower) =>
-            Vector3.Dot(Flat(tower.Position - route[index]).normalized, Flat(route[index] - route[index - 1]).normalized);
-
-        private static List<Vector3> Line(IReadOnlyList<Vector3> route, int index, TowerDefinition tower, int count)
+        private static Vector3 Axis(Vector3 offset, Vector3 fallback)
         {
-            var center = route[index];
-            var offset = Flat(tower.Position - center);
-            var normal = Mathf.Abs(offset.x) >= Mathf.Abs(offset.z) ? new Vector3(Mathf.Sign(offset.x), 0f, 0f) : new Vector3(0f, 0f, Mathf.Sign(offset.z));
-            var along = new Vector3(normal.z, 0f, normal.x);
-            var middle = center + normal;
-            var a = middle - along;
-            var b = middle + along;
-            var aFirst = Adjacency(route, a) <= Adjacency(route, b);
-            var cells = new List<Vector3> { middle, aFirst ? a : b, aFirst ? b : a };
-            return cells.GetRange(0, Mathf.Clamp(count, 0, cells.Count));
-        }
-
-        private static int Adjacency(IReadOnlyList<Vector3> route, Vector3 cell)
-        {
-            for (var i = 0; i < route.Count; i++)
-            {
-                var offset = route[i] - cell;
-                if (Mathf.Abs(offset.x) + Mathf.Abs(offset.z) <= 1.01f) return i;
-            }
-            return int.MaxValue;
+            if (offset.sqrMagnitude < 0.0001f) return fallback;
+            return Mathf.Abs(offset.x) >= Mathf.Abs(offset.z) ? new Vector3(Mathf.Sign(offset.x), 0f, 0f) : new Vector3(0f, 0f, Mathf.Sign(offset.z));
         }
 
         private static Vector3 Flat(Vector3 value) => new Vector3(value.x, 0f, value.z);

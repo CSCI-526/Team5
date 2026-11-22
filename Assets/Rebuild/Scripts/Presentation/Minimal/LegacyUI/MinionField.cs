@@ -12,19 +12,22 @@ namespace Team5.Rebuild.Presentation.LegacyUI
     [DisallowMultipleComponent]
     public sealed class MinionField : MonoBehaviour
     {
-        [SerializeField, Tooltip("Simulation seconds the squad may stand still without hurting anything before a minion next to it steps aside.")]
-        private float stuckSeconds = 3f;
-        [SerializeField, Tooltip("How far a minion that steps aside is lifted, in world units, so the battle no longer sees it.")]
-        private float liftHeight = 1000f;
-        [SerializeField, Tooltip("A minion only steps aside when a living unit is at most this far from its footprint, in tiles.")]
-        private float nearDistance = 1f;
+        [SerializeField, Tooltip("Real seconds a first-encounter hint stays on screen.")]
+        private float hintSeconds = 5f;
+        [SerializeField, Tooltip("Tiles between a living unit and a living shield bearer when the bearer hint first shows.")]
+        private float noticeDistance = 5f;
 
         private readonly List<MinionPost> posts = new List<MinionPost>();
-        private readonly List<Material> materials = new List<Material>();
+        private readonly List<MinionShieldView> shields = new List<MinionShieldView>();
+        private readonly List<MinionLobber> lobbers = new List<MinionLobber>();
+        private readonly List<MinionGuard> guards = new List<MinionGuard>();
+        private readonly HashSet<Vector2Int> blocked = new HashSet<Vector2Int>();
+        private readonly Dictionary<int, MinionPost> postsById = new Dictionary<int, MinionPost>();
+        private double lastTime = -1d;
+        private MinionMaterials materials;
+        private MinionHint hint;
         private BattleSession session;
-        private double lastActivity;
-        private float lastProgress = -1f;
-        private float lastTowerHp = float.MaxValue;
+        private BattleSimulation bound;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics() => SceneManager.sceneLoaded -= OnSceneLoaded;
@@ -60,93 +63,154 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         private void Build(BattleSession battleSession)
         {
             session = battleSession;
-            var errors = new List<string>();
-            session.Grid.RebuildIndex(errors);
-            var occupied = new HashSet<Vector3Int>();
+            materials = new MinionMaterials();
+            var baseline = session.ValidateConfiguration().Count;
+            Vector3[] route;
+            try { route = session.Route.CaptureTopCenters(); }
+            catch (Exception) { return; }
+            var level = session.DisplayedLevelNumber;
+            var towers = new List<BattleTower>(session.Towers);
             var definitions = new List<TowerDefinition>();
-            var existing = session.Towers;
-            for (var i = 0; i < existing.Count; i++)
+            var occupied = new HashSet<Vector3Int>();
+            var ignored = new List<string>();
+            for (var i = 0; i < towers.Count; i++)
             {
-                var tower = existing[i];
+                var tower = towers[i];
                 if (tower == null) continue;
-                tower.CollectFootprintErrors(session.Grid, occupied, errors);
+                tower.CollectFootprintErrors(session.Grid, occupied, ignored);
                 if (!tower.HasValidConfiguration) continue;
                 try { definitions.Add(tower.CaptureDefinition(i + 1)); }
                 catch (ArgumentException) { }
             }
-            Vector3[] route;
-            try { route = session.Route.CaptureTopCenters(); }
-            catch (Exception) { return; }
-            FindParts(out var mesh, out var material);
-            var level = session.DisplayedLevelNumber;
-            var hp = MinionRules.Hp(level);
-            var damage = MinionRules.Damage(level);
-            foreach (var spot in MinionPlanner.Plan(route, definitions, level))
-                foreach (var cell in spot.Cells)
+            var sites = MinionSiteScan.Scan(session);
+            foreach (var placement in MinionPlanner.Plan(route, definitions, level, sites))
+                foreach (var cell in placement.Cells)
                 {
-                    var post = Spawn(cell, hp, damage, occupied, mesh, material);
+                    var post = Spawn(placement, cell, level, occupied);
                     if (post != null) posts.Add(post);
                 }
+            if (posts.Count > 0 && session.ValidateConfiguration().Count > baseline)
+            {
+                Debug.LogWarning("Minions removed because they made the battle configuration invalid.", this);
+                foreach (var post in posts)
+                    if (post.Tower != null) DestroyImmediate(post.Tower.gameObject);
+                posts.Clear();
+                session.ValidateConfiguration();
+            }
+            BuildViews(towers, level, sites);
+            hint = new MinionHint(transform, hintSeconds);
             session.SimulationCreated += OnSimulationCreated;
+            if (session.Simulation != null) OnSimulationCreated(session.Simulation);
         }
 
-        private MinionPost Spawn(Vector3 cell, float hp, float damage, HashSet<Vector3Int> occupied, Mesh mesh, Material material)
+        private MinionPost Spawn(MinionPlacement placement, Vector3 cell, int level, HashSet<Vector3Int> occupied)
         {
+            var bearer = placement.Kind == MinionKind.Bearer;
             var home = new Vector3(Mathf.Round(cell.x), cell.y, Mathf.Round(cell.z));
-            var minion = new GameObject("Minion " + Mathf.RoundToInt(home.x) + "," + Mathf.RoundToInt(home.z));
+            var minion = new GameObject((bearer ? "Bearer " : "Lobber ") + Mathf.RoundToInt(home.x) + "," + Mathf.RoundToInt(home.z));
             minion.transform.SetParent(transform, false);
             minion.transform.SetPositionAndRotation(home, Quaternion.identity);
             var tower = minion.AddComponent<BattleTower>();
-            JsonUtility.FromJsonOverwrite("{\"isWall\":true,\"isMinion\":true,\"maxHp\":" + Number(hp) + ",\"damage\":" + Number(damage) +
-                ",\"range\":" + Number(MinionRules.AttackRange) + ",\"attackInterval\":" + Number(MinionRules.AttackInterval) +
-                ",\"targetRule\":" + (int)TargetRule.Nearest + ",\"attackArea\":" + (int)AttackArea.Square + ",\"attackWidth\":0.9}", tower);
+            JsonUtility.FromJsonOverwrite(bearer ? BearerJson(level, placement.TowerId) : LobberJson(level), tower);
             var errors = new List<string>();
             var trial = new HashSet<Vector3Int>(occupied);
             if (tower.HasValidConfiguration) tower.CollectFootprintErrors(session.Grid, trial, errors);
             else errors.Add("invalid minion stats");
             if (errors.Count > 0)
             {
-                JsonUtility.FromJsonOverwrite("{\"isWall\":false}", tower);
-                minion.SetActive(false);
-                Destroy(minion);
                 Debug.LogWarning("Minion skipped at " + home + ": " + errors[0], this);
+                DestroyImmediate(minion);
                 return null;
             }
             occupied.UnionWith(trial);
-            var look = MinionLook.Build(minion.transform, mesh, material, materials);
-            return new MinionPost(tower, home, tower.Footprint, look);
+            var facing = bearer ? home - placement.TowerPosition : placement.TowerPosition - home;
+            var rig = MinionLook.Build(minion.transform, placement.Kind, facing, materials);
+            return new MinionPost(tower, placement.Kind, bearer ? placement.TowerId : 0, rig);
         }
+
+        private void BuildViews(IReadOnlyList<BattleTower> towers, int level, MinionSites sites)
+        {
+            var bearersByTower = new Dictionary<int, List<MinionPost>>();
+            foreach (var post in posts)
+            {
+                if (post.Kind == MinionKind.Lobber)
+                {
+                    lobbers.Add(new MinionLobber(transform, post, MinionRules.BombDamage(level), materials));
+                    continue;
+                }
+                if (post.GuardedTowerId <= 0) continue;
+                if (!bearersByTower.TryGetValue(post.GuardedTowerId, out var list)) bearersByTower[post.GuardedTowerId] = list = new List<MinionPost>();
+                list.Add(post);
+            }
+            foreach (var pair in bearersByTower)
+            {
+                var index = pair.Key - 1;
+                if (index < 0 || index >= towers.Count || towers[index] == null) continue;
+                var tower = towers[index].transform.position;
+                shields.Add(new MinionShieldView(transform, tower, pair.Key, pair.Value, materials));
+                guards.Add(new MinionGuard(tower, pair.Value, sites));
+            }
+        }
+
+        private static string BearerJson(int level, int towerId) =>
+            "{\"isWall\":true,\"isMinion\":true,\"maxHp\":" + Number(MinionRules.Hp(MinionKind.Bearer, level)) +
+            ",\"damage\":" + Number(MinionRules.BearerDamage(level)) + ",\"range\":" + Number(MinionRules.BearerRange) +
+            ",\"attackInterval\":" + Number(MinionRules.BearerInterval) + ",\"targetRule\":" + (int)TargetRule.Nearest +
+            ",\"attackArea\":" + (int)AttackArea.Circle + ",\"attackWidth\":0.9,\"shieldsTowerId\":" + towerId +
+            ",\"shieldDamageScale\":" + Number(MinionRules.ShieldDamageScale) + "}";
+
+        private static string LobberJson(int level) =>
+            "{\"isWall\":true,\"isMinion\":true,\"maxHp\":" + Number(MinionRules.Hp(MinionKind.Lobber, level)) +
+            ",\"damage\":0.01,\"range\":0,\"attackInterval\":" + Number(MinionRules.LobberInterval) +
+            ",\"targetRule\":" + (int)TargetRule.Nearest + ",\"attackArea\":" + (int)AttackArea.Circle + ",\"attackWidth\":0.9}";
 
         private static string Number(float value) => value.ToString(CultureInfo.InvariantCulture);
 
-        private void FindParts(out Mesh mesh, out Material material)
-        {
-            mesh = null;
-            material = null;
-            foreach (var root in session.gameObject.scene.GetRootGameObjects())
-            {
-                var presentation = root.GetComponentInChildren<BattlePresentation>(true);
-                if (presentation == null || presentation.UnitPrefab == null) continue;
-                var filter = presentation.UnitPrefab.GetComponentInChildren<MeshFilter>(true);
-                var renderer = presentation.UnitPrefab.GetComponentInChildren<MeshRenderer>(true);
-                if (filter == null || renderer == null || filter.sharedMesh == null || renderer.sharedMaterial == null) continue;
-                mesh = filter.sharedMesh;
-                material = renderer.sharedMaterial;
-                return;
-            }
-            var cell = session.Grid.GetComponentInChildren<MeshRenderer>(true);
-            var cellFilter = cell != null ? cell.GetComponent<MeshFilter>() : null;
-            if (cellFilter == null) return;
-            mesh = cellFilter.sharedMesh;
-            material = cell.sharedMaterial;
-        }
-
         private void OnSimulationCreated(BattleSimulation next)
         {
-            lastActivity = 0;
-            lastProgress = -1f;
-            lastTowerHp = float.MaxValue;
+            Unbind();
+            postsById.Clear();
+            lastTime = -1d;
             foreach (var post in posts) post.Restore();
+            foreach (var shield in shields) shield.Reset();
+            foreach (var lobber in lobbers) lobber.Reset();
+            foreach (var guard in guards) guard.Reset();
+            if (next == null) return;
+            bound = next;
+            var towers = session.Towers;
+            foreach (var post in posts)
+            {
+                for (var i = 0; i < towers.Count; i++)
+                    if (towers[i] == post.Tower)
+                    {
+                        postsById[i + 1] = post;
+                        break;
+                    }
+                if (post.GuardedTowerId > 0 && (post.GuardedTowerId > next.Towers.Count || next.Towers[post.GuardedTowerId - 1].Definition.IsWall))
+                    Debug.LogWarning(post.Tower.name + " guards tower " + post.GuardedTowerId + ", which is not a tower in this battle.", this);
+            }
+            next.TowerAttacked += OnTowerAttacked;
+            next.TowerDamaged += OnTowerDamaged;
+        }
+
+        private void Unbind()
+        {
+            if (bound == null) return;
+            bound.TowerAttacked -= OnTowerAttacked;
+            bound.TowerDamaged -= OnTowerDamaged;
+            bound = null;
+        }
+
+        private void OnTowerAttacked(TowerAttackEvent attack)
+        {
+            if (postsById.TryGetValue(attack.TowerId, out var post)) post.Kick();
+        }
+
+        private void OnTowerDamaged(TowerDamageEvent damage)
+        {
+            if (bound == null) return;
+            foreach (var shield in shields)
+                if (shield.TowerId == damage.TowerId && bound.IsTowerShielded(damage.TowerId)) shield.Flash();
         }
 
         private void Update()
@@ -154,39 +218,61 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             if (session == null) return;
             var simulation = session.Simulation;
             if (simulation == null) return;
-            foreach (var post in posts) post.Animate(Time.time, Time.deltaTime);
-            if (simulation.Outcome != BattleOutcome.Running || simulation.IsPaused) return;
-            var progress = -1f;
-            for (var i = 0; i < simulation.Units.Count; i++)
-                if (simulation.Units[i].IsAlive) progress = Mathf.Max(progress, simulation.Units[i].RouteProgress);
-            var towerHp = 0f;
-            for (var i = 0; i < simulation.Towers.Count; i++) towerHp += Mathf.Max(0f, simulation.Towers[i].Hp);
-            var time = simulation.ElapsedTime;
-            if (progress > lastProgress + 0.0001f || towerHp < lastTowerHp - 0.0001f) lastActivity = time;
-            lastProgress = Mathf.Max(lastProgress, progress);
-            lastTowerHp = towerHp;
-            if (time - lastActivity < stuckSeconds) return;
-            lastActivity = time;
-            foreach (var post in posts)
-                if (!post.Lifted && post.IsAlive && NearSquad(post, simulation)) post.StepAside(liftHeight);
+            var time = Time.time;
+            var delta = Time.deltaTime;
+            var now = simulation.ElapsedTime;
+            var simulated = lastTime < 0d ? 0f : Mathf.Max(0f, (float)(now - lastTime));
+            lastTime = now;
+            if (simulation.Outcome == BattleOutcome.Running && !simulation.IsPaused) Guard(simulation);
+            for (var i = 0; i < posts.Count; i++) posts[i].Animate(time, delta, simulated, i);
+            foreach (var shield in shields) shield.Tick(simulation, time, delta);
+            foreach (var lobber in lobbers)
+            {
+                lobber.Tick(simulation, time, delta);
+                if (lobber.MarkedThisFrame && hint != null) hint.Show(MinionKind.Lobber);
+            }
+            if (hint == null) return;
+            if (NearBearer(simulation)) hint.Show(MinionKind.Bearer);
+            hint.Tick(Time.unscaledDeltaTime);
         }
 
-        private bool NearSquad(MinionPost post, BattleSimulation simulation)
+        private void Guard(BattleSimulation simulation)
         {
-            for (var i = 0; i < simulation.Units.Count; i++)
+            if (guards.Count == 0) return;
+            blocked.Clear();
+            var sum = Vector3.zero;
+            var alive = 0;
+            foreach (var unit in simulation.Units)
             {
-                var unit = simulation.Units[i];
-                if (unit.IsAlive && post.DistanceTo(unit.Position) <= nearDistance) return true;
+                if (!unit.IsAlive) continue;
+                sum += unit.Position;
+                alive++;
+                blocked.Add(new Vector2Int(Mathf.RoundToInt(unit.Position.x), Mathf.RoundToInt(unit.Position.z)));
+            }
+            if (alive == 0) return;
+            foreach (var post in posts)
+                if (post.IsAlive) blocked.Add(post.Cell);
+            var squad = sum / alive;
+            foreach (var guard in guards) guard.Tick(squad, blocked);
+        }
+
+        private bool NearBearer(BattleSimulation simulation)
+        {
+            foreach (var post in posts)
+            {
+                if (post.Kind != MinionKind.Bearer || !post.IsAlive) continue;
+                var position = post.Position;
+                foreach (var unit in simulation.Units)
+                    if (unit.IsAlive && MinionBombRules.FlatDistanceSquared(unit.Position, position) <= noticeDistance * noticeDistance) return true;
             }
             return false;
         }
 
         private void OnDestroy()
         {
+            Unbind();
             if (session != null) session.SimulationCreated -= OnSimulationCreated;
-            foreach (var material in materials)
-                if (material != null) Destroy(material);
-            materials.Clear();
+            if (materials != null) materials.Dispose();
         }
     }
 }

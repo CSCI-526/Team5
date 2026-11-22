@@ -5,17 +5,17 @@ namespace Team5.Rebuild.Presentation.LegacyUI
 {
     public sealed class MinionPlacement
     {
-        public MinionPlacement(int routeIndex, Vector3 center, Vector3 approach, IReadOnlyList<Vector3> cells)
+        public MinionPlacement(MinionKind kind, int towerId, Vector3 towerPosition, IReadOnlyList<Vector3> cells)
         {
-            RouteIndex = routeIndex;
-            Center = center;
-            Approach = approach;
+            Kind = kind;
+            TowerId = towerId;
+            TowerPosition = towerPosition;
             Cells = cells;
         }
 
-        public int RouteIndex { get; }
-        public Vector3 Center { get; }
-        public Vector3 Approach { get; }
+        public MinionKind Kind { get; }
+        public int TowerId { get; }
+        public Vector3 TowerPosition { get; }
         public IReadOnlyList<Vector3> Cells { get; }
     }
 }
