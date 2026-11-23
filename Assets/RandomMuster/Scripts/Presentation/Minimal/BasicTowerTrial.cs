@@ -9,7 +9,7 @@ namespace Team5.BasicTowerTrial.Presentation
 {
     public sealed class BasicTowerTrial : MonoBehaviour
     {
-        public const string ScenePath = "Assets/BasicTowerTrial/Scenes/BasicTowerTrial.unity";
+        public const string ScenePath = "Assets/RandomMuster/Scenes/RandomMuster.unity";
         private static readonly Color[] Accent =
         {
             Color.clear, new Color(.32f,.70f,.39f), new Color(.60f,.38f,.92f),

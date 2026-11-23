@@ -14,7 +14,7 @@ namespace Team5.BasicTowerTrial.Presentation
 {
     public sealed class FormationReserveBattle : MonoBehaviour
     {
-        public const string ScenePath = "Assets/BasicTowerTrial/Scenes/BasicTowerTrial.unity";
+        public const string ScenePath = "Assets/RandomMuster/Scenes/RandomMuster.unity";
         private static TavernRecruitment pendingTavern;
         private static readonly UnitRole[] RecruitPool = { UnitRole.Attack, UnitRole.Tank, UnitRole.Heal,
             UnitRole.Sniper, UnitRole.Vanguard, UnitRole.Demolisher };
