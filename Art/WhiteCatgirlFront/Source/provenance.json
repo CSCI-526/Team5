@@ -1,0 +1,89 @@
+{
+  "tool": "built-in image_gen image editing",
+  "external_api_used": false,
+  "reference_role": "User-provided character illustration",
+  "generated_content": "Occluded anatomy/clothing overlaps and isolated matching parts, not pixel-exact extraction",
+  "postprocessing": "Mechanical crop, resize, register, transparent composite and layered PSD/PSB packaging; no procedural drawing",
+  "prompt_file": "imagegen_prompt.txt",
+  "source_sha256": {
+    "Reference_Original.png": "494cec3a270d6ee8e8eb3e4d89ba7a400a0e928402fea6b19708c6cf9a664f4d",
+    "Generated_PartsAtlas.png": "2adb7b36aef76df67023dc71ba6eddfdfd377a60a6c955ab2bb85f7a45815a7c"
+  },
+  "user_constraints": [
+    "No visible hands; two continuous broad sleeves",
+    "Static tail; no dedicated tail animation",
+    "Only layered source and transparent parts; no game integration"
+  ],
+  "format_reference": "https://www.adobe.com/devnet-apps/photoshop/fileformatashtml/",
+  "excluded_atlas_cells": [
+    {
+      "index_zero_based": 2,
+      "former_layer": "F_COAT_BACK",
+      "reason": "User requested removal: part absent from original illustration."
+    },
+    {
+      "index_zero_based": 15,
+      "former_layer": "F_SCARF",
+      "reason": "User requested removal of standalone scarf."
+    }
+  ],
+  "part_corrections": [
+    {
+      "part": "F_BODY",
+      "tool": "User-approved built-in image_gen cleanup",
+      "source": "Corrections/F_BODY.png",
+      "prompt": "../Edits/F_BODY_cleanup_prompt.txt",
+      "sha256": "5fd18dc96080daa509ee685b9523c9c224e262d2e3295ef265c83302c97235e9",
+      "change": "Replace torso with approved cleaned user artwork; fit existing layer bounds."
+    },
+    {
+      "part": "F_TAIL_STATIC",
+      "tool": "built-in image_gen image editing",
+      "source": "Corrections/F_TAIL_STATIC.png",
+      "prompt": "Corrections/F_TAIL_STATIC_prompt.txt",
+      "sha256": "49c2801172112179f381ec0c63c7f0e1d2ab94c4baebe4e21f66278d8940b195",
+      "change": "Remove dark band and lift free tail tip upward; remains static."
+    },
+    {
+      "part": "F_LEG_SCREEN_L",
+      "tool": "User-approved built-in image_gen cleanup",
+      "source": "Corrections/F_LEG_SCREEN_L.png",
+      "prompt": "../Edits/F_LEG_SCREEN_L_cleanup_prompt.txt",
+      "sha256": "c67402b968a9160d0a0b4299e67441847fa4dd20ef71fb454b1d3a6bd03ca433",
+      "change": "Replace left leg with approved cleaned version; retain upper-thigh skin band and original layer bounds."
+    },
+    {
+      "part": "F_PELVIS",
+      "tool": "User-selected supplied image; copy and registration only",
+      "source": "Corrections/F_PELVIS.png",
+      "sha256": "26d256602e5b7da649b256269643577cd62ba87954ca0a924c4c7cc256b990e8",
+      "change": "Replace pelvis with latest user-selected open-center version; preserve opening and existing layer placement."
+    }
+  ],
+  "part_correction_history": [
+    {
+      "part": "F_BODY",
+      "tool": "built-in image_gen image editing",
+      "source": "Corrections/F_BODY.png",
+      "prompt": "Corrections/F_BODY_prompt.txt",
+      "sha256": "43a0ba367d3e85aba0e140fb8a97144cc9f02eb8fe5c095be8896694fafe90c3",
+      "change": "Waist-length closed upper torso; no long coat tails or front split; diagonal strap and buckle retained."
+    },
+    {
+      "part": "F_BODY",
+      "tool": "User-supplied artwork; file copy and registration only",
+      "source": "Corrections/F_BODY.png",
+      "original_filename": "download.png",
+      "sha256": "df2c283bdfdfc03709ec33c87445778aa5b10ef0725d5d04482597c78ed48f56",
+      "change": "Replace torso with user-provided PNG; retain existing layer placement and fit visible bounds."
+    },
+    {
+      "part": "F_PELVIS",
+      "tool": "built-in image_gen image editing",
+      "source": "Corrections/F_PELVIS.png",
+      "prompt": "Corrections/F_PELVIS_prompt.txt",
+      "sha256": "415861cb259c7778ffc061689a1f73e81eaf0d05224d9429a9e6cbfad52a4f32",
+      "change": "Clean up user-painted closed skirt edges and seams; retain continuous center panel and closed hem."
+    }
+  ]
+}

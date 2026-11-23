@@ -1,0 +1,23 @@
+{
+  "formats": [
+    {
+      "file": "WhiteCatgirl_Front.psd",
+      "version": 1,
+      "visible_parts": 14,
+      "hidden_reference_layers": 1,
+      "all_channel_pixels_verified": true,
+      "bytes": 17896952
+    },
+    {
+      "file": "WhiteCatgirl_Front.psb",
+      "version": 2,
+      "visible_parts": 14,
+      "hidden_reference_layers": 1,
+      "all_channel_pixels_verified": true,
+      "bytes": 17897200
+    }
+  ],
+  "independent_pillow_psd_flattened_rgb_match": true,
+  "unity_import_tested": false,
+  "photoshop_open_tested": false
+}

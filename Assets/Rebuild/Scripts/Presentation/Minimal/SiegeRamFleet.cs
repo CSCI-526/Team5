@@ -42,6 +42,8 @@ namespace Team5.Rebuild.Presentation
         public int RemainingQuantity=>remainingQuantity;
         public IReadOnlyList<SiegeRamMotion> Vehicles=>vehicles;
         public SiegeRamMotion PlanningVehicle=>planningVehicle;
+        internal bool HideVehicleHud { get; set; }
+        internal Sprite PlanningIcon => icon;
         public IReadOnlyList<Vector3> Draft=>draft;
         public Button VehicleButton(int index)=>buttons[index];
         public SpriteRenderer VehicleRenderer(int id)=>views.TryGetValue(id,out var view)?view.Body:null;
@@ -87,7 +89,7 @@ namespace Team5.Rebuild.Presentation
         }
         private void RefreshQuantity()
         {
-            foreach(var button in buttons)if(button!=null)button.gameObject.SetActive(IsUnlocked);
+            foreach(var button in buttons)if(button!=null)button.gameObject.SetActive(IsUnlocked&&!HideVehicleHud);
             if(quantityLabel!=null)quantityLabel.text="x"+remainingQuantity;
             if(ramIcon!=null)ramIcon.color=RamIconColor();
             if(buttons[0]!=null)buttons[0].interactable=IsUnlocked&&remainingQuantity>0&&!IsPlanning&&simulation!=null&&simulation.Outcome==BattleOutcome.Running&&(hud==null||!hud.TutorialOwnsPause);
@@ -168,12 +170,34 @@ namespace Team5.Rebuild.Presentation
             if(hud!=null&&hud.TutorialOwnsPause){Say("Finish the current guide first.");return false;}
             if(SpawnOccupied()){Say("Spawn occupied. Move units away first.");return false;}
             if(!IsPassable(SpawnPosition)){Say("Spawn is blocked.");return false;}
+            var vehicle = new SiegeRamMotion(nextId, SpawnPosition, moveSpeed);
+            RegisterVehicle(vehicle);
+            BeginPlanning(vehicle);return true;
+        }
+
+        public bool CanUsePlannedRoute(IReadOnlyList<Vector3> points) =>
+            vehiclePrefab != null && IsUnlocked && new SiegeRamMotion(0, SpawnPosition, moveSpeed)
+                .TrySetRoute(points, IsRoutePassable, true);
+
+        public bool TryLaunchPlannedRoute(IReadOnlyList<Vector3> points)
+        {
+            if (simulation == null || simulation.Outcome != BattleOutcome.Running || simulation.IsPaused ||
+                (simulation.PendingSpawnCount > 0 && !simulation.InitialDeploymentHeld) || IsPlanning || remainingQuantity <= 0 || SpawnOccupied() ||
+                vehiclePrefab == null || !IsUnlocked) return false;
+            var vehicle = new SiegeRamMotion(nextId, SpawnPosition, moveSpeed);
+            if (!vehicle.TrySetRoute(points, IsRoutePassable, true)) return false;
+            RegisterVehicle(vehicle);
+            return true;
+        }
+
+        private void RegisterVehicle(SiegeRamMotion vehicle)
+        {
             ClearGateGuide();
-            var vehicle=new SiegeRamMotion(nextId++,SpawnPosition,moveSpeed);vehicles.Add(vehicle);
+            nextId++;
+            vehicles.Add(vehicle);
             var view=Instantiate(vehiclePrefab,transform);view.name="Siege Ram "+vehicle.Id;view.Initialize();view.Present(vehicle,Camera.main);views.Add(vehicle.Id,view);
             remainingQuantity--;RefreshQuantity();
             if(toast!=null)toast.text="";toastUntil=0;
-            BeginPlanning(vehicle);return true;
         }
         public bool TryBeginReplanningAt(Vector2 screenPoint)
         {
@@ -275,42 +299,15 @@ namespace Team5.Rebuild.Presentation
         public bool ExtendDrag(Vector3 cursor)
         {
             if(!IsPlanning||!dragging)return false;
-            float Snap(float n)=>Mathf.Sign(n)*Mathf.Floor((Mathf.Abs(n)+.001f)/SiegeRamMotion.RouteStep)*SiegeRamMotion.RouteStep;
-            validCursor=true;
-            var start=draft[0];
-            if(session.DisplayedLevelNumber==3)cursor=new Vector3(Mathf.Max(cursor.x,start.x),start.y,start.z);
-            var fromStart=cursor-start;fromStart.y=0;
-            // Returning to the starting block erases the alignment connector as well.
-            if(draft.Count>1&&Mathf.Floor((cursor.x+.5f)/3)==Mathf.Floor((start.x+.5f)/3)&&
-                Mathf.Floor((cursor.z+.5f)/3)==Mathf.Floor((start.z+.5f)/3))draft.RemoveRange(1,draft.Count-1);
-            if(draft.Count==1)
-            {
-                if(fromStart.sqrMagnitude<.000001f){views[planningVehicle.Id].ShowPath(draft,1,start);return true;}
-                var first=SiegeRamMotion.NextBlockCenter(start,fromStart);
-                var alongX=Mathf.Abs(fromStart.x)>=Mathf.Abs(fromStart.z);
-                var reached=alongX?Mathf.Abs(fromStart.x)+.001f>=Mathf.Abs(first.x-start.x):Mathf.Abs(fromStart.z)+.001f>=Mathf.Abs(first.z-start.z);
-                if(!reached){views[planningVehicle.Id].ShowPath(draft,1,start);return true;}
-                var samples=Mathf.Max(1,Mathf.CeilToInt(Vector3.Distance(start,first)*5));
-                for(var sample=1;sample<=samples;sample++)
-                    if(!IsRoutePassable(Vector3.Lerp(start,first,(float)sample/samples)))
-                    {validCursor=false;Say("Blocked. Draw around stone walls, towers and obstacles.");views[planningVehicle.Id].ShowPath(draft,1,start);return false;}
-                draft.Add(first);
-            }
-            var anchor=draft[1];
-            var target=anchor+new Vector3(Snap(cursor.x-anchor.x),0,Snap(cursor.z-anchor.z));
-            for(var i=0;i<512;i++)
-            {
-                var previous=draft[draft.Count-1];var delta=target-previous;if(delta.sqrMagnitude<.0001f)break;
-                var next=previous+SiegeRamMotion.RouteStep*(Mathf.Abs(delta.x)>=Mathf.Abs(delta.z)?Vector3.right*Mathf.Sign(delta.x):Vector3.forward*Mathf.Sign(delta.z));
-                if(draft.Count>2&&(next-draft[draft.Count-2]).sqrMagnitude<.0001f){draft.RemoveAt(draft.Count-1);continue;}
-                var valid=true;
-                for(var sample=1;sample<=15;sample++)if(!IsRoutePassable(Vector3.Lerp(previous,next,sample/15f))){valid=false;break;}
-                if(!valid){validCursor=false;Say("Blocked. Draw around stone walls, towers and obstacles.");break;}
-                draft.Add(next);
-            }
-            if((target-draft[draft.Count-1]).sqrMagnitude>.0001f)validCursor=false;
-            views[planningVehicle.Id].ShowPath(draft,1,planningVehicle.Position);return validCursor;
+            var start = draft[0];
+            if (session.DisplayedLevelNumber == 3)
+                cursor = new Vector3(Mathf.Max(cursor.x, start.x), start.y, start.z);
+            validCursor = SiegeRamMotion.ExtendRouteDraft(draft, cursor, IsRoutePassable);
+            if (!validCursor) Say("Blocked. Draw around stone walls, towers and obstacles.");
+            views[planningVehicle.Id].ShowPath(draft, 1, start);
+            return validCursor;
         }
+
         public bool FinishDrag()
         {
             if(!IsPlanning||!dragging)return false;dragging=false;

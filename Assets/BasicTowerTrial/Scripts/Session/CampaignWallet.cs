@@ -1,0 +1,45 @@
+using System;
+using System.Collections.Generic;
+
+namespace Team5.BasicTowerTrial.Session
+{
+    public sealed class CampaignWallet
+    {
+        private readonly HashSet<int> rewardedLevels = new HashSet<int>();
+        public int Balance { get; private set; }
+        public bool IsUnlimited { get; }
+
+        public CampaignWallet(int startingGold = 0, bool unlimited = false)
+        {
+            if (startingGold < 0) throw new ArgumentOutOfRangeException(nameof(startingGold));
+            IsUnlimited = unlimited;
+            Balance = unlimited ? int.MaxValue : startingGold;
+        }
+
+        public bool TryRewardLevel(int level, int amount)
+        {
+            if (level < 1) throw new ArgumentOutOfRangeException(nameof(level));
+            if (amount < 0) throw new ArgumentOutOfRangeException(nameof(amount));
+            if (rewardedLevels.Contains(level)) return false;
+            var total = IsUnlimited ? Balance : checked(Balance + amount);
+            rewardedLevels.Add(level);
+            Balance = total;
+            return true;
+        }
+
+        public void AddBonusGold(int amount)
+        {
+            if (amount <= 0 || IsUnlimited) return;
+            Balance = checked(Balance + amount);
+        }
+
+        public bool TrySpend(int price)
+        {
+            if (price <= 0) throw new ArgumentOutOfRangeException(nameof(price));
+            if (IsUnlimited) return true;
+            if (Balance < price) return false;
+            Balance -= price;
+            return true;
+        }
+    }
+}

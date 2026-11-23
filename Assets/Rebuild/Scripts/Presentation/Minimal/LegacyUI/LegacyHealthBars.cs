@@ -19,6 +19,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         private BattleSimulation simulation;
         private BattleSession session;
         private BattlePresentation presentation;
+        internal bool ShowHeadHealthBars { get; set; }
         public void Bind(BattleSession owner, BattleSimulation next)
         {
             if (simulation != null) simulation.UnitDamaged -= OnDamaged;
@@ -38,12 +39,19 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             foreach (var unit in simulation.Units)
             {
                 if (!unitBars.TryGetValue(unit.Id, out var bar))
-                { bar = Create("Unit HP " + unit.Id, 9, 1.5f, 0.3f); unitBars.Add(unit.Id, bar); }
+                {
+                    bar = ShowHeadHealthBars ? Create("Unit HP " + unit.Id, 19, 4, .7f)
+                        : Create("Unit HP " + unit.Id, 9, 1.5f, .3f);
+                    unitBars.Add(unit.Id, bar);
+                }
                 var position = unit.Position + Vector3.up * 0.9f;
                 Transform model = null;
                 if (presentation != null && presentation.TryGetView(unit.Id, out var view)) model = view.transform;
-                Present(bar, position, unit.Hp / unit.MaxHp, unit.IsAlive && (damaged.Contains(unit.Id) || unit.Hp < unit.MaxHp), camera, model);
+                Present(bar, position, unit.Hp / unit.MaxHp,
+                    unit.IsAlive && (ShowHeadHealthBars || damaged.Contains(unit.Id) || unit.Hp < unit.MaxHp),
+                    camera, model, overlapHead: ShowHeadHealthBars);
             }
+            if (ShowHeadHealthBars) return;
             for (var i = 0; i < simulation.Towers.Count; i++)
             {
                 var tower = simulation.Towers[i];
@@ -63,7 +71,8 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             fill.rectTransform.anchoredPosition = new Vector2(inset, 0);
             return new Bar { Root = rect, Fill = fill, Width = width, Height = height, Inset = inset };
         }
-        private void Present(Bar bar, Vector3 position, float fraction, bool visible, Camera camera, Transform model)
+        private void Present(Bar bar, Vector3 position, float fraction, bool visible, Camera camera, Transform model,
+            bool overlapHead = false)
         {
             var screen = camera.WorldToScreenPoint(position);
             if (model != null)
@@ -87,7 +96,8 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                     for (var x = -1; x <= 1; x += 2)
                         top = Mathf.Max(top, camera.WorldToScreenPoint(bounds.center + Vector3.Scale(bounds.extents, new Vector3(x, y, z))).y);
                     screen = camera.WorldToScreenPoint(bounds.center);
-                    screen.y = top + (bar.Height / 2 + 1) * GetComponentInParent<Canvas>().scaleFactor;
+                    var offset = overlapHead ? -bar.Height * .25f : bar.Height / 2 + 1;
+                    screen.y = top + offset * GetComponentInParent<Canvas>().scaleFactor;
                 }
             }
             bar.Root.gameObject.SetActive(visible && screen.z > 0);

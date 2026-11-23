@@ -1,0 +1,28 @@
+Use case: identity-preserve / animation parts extraction.
+Edit the provided white-haired, gold-eyed chibi catgirl into a clean production CUTOUT PARTS ATLAS for Unity 2D Animation. This is the SAME character, not a redesign. Preserve cream-white long hair and cat ears, gold eyes, pale face, high white scarf/collar, oversized ivory coat, diagonal black chest strap with rectangular dark gray buckle, short white skirt with black trim, charcoal leggings, chunky black boots with gray rectangular details and pale soles, fluffy white tail, thick near-black outlines, angular soft cream/gray cel shading, front three-quarter view facing screen-right. NO weapons. IMPORTANT: the hands are NOT visible at all; there are NO fingers, palms, wrists or exposed hand skin. BOTH oversized wide sleeves completely conceal the hands and function as the arms. Draw each sleeve as ONE continuous, closed silhouette from a generous shoulder overlap down to its wide cuff, not multiple disconnected segments. The tail is a static decorative part.
+
+Deliver one LARGE SQUARE transparent PNG atlas, ideally 2048x2048 or larger. STRICT EXACTLY 4 columns x 4 rows of equally sized square cells. One isolated component centred in EACH of the 16 cells; each component stays entirely within its cell with clear transparent padding. No components touch another cell, no labels, no numbers, no frames, no grid, no background, no contact shadows. True RGBA transparent alpha (not a drawn checkerboard). Components can be resized to fill their own cell; we will register their size and position later. All components retain the reference viewing angle and rest pose. Extrapolate and paint hidden overlapping material where needed for animation, matching the existing style.
+
+EXACT cell order reading left to right, top to bottom:
+ROW 1:
+1. BACK HAIR only: complete flowing rear long cream-white hair mass, no ears, face, side locks, body or tail. Include the hidden upper root behind the head.
+2. TAIL only: the exact fluffy cream-white curved tail with black band near its root and soft gray inner shadow, curling down-left. Complete tail with extended hidden root, no coat or hair attached.
+3. REAR COAT/SKIRT TAILS only: complete ivory flared rear coat panels behind the hips, dark edge trim and broad angled flap on screen-left, hidden connecting waist included. NO legs or sleeves.
+4. COMPLETE SCREEN-LEFT LEG: ONE uninterrupted charcoal thigh + knee + calf silhouette down into the full black boot, pale sole and small gray rectangular boot detail. Generous hidden upper-thigh overlap. No gap at knee/ankle, no skin, no skirt.
+ROW 2:
+5. COMPLETE SCREEN-RIGHT LEG: corresponding continuous charcoal leg with full black boot and pale sole, preserving its rightward rest-pose angle; generous hidden upper-thigh overlap. No skin or skirt.
+6. PELVIS / SHORT SKIRT only: white segmented short skirt/hip piece with black belt and trim as reference, including hidden waist; no torso, legs or coat tails.
+7. TORSO only: full ivory coat torso with its diagonal black chest strap and dark gray rectangular buckle, extending behind the skirt at waist. NO sleeves, scarf, face, hands, hair, or legs. Paint hidden shoulder joints under sleeves.
+8. SCREEN-RIGHT SLEEVE ARM only: large wide ivory sleeve from full hidden shoulder to wide dark-edged closed cuff; thick black trim, shape matching reference rest pose, completely covers the hand. ONE solid continuous sleeve, no skin/fingers/hand protrusion and no body.
+ROW 3:
+9. SCREEN-LEFT SLEEVE ARM only: corresponding continuous wide ivory coat sleeve, full shoulder overlap to dark-edged closed wide cuff, correct screen-left pose. NO visible hands, fingers, skin, body, or separate dangling pieces.
+10. FACE / HEAD BASE only: complete pale chibi head under the hair, exact gold eyes, brows and reserved calm expression; include a natural hidden forehead under the bangs and lower face under scarf, NO hair, ears, neck clothing or accessories.
+11. FRONT BANGS / CROWN HAIR only: cream-white rounded top hair crown and blunt sweeping fringe matching the reference, including crown that joins behind side locks. NO face, ears, eyes, or separate long side locks.
+12. SCREEN-LEFT SIDE HAIR only: one long cream-white face-framing lock, pointed lower tips, from temple root down to chest/waist, matching reference, NO face, ear or torso.
+ROW 4:
+13. SCREEN-RIGHT SIDE HAIR only: corresponding long narrow cream-white lock on the right with pointed tip, enough upper root behind bangs. NO face, ear, sleeve or torso.
+14. SCREEN-LEFT CAT EAR only: complete pale large cat ear with cream outer shape, gray inner angular line and thick dark outline, extended hidden base, matching the reference tilt.
+15. SCREEN-RIGHT CAT EAR only: corresponding complete pale upright ear with inner angular gray line, extended hidden base and correct tilt.
+16. SCARF / HIGH COLLAR FRONT only: ivory high collar/scarf wrapping the neck and concealing the lower face, angular gray fold shadow and dark outline, as reference; generous hidden extension under head/torso, NO face, hair, straps, sleeves or body.
+
+Do not add exposed hands or human fingers anywhere. Do not make a back view. Do not add weapons, extra jewellery, text, or a new colour scheme. No full assembled characters in the atlas, only the ordered separate pieces. Preserve the distinctive reference identity.

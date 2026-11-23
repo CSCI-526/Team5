@@ -62,10 +62,18 @@ namespace Team5.Rebuild.Presentation
                 if (sim != null && camera != null && !sim.IsPaused)
                 {
                     var ray = camera.ScreenPointToRay(point);
-                    var plane = new Plane(Vector3.up, sim.SquadReferencePosition);
+                    // Ground remains selectable while the squad is above it. Wall tops
+                    // are explicit navigation surfaces, not the current squad's height plane.
+                    var plane = new Plane(Vector3.up, owner.Session.Route.CaptureTopCenters()[0]);
                     if (plane.Raycast(ray, out var distance))
                     {
                         var target = ray.GetPoint(distance);
+                        foreach(var wall in owner.Session.Towers)
+                        {
+                            var surface=wall.GetComponent<Team5.Rebuild.World.WallWalkSurface>();
+                            if(surface!=null&&surface.TryHit(ray,out var wallDistance,out var top)&&wallDistance<distance)
+                            {distance=wallDistance;target=top;}
+                        }
                         var accepted = sim.RequestMovement(new MovementRequest(target));
                         owner.GetComponent<ContinuousMovementView>()?.ShowDestination(accepted ? sim.SquadDestination : target, accepted);
                     }

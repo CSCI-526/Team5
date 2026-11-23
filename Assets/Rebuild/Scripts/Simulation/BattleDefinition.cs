@@ -27,6 +27,8 @@ namespace Team5.Rebuild.Simulation
         public float Range { get; }
         public float AttackInterval { get; }
         public float Defense { get; }
+        public float MagicResistance { get; }
+        public bool IsFlying { get; }
         public float HealPerSecond { get; }
         public float TowerDamageMultiplier { get; }
         public AttackDamageType DamageType { get; }
@@ -43,7 +45,8 @@ namespace Team5.Rebuild.Simulation
             UnitRarity rarity = UnitRarity.Common,
             int level = 1,
             float towerDamageMultiplier = 1f,
-            AttackDamageType damageType = AttackDamageType.Normal)
+            AttackDamageType damageType = AttackDamageType.Normal,
+            float magicResistance = 0, bool isFlying = false)
         {
             if (!BattleNumbers.Finite(maxHp) || maxHp <= 0 || !BattleNumbers.Finite(speed) || speed <= 0)
                 throw new ArgumentOutOfRangeException(nameof(maxHp), "HP and speed must be finite and positive.");
@@ -57,6 +60,11 @@ namespace Team5.Rebuild.Simulation
                 throw new ArgumentOutOfRangeException(nameof(towerDamageMultiplier));
             if (!Enum.IsDefined(typeof(AttackDamageType), damageType)) throw new ArgumentOutOfRangeException(nameof(damageType));
 
+            if (!BattleNumbers.Finite(magicResistance) || magicResistance < 0 || magicResistance > 1)
+                throw new ArgumentOutOfRangeException(nameof(magicResistance));
+
+            MagicResistance = magicResistance;
+            IsFlying = isFlying;
             MaxHp = maxHp;
             Speed = speed;
             Role = role;
@@ -91,10 +99,16 @@ namespace Team5.Rebuild.Simulation
         public bool IsAoe { get; }
         public int GoldBounty { get; }
         public bool IsMinion { get; }
+        public BasicDefenseKind BasicDefense { get; }
+        public float MinimumShotDamage { get; }
+        public float BlastRadius { get; }
+        public float BlastEdgeMultiplier { get; }
 
         public TowerDefinition(int id, Vector3 position, float range, float damage, float attackInterval, TargetRule targetRule,
             int footprintSize = 1, float maxHp = 20, AttackArea area = AttackArea.Square, float attackWidth = 0.3f,
-            bool isAoe = false, int goldBounty = 20, bool isWall = false, bool wallAlongZ = false, bool isMinion = false, bool isWoodenGate = false)
+            bool isAoe = false, int goldBounty = 20, bool isWall = false, bool wallAlongZ = false, bool isMinion = false, bool isWoodenGate = false,
+            BasicDefenseKind basicDefense = BasicDefenseKind.None, float minimumShotDamage = 0,
+            float blastRadius = 1.3f, float blastEdgeMultiplier = .5f)
         {
             isWall = isWall || isMinion;
             if (!BattleNumbers.Finite(position) || !BattleNumbers.Finite(range) || range < 0 ||
@@ -118,6 +132,14 @@ namespace Team5.Rebuild.Simulation
             IsAoe = !isWall && isAoe;
             IsWall = isWall;
             IsMinion = isMinion;
+            if (!BattleNumbers.Finite(minimumShotDamage) || minimumShotDamage < 0 ||
+                !BattleNumbers.Finite(blastRadius) || blastRadius <= 0 ||
+                !BattleNumbers.Finite(blastEdgeMultiplier) || blastEdgeMultiplier < 0 || blastEdgeMultiplier > 1)
+                throw new ArgumentOutOfRangeException(nameof(minimumShotDamage));
+            BasicDefense = basicDefense;
+            MinimumShotDamage = Mathf.Min(damage, minimumShotDamage);
+            BlastRadius = blastRadius;
+            BlastEdgeMultiplier = blastEdgeMultiplier;
             IsWoodenGate = isWall && !isMinion && isWoodenGate;
             Footprint = isMinion ? Vector2Int.one : isWall ? (wallAlongZ ? new Vector2Int(1, 3) : new Vector2Int(3, 1)) : new Vector2Int(footprintSize, footprintSize);
             GoldBounty = isWall ? 0 : Math.Max(0, goldBounty);
@@ -137,9 +159,12 @@ namespace Team5.Rebuild.Simulation
         public BattleObjective Objective { get; private set; }
         public ReadOnlyCollection<MemberSpawnDefinition> Members { get; private set; }
         public ReadOnlyCollection<Vector3Int> WalkableCells { get; private set; }
+        public ReadOnlyCollection<WallSurfaceDefinition> WallSurfaces { get; private set; } = new List<WallSurfaceDefinition>().AsReadOnly();
+        public ReadOnlyCollection<LadderDefinition> Ladders { get; private set; } = new List<LadderDefinition>().AsReadOnly();
 
         public BattleDefinition(IEnumerable<Vector3> waypoints, IEnumerable<TowerDefinition> towers,
-            IEnumerable<MemberSpawnDefinition> members, IEnumerable<Vector3Int> walkableCells = null)
+            IEnumerable<MemberSpawnDefinition> members, IEnumerable<Vector3Int> walkableCells = null,
+            IEnumerable<WallSurfaceDefinition> wallSurfaces = null, IEnumerable<LadderDefinition> ladders = null)
             : this(waypoints, towers, FirstUnit(members, out var captured), captured.Count, 1, 1, 3)
         {
             Objective = BattleObjective.ReachGoal;
@@ -150,6 +175,8 @@ namespace Team5.Rebuild.Simulation
                     throw new ArgumentException("Members require unique IDs/slots and a shared formation speed.");
             Members = captured.AsReadOnly();
             WalkableCells = walkableCells == null ? null : new List<Vector3Int>(walkableCells).AsReadOnly();
+            if(wallSurfaces!=null)WallSurfaces=new List<WallSurfaceDefinition>(wallSurfaces).AsReadOnly();
+            if(ladders!=null)Ladders=new List<LadderDefinition>(ladders).AsReadOnly();
         }
 
         private static UnitDefinition FirstUnit(IEnumerable<MemberSpawnDefinition> members, out List<MemberSpawnDefinition> captured)

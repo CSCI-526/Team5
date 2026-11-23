@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c37974a930449c0a06ee0fd1c2fa633, type: 3}
+  m_Name: CatgirlAllRoles
+  m_EditorClassIdentifier: Team5.BasicTowerTrial.Presentation::Team5.BasicTowerTrial.Presentation.UnitRoleVisualSet
+  entries:
+  - role: 1
+    prefab: {fileID: 6624711686001247672, guid: 79438cca68074d518a146404ab7ad7e0, type: 3}
+  - role: 2
+    prefab: {fileID: 6624711686001247672, guid: efa55e03bade4186aee38454b2b3437e, type: 3}
+  - role: 3
+    prefab: {fileID: 6624711686001247672, guid: d3446b8bb1504f6bbf239f649d1b680b, type: 3}
+  - role: 4
+    prefab: {fileID: 6624711686001247672, guid: 4ba83d9b03584d68856fcf383fc38ed7, type: 3}
+  - role: 5
+    prefab: {fileID: 6624711686001247672, guid: 00ee3488e8b24b088e0d887f32bab6a1, type: 3}
+  - role: 6
+    prefab: {fileID: 6624711686001247672, guid: 5e1b827f05734d16877fc32ba7f96492, type: 3}
+  - role: 7
+    prefab: {fileID: 6624711686001247672, guid: 8e296c5699d048b0ae11c80d9afd6191, type: 3}
+  - role: 8
+    prefab: {fileID: 6624711686001247672, guid: 13f0b96907c64724bd9abd18985be070, type: 3}
+  - role: 9
+    prefab: {fileID: 6624711686001247672, guid: 82c21920783346c7bae13e3869fda0f9, type: 3}
+  - role: 10
+    prefab: {fileID: 6624711686001247672, guid: 011f615022a14b02813b56c48e145b88, type: 3}

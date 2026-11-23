@@ -1,0 +1,213 @@
+{
+  "canvas_px": [
+    1190,
+    1322
+  ],
+  "root_px": [
+    626,
+    1265
+  ],
+  "suggested_pixels_per_unit": 1000,
+  "coordinate_system": "Pixel origin top left; y increases down. Unity root at foot baseline.",
+  "hands_visible": false,
+  "tail_animated": false,
+  "rigged": false,
+  "layers": [
+    {
+      "name": "F_TAIL_STATIC",
+      "atlas_cell_zero_based": 1,
+      "order_bottom_to_top": 0,
+      "bounds_px": [
+        210,
+        825,
+        482,
+        1140
+      ],
+      "visible": true,
+      "animation_candidate": false,
+      "notes": "Static decoration; attach to body, no dedicated tail animation."
+    },
+    {
+      "name": "F_B_HAIR",
+      "atlas_cell_zero_based": 0,
+      "order_bottom_to_top": 1,
+      "bounds_px": [
+        90,
+        290,
+        743,
+        1010
+      ],
+      "visible": true,
+      "animation_candidate": true,
+      "notes": ""
+    },
+    {
+      "name": "F_LEG_SCREEN_L",
+      "atlas_cell_zero_based": 3,
+      "order_bottom_to_top": 2,
+      "bounds_px": [
+        438,
+        935,
+        598,
+        1265
+      ],
+      "visible": true,
+      "animation_candidate": true,
+      "notes": "Continuous thigh/calf/boot; future mesh skinning, no detached knee."
+    },
+    {
+      "name": "F_LEG_SCREEN_R",
+      "atlas_cell_zero_based": 4,
+      "order_bottom_to_top": 3,
+      "bounds_px": [
+        604,
+        935,
+        841,
+        1265
+      ],
+      "visible": true,
+      "animation_candidate": true,
+      "notes": "Continuous thigh/calf/boot; future mesh skinning, no detached knee."
+    },
+    {
+      "name": "F_PELVIS",
+      "atlas_cell_zero_based": 5,
+      "order_bottom_to_top": 4,
+      "bounds_px": [
+        506,
+        837,
+        729,
+        994
+      ],
+      "visible": true,
+      "animation_candidate": true,
+      "notes": ""
+    },
+    {
+      "name": "F_SLEEVE_SCREEN_R",
+      "atlas_cell_zero_based": 7,
+      "order_bottom_to_top": 5,
+      "bounds_px": [
+        620,
+        658,
+        778,
+        1018
+      ],
+      "visible": true,
+      "animation_candidate": true,
+      "notes": "Continuous closed sleeve; no visible hand."
+    },
+    {
+      "name": "F_SLEEVE_SCREEN_L",
+      "atlas_cell_zero_based": 8,
+      "order_bottom_to_top": 6,
+      "bounds_px": [
+        348,
+        655,
+        550,
+        1050
+      ],
+      "visible": true,
+      "animation_candidate": true,
+      "notes": "Continuous closed sleeve; no visible hand."
+    },
+    {
+      "name": "F_BODY",
+      "atlas_cell_zero_based": 6,
+      "order_bottom_to_top": 7,
+      "bounds_px": [
+        465,
+        635,
+        713,
+        855
+      ],
+      "visible": true,
+      "animation_candidate": true,
+      "notes": ""
+    },
+    {
+      "name": "F_EAR_SCREEN_L",
+      "atlas_cell_zero_based": 13,
+      "order_bottom_to_top": 8,
+      "bounds_px": [
+        330,
+        220,
+        525,
+        394
+      ],
+      "visible": true,
+      "animation_candidate": true,
+      "notes": ""
+    },
+    {
+      "name": "F_EAR_SCREEN_R",
+      "atlas_cell_zero_based": 14,
+      "order_bottom_to_top": 9,
+      "bounds_px": [
+        647,
+        196,
+        807,
+        370
+      ],
+      "visible": true,
+      "animation_candidate": true,
+      "notes": ""
+    },
+    {
+      "name": "F_FACE",
+      "atlas_cell_zero_based": 9,
+      "order_bottom_to_top": 10,
+      "bounds_px": [
+        431,
+        339,
+        743,
+        664
+      ],
+      "visible": true,
+      "animation_candidate": true,
+      "notes": ""
+    },
+    {
+      "name": "F_SIDE_HAIR_SCREEN_L",
+      "atlas_cell_zero_based": 11,
+      "order_bottom_to_top": 11,
+      "bounds_px": [
+        348,
+        367,
+        485,
+        947
+      ],
+      "visible": true,
+      "animation_candidate": true,
+      "notes": ""
+    },
+    {
+      "name": "F_SIDE_HAIR_SCREEN_R",
+      "atlas_cell_zero_based": 12,
+      "order_bottom_to_top": 12,
+      "bounds_px": [
+        686,
+        470,
+        809,
+        1012
+      ],
+      "visible": true,
+      "animation_candidate": true,
+      "notes": ""
+    },
+    {
+      "name": "F_HAIR_FRONT",
+      "atlas_cell_zero_based": 10,
+      "order_bottom_to_top": 13,
+      "bounds_px": [
+        356,
+        289,
+        778,
+        538
+      ],
+      "visible": true,
+      "animation_candidate": true,
+      "notes": ""
+    }
+  ]
+}

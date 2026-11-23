@@ -37,6 +37,11 @@ namespace Team5.Rebuild.Simulation
         public bool RequestMovement(MovementRequest request) => !stepping && continuous != null &&
             Outcome == BattleOutcome.Running && PendingSpawnCount == 0 && continuous.Request(request);
 
+        public IReadOnlyList<Vector3> PreviewSquadPath(Vector3 from, Vector3 to) =>
+            continuous?.PreviewPath(from, to);
+
+        public bool CanStandOnSquadRoute(Vector3 point) => continuous != null && continuous.CanStandOnRoute(point);
+
         // Continuous navigation owns no transforms, physics bodies or SlotIds. Callers specify actual endpoints.
         private sealed class ContinuousMovement
         {
@@ -75,7 +80,7 @@ namespace Team5.Rebuild.Simulation
                 travels.TryGetValue(id, out var travel) && travel.Next < travel.Path.Count;
             public ContinuousMovement(BattleSimulation owner, Vector3 origin, float spacing, float radius, bool compact = false)
             { sim = owner; Reference = destination = origin; Spacing = spacing; Radius = radius; Compact = compact; }
-            public bool CanPlaceFormation(Vector3 anchor) => Mathf.Abs(anchor.y - Reference.y) < .01f && sim.units.Any(u => u.IsAlive) &&
+            public bool CanPlaceFormation(Vector3 anchor) => (sim.definition.Ladders.Count>0||Mathf.Abs(anchor.y-Reference.y)<.01f) && sim.units.Any(u => u.IsAlive) &&
                 sim.units.Where(u => u.IsAlive).All(u => Stand(anchor + u.FormationOffset, Radius));
             public ContinuousMovement Copy(BattleSimulation owner)
             {
@@ -189,7 +194,7 @@ namespace Team5.Rebuild.Simulation
             }
             public bool Request(MovementRequest request)
             {
-                if (!BattleNumbers.Finite(request.Target) || Mathf.Abs(request.Target.y - Reference.y) > .01f) return false;
+                if (!BattleNumbers.Finite(request.Target) || sim.definition.Ladders.Count==0 && Mathf.Abs(request.Target.y - Reference.y) > .01f) return false;
                 var living = sim.units.Where(u => u.IsAlive && (!request.MemberId.HasValue || u.Id == request.MemberId)).OrderBy(u => u.Id).ToArray();
                 if (living.Length == 0) return false;
                 if (request.Source == MovementCommandSource.AI && living.Any(u => travels.TryGetValue(u.Id, out var active) &&
@@ -199,13 +204,14 @@ namespace Team5.Rebuild.Simulation
                 if (!request.MemberId.HasValue && TryNearbyFormation(target, living, out var adjusted)) target = adjusted;
                 var centerPath = FindPath(Reference, target, Radius);
                 if (!request.MemberId.HasValue && centerPath == null) return false;
-                if (Compact && !request.MemberId.HasValue) centerPath = SampleCompactRoute(centerPath);
+                if (Compact && !request.MemberId.HasValue && centerPath.All(p=>Mathf.Abs(p.y-centerPath[0].y)<.01f)) centerPath = SampleCompactRoute(centerPath);
                 var heading = lastHeading;
                 if (centerPath != null)
                     for (var i = centerPath.Count - 1; i > 0; i--)
                     {
                         var segment = centerPath[i] - centerPath[i - 1];
                         if (segment.sqrMagnitude < .000001f) continue;
+                        segment.y=0;if(segment.sqrMagnitude<.000001f)continue;
                         heading = segment.normalized; break;
                     }
                 var goals = living.Select(u => target + (request.MemberId.HasValue ? Vector3.zero : u.FormationOffset)).ToArray();
@@ -217,6 +223,23 @@ namespace Team5.Rebuild.Simulation
                     living = living.OrderByDescending(u => Vector3.Dot(u.Position, direction)).ThenBy(u => u.Id).ToArray();
                     for (var i = 0; i < living.Length; i++) goals[i] = target - direction * (i * Spacing);
                     queueDestination = true;
+                    if(sim.definition.Ladders.Count>0 && goals.Any(g=>!Stand(g,Radius)))
+                    {
+                        var found=false;
+                        foreach(var axis in new[]{Vector3.right,Vector3.forward})
+                        {
+                            for(var shift=0;shift<=16&&!found;shift++)foreach(var sign in new[]{1,-1})
+                            {
+                                var center=target+axis*(shift*.125f*sign);
+                                var line=Enumerable.Range(0,living.Length).Select(i=>center+axis*((i-(living.Length-1)*.5f)*Spacing)).ToArray();
+                                if(line.Any(g=>!Stand(g,Radius)))continue;
+                                goals=line;target=center;found=true;break;
+                            }
+                            if(found)break;
+                        }
+                        if(!found)return false;
+                        centerPath=FindPath(Reference,target,Radius);if(centerPath==null)return false;
+                    }
                 }
                 var pending = new Dictionary<int, Travel>();
                 for (var i = 0; i < living.Length; i++)
@@ -312,6 +335,17 @@ namespace Team5.Rebuild.Simulation
             }
             public void Step(float dt)
             {
+                // A destroyed wall removes its upper floor and links. Falling is simulated,
+                // never a view-only coordinate correction or a teleport to the ground.
+                if(sim.definition.WallSurfaces.Count>0)foreach(var u in sim.units.Where(u=>u.IsAlive))
+                {
+                    if(Stand(u.Position,Radius)||ActiveLadders().Any(l=>l.Between(u.Position,l.Top)!=null))continue;
+                    var ground=new Vector3(u.Position.x,sim.definition.Waypoints[0].y,u.Position.z);
+                    if(u.Position.y>ground.y+.001f && Stand(ground,Radius))
+                    {u.Position=Vector3.MoveTowards(u.Position,ground,3*dt);travels.Remove(u.Id);}
+                }
+                if(sim.definition.WallSurfaces.Count>0&&!Stand(Reference,Radius)&&!ActiveLadders().Any(l=>l.Between(Reference,l.Top)!=null))
+                {var standing=sim.units.Where(u=>u.IsAlive).ToArray();if(standing.Length>0&&standing.All(u=>Stand(u.Position,Radius)))Reference=standing.Aggregate(Vector3.zero,(p,u)=>p+u.Position)/standing.Length;}
                 if (pendingReform) TryBeginReform();
                 var activeReform = reforming;
                 var advance = Vector3.zero;
@@ -359,7 +393,7 @@ namespace Team5.Rebuild.Simulation
                         if (travel.Blocked > .4f)
                         {
                             var retry = FindPath(unit.Position, travel.Goal, Radius, unit.Id);
-                            if (retry != null) { travel.Path = retry; travel.Next = 1; travel.Yielding = false; }
+                            if (retry != null) { travel.Path = retry; travel.Next = 1; travel.Yielding = false; travel.SharedStages=null; }
                             travel.Blocked = 0;
                         }
                     }
@@ -369,6 +403,7 @@ namespace Team5.Rebuild.Simulation
                     while (remaining > .000001f && travel.Next < travel.Path.Count)
                     {
                         var target = travel.Path[travel.Next];
+                        if(Mathf.Abs(target.y-unit.Position.y)>.001f)remaining=Mathf.Min(remaining,unit.Speed*dt*.55f);
                         var next = Vector3.MoveTowards(unit.Position, target, remaining);
                         if (Compact && !activeReform && travel.SharedStages != null && living.Any(other =>
                             other != unit && travels.TryGetValue(other.Id, out var follower) && follower.SharedStages != null && follower.Next < follower.Path.Count &&
@@ -385,11 +420,16 @@ namespace Team5.Rebuild.Simulation
                         }
                         if (!Segment(unit.Position, next, Radius, unit.Id))
                         {
+                            // Another climber temporarily owns this rung. Keep the shared
+                            // route/stage indices intact instead of replacing it with a
+                            // shorter individual path and stranding the rest of the squad.
+                            if(ActiveLadders().Any(l=>l.ContainsSegment(unit.Position,next)))
+                            {travel.Blocked=0;break;}
                             travel.Blocked += dt;
                             if (travel.Blocked > .4f)
                             {
                                 var detour = FindPath(unit.Position, travel.Goal, Radius, unit.Id);
-                                if (detour != null) { travel.Path = detour; travel.Next = 1; travel.Yielding = false; }
+                                if (detour != null) { travel.Path = detour; travel.Next = 1; travel.Yielding = false; travel.SharedStages=null; }
                                 else if (!travel.Yielding && sim.units.Any(other => other.IsAlive && other.Id > unit.Id &&
                                     DistanceToSegment(other.Position, unit.Position, next) < (Radius + other.CollisionRadius + .005f) * (Radius + other.CollisionRadius + .005f)))
                                 {
@@ -442,9 +482,11 @@ namespace Team5.Rebuild.Simulation
                 }
                 return best;
             }
-            private bool BlockedCell(int x, int z)
+            private bool BlockedCell(int x, int z,float height)
             {
-                var key = new Vector3Int(x, SmallCellOccupancy.PositionToCell(Reference).y, z);
+                var key = new Vector3Int(x, SmallCellOccupancy.PositionToCell(new Vector3(0,height,0)).y, z);
+                var surface=sim.definition.WallSurfaces.FirstOrDefault(s=>s.Cells.Contains(key));
+                if(surface!=null)return !OwnerAlive(surface.TowerId)||Mathf.Abs(surface.Height-height)>.01f;
                 return sim.walkable != null && !sim.walkable.Contains(key) || sim.HasTowerFootprint(key);
             }
             private static float DistanceToSegment(Vector3 point, Vector3 from, Vector3 to)
@@ -458,7 +500,7 @@ namespace Team5.Rebuild.Simulation
                 for (var x = Mathf.FloorToInt(point.x - radius + .5f); x <= Mathf.FloorToInt(point.x + radius + .5f); x++)
                     for (var z = Mathf.FloorToInt(point.z - radius + .5f); z <= Mathf.FloorToInt(point.z + radius + .5f); z++)
                     {
-                        if (!BlockedCell(x, z)) continue;
+                        if (!BlockedCell(x, z,point.y)) continue;
                         var dx = Mathf.Max(Mathf.Abs(point.x - x) - .5f, 0);
                         var dz = Mathf.Max(Mathf.Abs(point.z - z) - .5f, 0);
                         if (dx * dx + dz * dz < radius * radius - .000001f) return false;
@@ -467,11 +509,20 @@ namespace Team5.Rebuild.Simulation
             }
             private bool Segment(Vector3 from, Vector3 to, float radius, int? member = null)
             {
+                if(ActiveLadders().Any(l=>l.ContainsSegment(from,to)))
+                {
+                    if(member.HasValue&&(!Compact||Mathf.Abs(from.y-to.y)>.001f))foreach(var other in sim.units)
+                        if(other.IsAlive&&other.Id!=member && ((other.Position-from).sqrMagnitude<.000001f
+                            ? other.Id<member.Value : Vector3.Dot(other.Position-from,to-from)>.000001f) &&
+                            (other.Position-to).sqrMagnitude<Mathf.Pow(radius+other.CollisionRadius+.01f,2))return false;
+                    return true;
+                }
+                if(Mathf.Abs(from.y-to.y)>.001f)return false;
                 // Conservative swept circle vs inflated cell AABBs; never cut an obstacle corner.
                 for (var x = Mathf.FloorToInt(Mathf.Min(from.x, to.x) - radius + .5f); x <= Mathf.FloorToInt(Mathf.Max(from.x, to.x) + radius + .5f); x++)
                     for (var z = Mathf.FloorToInt(Mathf.Min(from.z, to.z) - radius + .5f); z <= Mathf.FloorToInt(Mathf.Max(from.z, to.z) + radius + .5f); z++)
                     {
-                        if (!BlockedCell(x, z)) continue;
+                        if (!BlockedCell(x, z,from.y)) continue;
                         float enter = 0, exit = 1;
                         var delta = to - from;
                         if (ClipWallAxis(from.x - x, delta.x, .5f + radius - .0001f, ref enter, ref exit) &&
@@ -483,8 +534,38 @@ namespace Team5.Rebuild.Simulation
                             (radius + other.CollisionRadius + .005f) * (radius + other.CollisionRadius + .005f)) return false;
                 return true;
             }
+            public List<Vector3> PreviewPath(Vector3 from, Vector3 to) => FindPath(from, to, Radius);
+            public bool CanStandOnRoute(Vector3 point) => Stand(point, Radius);
+
             private List<Vector3> FindPath(Vector3 from, Vector3 to, float radius, int? member = null)
             {
+                if(sim.definition.Ladders.Count==0)return FindFlatPath(from,to,radius,member);
+                var links=ActiveLadders().ToArray();
+                var nodes=new List<Vector3>{from,to};foreach(var l in links){nodes.Add(l.Bottom);nodes.Add(l.Top);}
+                var costs=Enumerable.Repeat(float.PositiveInfinity,nodes.Count).ToArray();var done=new bool[nodes.Count];
+                var prior=new int[nodes.Count];var routes=new List<Vector3>[nodes.Count];costs[0]=0;
+                for(var iteration=0;iteration<nodes.Count;iteration++)
+                {
+                    var a=-1;for(var i=0;i<nodes.Count;i++)if(!done[i]&&(a<0||costs[i]<costs[a]))a=i;
+                    if(a<0||float.IsPositiveInfinity(costs[a]))break;if(a==1)
+                    {var path=new List<Vector3>();var chain=new List<int>();for(var n=1;n!=0;n=prior[n])chain.Add(n);chain.Reverse();path.Add(from);foreach(var n in chain)path.AddRange(routes[n].Skip(1));return path;}
+                    done[a]=true;
+                    for(var b=1;b<nodes.Count;b++)
+                    {
+                        if(a==b||done[b])continue;List<Vector3> path=null;
+                        foreach(var l in links){var transit=l.Between(nodes[a],nodes[b]);if(transit!=null){path=transit;break;}}
+                        if(path==null&&Mathf.Abs(nodes[a].y-nodes[b].y)<.001f)path=FindFlatPath(nodes[a],nodes[b],radius,member);
+                        if(path==null)continue;var cost=costs[a];for(var i=1;i<path.Count;i++)cost+=Vector3.Distance(path[i-1],path[i]);
+                        if(cost>=costs[b])continue;costs[b]=cost;prior[b]=a;routes[b]=path;
+                    }
+                }
+                return null;
+            }
+            private bool OwnerAlive(int id)=>sim.towers.Any(t=>t.Id==id&&t.IsAlive);
+            private IEnumerable<LadderDefinition> ActiveLadders()=>sim.definition.Ladders.Where(l=>OwnerAlive(l.TowerId));
+            private List<Vector3> FindFlatPath(Vector3 from, Vector3 to, float radius, int? member = null)
+            {
+                if(Mathf.Abs(from.y-to.y)>.001f)return null;
                 if (!Stand(from, radius) || !Stand(to, radius)) return null;
                 if (member.HasValue && !Segment(to, to, radius, member)) return null;
                 if (Segment(from, to, radius, member)) return new List<Vector3> { from, to };

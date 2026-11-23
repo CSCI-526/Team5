@@ -88,28 +88,38 @@ namespace Team5.Rebuild.Session
         public SceneRoute Route => route;
         // Unity leaves a null list entry when an authored tower is deleted from the Scene.
         // All consumers use the same surviving order so simulation IDs and views stay aligned.
-        private readonly List<BattleTower> sceneWalls = new List<BattleTower>();
-        private bool wallsIndexed;
+        private readonly List<BattleTower> sceneDefenses = new List<BattleTower>();
+        private bool defensesIndexed;
         public IReadOnlyList<BattleTower> Towers
         {
             get
             {
-                if (!wallsIndexed) IndexSceneWalls();
+                if (!defensesIndexed) IndexSceneDefenses();
                 return towers.Where(tower => tower != null)
-                    .Concat(sceneWalls.Where(wall => wall != null && !towers.Contains(wall))).ToArray();
+                    .Concat(sceneDefenses.Where(tower => tower != null && !towers.Contains(tower))).ToArray();
             }
         }
 
-        private void IndexSceneWalls()
+        private void IndexSceneDefenses()
         {
-            sceneWalls.Clear();
+            sceneDefenses.Clear();
             if (gameObject.scene.IsValid())
                 foreach (var root in gameObject.scene.GetRootGameObjects())
                     foreach (var enemy in root.GetComponentsInChildren<BattleTower>(true))
-                        if (enemy.IsWall) sceneWalls.Add(enemy);
-            wallsIndexed = true;
+                        if (enemy.IsWall || (enemy.isActiveAndEnabled && enemy.BasicDefense != BasicDefenseKind.None))
+                            sceneDefenses.Add(enemy);
+            defensesIndexed = true;
         }
+        [SerializeField] private bool disableUnitTowerAttacks;
         public BattleSimulation Simulation { get; private set; }
+        public void SetPrototypeTowerRoster(IEnumerable<BattleTower> configuration)
+        {
+            if(Simulation!=null||advancing)throw new InvalidOperationException("Configure defenses before starting battle.");
+            var items=configuration?.ToList()??throw new ArgumentNullException(nameof(configuration));
+            if(items.Any(t=>t==null||t.gameObject.scene!=gameObject.scene)||items.Distinct().Count()!=items.Count)
+                throw new ArgumentException("Defense roster needs unique towers from this scene.");
+            towers=items;defensesIndexed=false;
+        }
         public bool SquadCombat => squadCombat;
         public int DisplayedLevelNumber => displayedLevelNumber;
         public int AttemptsPerLevel => attemptsPerLevel;
@@ -198,8 +208,8 @@ namespace Team5.Rebuild.Session
                 errors.Add("Formation size must be 1 or 3 and match the route's required width.");
             if (formationSize == 3 && unitCount > 9)
                 errors.Add("This prototype supports one squad of up to nine independent members.");
-            // Scene-authored road walls participate even when dropped outside the manual tower list.
-            IndexSceneWalls();
+            // Scene-authored walls and basic defense prefabs are discovered without a manual roster entry.
+            IndexSceneDefenses();
             var seen = new HashSet<BattleTower>();
             var towerFootprints = new HashSet<Vector3Int>();
             foreach (var tower in Towers)
@@ -208,6 +218,8 @@ namespace Team5.Rebuild.Session
                 if (!seen.Add(tower)) errors.Add($"Duplicate tower reference: {tower.name}.");
                 if (tower.gameObject.scene != gameObject.scene || !tower.isActiveAndEnabled)
                     errors.Add($"{tower.name}: tower must be active in this Scene.");
+                if ((ManualSquadMovement || continuousSquadMovement) && tower.BasicDefense != BasicDefenseKind.None)
+                    errors.Add($"{tower.name}: basic defense prefabs require a fixed route.");
                 if (!tower.HasValidConfiguration) errors.Add($"{tower.name}: invalid tower stats or position.");
                 tower.CollectFootprintErrors(grid, towerFootprints, errors);
                 if (tower.IsWall) continue;
@@ -255,7 +267,14 @@ namespace Team5.Rebuild.Session
                 var passable = new List<Vector3Int>();
                 foreach (var cell in grid.SceneCells)
                     if ((cell.IsRouteSurface || (manualSquadMovement || continuousSquadMovement) && cell.Kind == CellKind.Ground) && grid.HasClearTop(cell)) passable.Add(cell.Occupancy);
-                return new BattleDefinition(route.CaptureTopCenters(), towerDefinitions, spawns, passable);
+                var surfaces=new List<WallSurfaceDefinition>();var ladders=new List<LadderDefinition>();
+                if(continuousSquadMovement)for(var i=0;i<sceneTowers.Count;i++)
+                {
+                    var surface=sceneTowers[i].GetComponent<WallWalkSurface>();if(surface==null||!surface.isActiveAndEnabled)continue;
+                    var definition=surface.CaptureSurface(i+1);surfaces.Add(definition);passable.AddRange(definition.Cells);
+                    var ladder=surface.CaptureLadder(i+1);if(ladder!=null)ladders.Add(ladder);
+                }
+                return new BattleDefinition(route.CaptureTopCenters(), towerDefinitions, spawns, passable,surfaces,ladders);
             }
             return new BattleDefinition(route.CaptureTopCenters(), towerDefinitions,
                 new UnitDefinition(unitHp, unitSpeed), unitCount, spawnInterval, goalLives, formationSize);
@@ -276,7 +295,7 @@ namespace Team5.Rebuild.Session
                 Debug.LogError("Battle configuration invalid:\n" + string.Join("\n", errors), this);
                 return;
             }
-            var next = new BattleSimulation(CaptureDefinition());
+            var next = new BattleSimulation(CaptureDefinition(), !disableUnitTowerAttacks);
             if (continuousSquadMovement) next.EnableContinuousMovement(continuousFormationSpacing, continuousSoldierRadius, compactSquadMovement);
             else if (manualSquadMovement) next.EnableManualMovement();
             tutorialCheckpoint = null;

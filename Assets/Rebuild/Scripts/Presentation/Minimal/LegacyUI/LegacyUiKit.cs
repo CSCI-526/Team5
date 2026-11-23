@@ -136,6 +136,20 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         public static Button CreateButton(Transform parent, string name, Vector2 position, Vector2 size, Color color, float radius) =>
             MakeButton(CreateImage(parent, name, position, size, color, radius));
 
+        public static Button CreatePlaybackPause(Slider slider, TMP_FontAsset font,
+            UnityEngine.Events.UnityAction toggle, out TMP_Text label)
+        {
+            var button = CreateButton(slider.transform, "Pause Battle", Vector2.zero,
+                new Vector2(80, 22), PanelLineColor, 3);
+            var rect = (RectTransform)button.transform;
+            rect.anchorMin = rect.anchorMax = new Vector2(.5f, 1);
+            rect.anchoredPosition = new Vector2(0, 30);
+            label = CreateText(rect, "Label", "Pause", Vector2.zero, new Vector2(76, 20), 12, Color.white);
+            if (font != null) label.font = font;
+            button.onClick.AddListener(toggle);
+            return button;
+        }
+
         private static Sprite RoundedSprite => rounded != null ? rounded : (rounded = CreateRoundedSprite());
         private static Sprite CircleSprite => circle != null ? circle : (circle = CreateCircleSprite());
 

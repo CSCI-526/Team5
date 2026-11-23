@@ -1,0 +1,9 @@
+{
+  "tool": "built-in image_gen image editing",
+  "source": "F_LEG_SCREEN_L_user_original.png",
+  "output": "F_LEG_SCREEN_L_cleaned.png",
+  "prompt": "F_LEG_SCREEN_L_cleanup_prompt.txt",
+  "sha256": "c67402b968a9160d0a0b4299e67441847fa4dd20ef71fb454b1d3a6bd03ca433",
+  "integrated_into_layered_documents": true,
+  "change": "Clean edges and joins while retaining pale upper-thigh band, charcoal leg, tilt and boot design"
+}

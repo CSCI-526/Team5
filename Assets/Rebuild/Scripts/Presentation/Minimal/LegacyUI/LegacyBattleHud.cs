@@ -157,17 +157,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         private void EnsurePauseButton()
         {
             if (pauseButton == null)
-            {
-                pauseButton = LegacyUiKit.CreateButton(speedSlider.transform, "Pause Battle", Vector2.zero,
-                    new Vector2(80, 22), LegacyUiKit.PanelLineColor, 3);
-                var rect = (RectTransform)pauseButton.transform;
-                rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 1);
-                rect.anchoredPosition = new Vector2(0, 30);
-                pauseLabel = LegacyUiKit.CreateText(rect, "Label", "Pause", Vector2.zero,
-                    new Vector2(76, 20), 12, Color.white);
-                pauseLabel.font = hudFont;
-                pauseButton.onClick.AddListener(TogglePause);
-            }
+                pauseButton = LegacyUiKit.CreatePlaybackPause(speedSlider, hudFont, TogglePause, out pauseLabel);
             pauseButton.gameObject.SetActive(true);
         }
         public void TogglePause()

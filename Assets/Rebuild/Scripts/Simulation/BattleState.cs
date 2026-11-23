@@ -51,14 +51,15 @@ namespace Team5.Rebuild.Simulation
     public sealed class TowerState
     {
         internal TowerState Copy() => (TowerState)MemberwiseClone();
-        public TowerDefinition Definition { get; }
+        public TowerDefinition Definition { get; internal set; }
         public int Id => Definition.Id;
         public Vector3 Position { get; internal set; }
         public float CooldownRemaining { get; internal set; }
         public float FrozenRemaining { get; internal set; }
         public int? TargetId { get; internal set; }
         public float Hp { get; internal set; }
-        public bool IsAlive => Hp > 0;
+        public bool UnderConstruction { get; internal set; }
+        public bool IsAlive => Hp > 0 && !UnderConstruction;
         internal TowerState(TowerDefinition definition)
         {
             Definition = definition;

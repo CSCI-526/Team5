@@ -1,6 +1,8 @@
 using System.Collections.Generic;
+using System.Linq;
 using Team5.Rebuild.Session;
 using Team5.Rebuild.Simulation;
+using Team5.Rebuild.Presentation.LegacyUI;
 using UnityEngine;
 
 namespace Team5.Rebuild.Presentation
@@ -21,6 +23,8 @@ namespace Team5.Rebuild.Presentation
         [SerializeField] private UnitRoleVisualSet roleVisuals;
         [SerializeField] private bool showTowerRanges = true;
         [SerializeField] private bool showUnitLevels = true;
+        [SerializeField] private bool showHeadHealthBars;
+        private LegacyHealthBars headHealthBars;
         [Header("Optional single-member visual test (disabled in production scenes)")]
         [SerializeField] private bool useTestUnitVisual;
         [SerializeField] private int testVisualMemberId;
@@ -122,8 +126,26 @@ namespace Team5.Rebuild.Presentation
             ClearRanges();
             simulation = next;
             if (simulation == null) return;
+            if (showHeadHealthBars)
+            {
+                var host = new GameObject("Unit Head Health Bars", typeof(RectTransform));
+                host.transform.SetParent(transform, false);
+                LegacyUiKit.CreateCanvas(host, 34, new Vector2(1280, 720), 0);
+                var layer = LegacyUiKit.CreateRect(host.transform, "Health Bars", Vector2.zero, Vector2.zero);
+                LegacyUiKit.Stretch(layer);
+                layer.pivot = Vector2.zero;
+                headHealthBars = layer.gameObject.AddComponent<LegacyHealthBars>();
+                headHealthBars.ShowHeadHealthBars = true;
+                headHealthBars.Bind(session, simulation);
+            }
+            if (simulation.Towers.Any(tower => tower.Definition.BasicDefense != BasicDefenseKind.None))
+            {
+                if (!TryGetComponent<BasicTowerTrial>(out var defenseView)) defenseView = gameObject.AddComponent<BasicTowerTrial>();
+                defenseView.Bind(session, simulation);
+            }
             foreach (var tower in simulation.Towers)
             {
+                if (tower.Definition.BasicDefense != BasicDefenseKind.None) continue;
                 var range = new GameObject($"Tower Range {tower.Id}").AddComponent<TowerRangeView>();
                 range.transform.SetParent(transform, false);
                 range.Bind(tower);
@@ -141,6 +163,14 @@ namespace Team5.Rebuild.Presentation
 
         private void Unbind()
         {
+            if (headHealthBars != null)
+            {
+                var host = headHealthBars.transform.parent.gameObject;
+                host.SetActive(false);
+                Destroy(host);
+                headHealthBars = null;
+            }
+            if (TryGetComponent<BasicTowerTrial>(out var defenseView)) defenseView.Bind(session, null);
             if (simulation == null) return;
             simulation.UnitSpawned -= OnSpawned;
             simulation.UnitMoved -= OnMoved;

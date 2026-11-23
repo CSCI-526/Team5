@@ -1,0 +1,13 @@
+{
+  "source": "C:/Users/haochen song/Downloads/download.png",
+  "tool": "built-in image_gen",
+  "prompt": "F_BODY_cleanup_prompt.txt",
+  "output": "F_BODY_cleaned.png",
+  "sha256": "5fd18dc96080daa509ee685b9523c9c224e262d2e3295ef265c83302c97235e9",
+  "purpose": "Conservative cleanup of user-painted waist-length torso edges and hem; generated edit may vary in small details",
+  "integrated_into_layered_documents": true,
+  "size_px": [
+    1166,
+    1349
+  ]
+}

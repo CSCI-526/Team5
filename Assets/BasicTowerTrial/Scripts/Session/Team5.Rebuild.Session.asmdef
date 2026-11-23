@@ -1,0 +1,5 @@
+{
+  "name": "Team5.BasicTowerTrial.Session",
+  "rootNamespace": "Team5.BasicTowerTrial",
+  "references": ["Team5.BasicTowerTrial.Simulation", "Team5.BasicTowerTrial.World"]
+}

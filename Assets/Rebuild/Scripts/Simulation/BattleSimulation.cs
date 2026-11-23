@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using UnityEngine;
 
 namespace Team5.Rebuild.Simulation
@@ -68,7 +69,52 @@ namespace Team5.Rebuild.Simulation
         public BattleObjective Objective => definition.Objective;
         public bool IsPaused { get; private set; }
         public int SpawnedCount { get; private set; }
-        public int PendingSpawnCount => definition.UnitCount - SpawnedCount;
+        private Queue<UnitDefinition[]> fixedWaves;
+        private int waveSequence, queuedMembers;
+        public int PendingSpawnCount => fixedWaves == null ? definition.UnitCount - SpawnedCount : queuedMembers;
+        public int QueuedFixedWaves => fixedWaves?.Count ?? 0;
+        public int? DeparturesRemaining { get; private set; }
+        public const float FixedWaveClearance = 3f;
+        public float FixedWaveClearanceDistance
+        {
+            get
+            {
+                var distance = 0f;
+                foreach (var unit in units)
+                    if (unit.IsAlive) distance = Mathf.Max(distance, FixedWaveClearance - unit.RouteProgress);
+                return distance;
+            }
+        }
+
+        public void EnableFixedWaveDeployment(int? departureLimit = null)
+        {
+            if (departureLimit < 0) throw new ArgumentOutOfRangeException(nameof(departureLimit));
+            if (stepping || ElapsedTime != 0 || SpawnedCount != 0 || ManualMovement ||
+                definition.FormationSize != 3 || Objective != BattleObjective.ReachGoal || fixedWaves != null)
+                throw new InvalidOperationException("Fixed waves require a fresh 3x3 assault on a fixed route.");
+            fixedWaves = new Queue<UnitDefinition[]>();
+            DeparturesRemaining = departureLimit;
+        }
+
+        public bool TryQueueFixedWave(IReadOnlyList<UnitDefinition> slots)
+        {
+            if (stepping || fixedWaves == null || Outcome != BattleOutcome.Running ||
+                DeparturesRemaining == 0 || slots?.Count != 9) return false;
+            var count = slots.Count(unit => unit != null);
+            if (count < 1 || count > 6 || slots.Any(unit => unit != null &&
+                (unit.Role == UnitRole.Test || Mathf.Abs(unit.Speed - definition.Unit.Speed) > .0001f))) return false;
+            fixedWaves.Enqueue(slots.ToArray());
+            queuedMembers += count;
+            if (DeparturesRemaining.HasValue) DeparturesRemaining--;
+            return true;
+        }
+        public bool InitialDeploymentHeld { get; private set; }
+
+        public void SetInitialDeploymentHeld(bool held)
+        {
+            if (stepping || SpawnedCount != 0) throw new InvalidOperationException("Set deployment hold before units spawn.");
+            InitialDeploymentHeld = held;
+        }
         public int KilledCount { get; private set; }
         public int ReachedGoalCount { get; private set; }
         public int TowersDestroyedCount { get; private set; }
@@ -109,7 +155,7 @@ namespace Team5.Rebuild.Simulation
 
         private BattleSimulation CopyState()
         {
-            var copy = new BattleSimulation(definition);
+            var copy = new BattleSimulation(definition, allowUnitTowerAttacks);
             copy.towers.Clear();
             foreach (var tower in towers) copy.towers.Add(tower.Copy());
             foreach (var unit in units) copy.units.Add(unit.Copy());
@@ -120,15 +166,25 @@ namespace Team5.Rebuild.Simulation
             copy.time = time; copy.healTimer = healTimer; copy.projectileSequence = projectileSequence;
             copy.Outcome = Outcome; copy.IsPaused = IsPaused;
             copy.SpawnedCount = SpawnedCount; copy.KilledCount = KilledCount; copy.ReachedGoalCount = ReachedGoalCount;
+            copy.InitialDeploymentHeld = InitialDeploymentHeld;
+            if (fixedWaves != null) copy.fixedWaves = new Queue<UnitDefinition[]>(fixedWaves);
+            copy.DeparturesRemaining = DeparturesRemaining;
+            copy.waveSequence = waveSequence;
+            copy.queuedMembers = queuedMembers;
             copy.TowersDestroyedCount = TowersDestroyedCount; copy.TowerBountyGoldEarned = TowerBountyGoldEarned;
+            CopyBasicDefensesTo(copy);
             return copy;
         }
 
-        public BattleSimulation(BattleDefinition definition)
+        private readonly bool allowUnitTowerAttacks;
+
+        public BattleSimulation(BattleDefinition definition, bool allowUnitTowerAttacks = true)
         {
             this.definition = definition ?? throw new ArgumentNullException(nameof(definition));
+            this.allowUnitTowerAttacks = allowUnitTowerAttacks;
             foreach (var tower in definition.Towers) towers.Add(new TowerState(tower));
             Units = units.AsReadOnly(); Towers = towers.AsReadOnly(); Projectiles = projectiles.AsReadOnly();
+            InitializeBasicDefenses();
             if (definition.WalkableCells == null) return;
             walkable = new HashSet<Vector3Int>(definition.WalkableCells);
             for (var i = 1; i < definition.Waypoints.Count; i++)
@@ -287,12 +343,14 @@ namespace Team5.Rebuild.Simulation
             {
                 Spawn();
                 TickLegendaryEffects(deltaTime);
+                TickBarracks(deltaTime);
                 if (continuous != null) continuous.Step(deltaTime);
                 var wallStop = continuous == null ? WallStopProgress() : 0;
                 foreach (var unit in units)
                 {
                     if (!unit.IsAlive) continue;
-                    if (continuous == null) Move(unit, deltaTime, wallStop);
+                    if (continuous == null) Move(unit, deltaTime,
+                        interceptedSquads.Contains(unit.SquadId) ? Mathf.Min(wallStop, unit.RouteProgress) : wallStop);
                     else UnitMoved?.Invoke(new UnitMovedEvent(unit));
                     if (Outcome != BattleOutcome.Running) return;
                     if (Objective == BattleObjective.DefendGoal && ReachedGoalCount >= definition.GoalLives) break;
@@ -304,13 +362,15 @@ namespace Team5.Rebuild.Simulation
                     {
                         foreach (var unit in units) AttackTower(unit, deltaTime);
                         TickProjectiles(deltaTime);
+                        TickBasicDefenseShots(deltaTime);
                         Heal(deltaTime);
                     }
                 }
                 time += deltaTime;
                 if (Objective == BattleObjective.ReachGoal)
                 {
-                    if (PendingSpawnCount == 0 && AliveCount == 0) End(BattleOutcome.Defeat);
+                    if (PendingSpawnCount == 0 && AliveCount == 0 &&
+                        DeparturesRemaining.GetValueOrDefault() == 0) End(BattleOutcome.Defeat);
                 }
                 else if (ReachedGoalCount >= definition.GoalLives) End(BattleOutcome.Defeat);
                 else if (PendingSpawnCount == 0 && AliveCount == 0) End(BattleOutcome.Victory);
@@ -320,6 +380,26 @@ namespace Team5.Rebuild.Simulation
 
         private void Spawn()
         {
+            if (InitialDeploymentHeld) return;
+            if (fixedWaves != null)
+            {
+                if (fixedWaves.Count == 0 || FixedWaveClearanceDistance > 0) return;
+                var slots = fixedWaves.Dequeue();
+                var squadId = ++waveSequence;
+                for (var slot = 0; slot < slots.Length; slot++)
+                {
+                    var stats = slots[slot];
+                    if (stats == null) continue;
+                    var offset = SquadCombatRules.Offset(slot);
+                    var unit = new UnitState(3101 + SpawnedCount, stats, Waypoints[0] + offset,
+                        squadId, SquadCombatRules.Slot(slot), offset);
+                    units.Add(unit);
+                    SpawnedCount++;
+                    queuedMembers--;
+                    UnitSpawned?.Invoke(new UnitSpawnedEvent(unit));
+                }
+                return;
+            }
             if (definition.Members != null)
             {
                 foreach (var member in definition.Members)
@@ -441,6 +521,7 @@ namespace Team5.Rebuild.Simulation
 
         private void Attack(TowerState tower, float deltaTime)
         {
+            if (AttackWithBasicDefense(tower, deltaTime)) return;
             if (!tower.IsAlive || (tower.Definition.IsWall && !tower.Definition.IsMinion)) { tower.TargetId = null; return; }
             if (tower.FrozenRemaining > 0) { tower.TargetId = null; return; }
             tower.CooldownRemaining = Math.Max(0, tower.CooldownRemaining - deltaTime);
@@ -471,6 +552,7 @@ namespace Team5.Rebuild.Simulation
                             SourceId = tower.Id,
                             TargetKind = ProjectileTargetKind.FormationSlot,
                             TargetId = unit.SlotId,
+                            SquadId = unit.SquadId,
                             Position = tower.Position,
                             Origin = tower.Position,
                             Damage = tower.Definition.Damage,
@@ -509,6 +591,7 @@ namespace Team5.Rebuild.Simulation
                 SourceId = tower.Id,
                 TargetKind = ProjectileTargetKind.FormationSlot,
                 TargetId = target.SlotId,
+                SquadId = target.SquadId,
                 Position = tower.Position,
                 Origin = tower.Position,
                 Damage = tower.Definition.Damage,
@@ -519,9 +602,9 @@ namespace Team5.Rebuild.Simulation
             });
         }
 
-        private static Vector3 AimPosition(TowerState target, Vector3 from)
+        private Vector3 AimPosition(TowerState target, Vector3 from)
         {
-            if (!target.Definition.IsWall) return target.Position;
+            if (!target.Definition.IsWall && target.Definition.BasicDefense == BasicDefenseKind.None) return target.Position;
             var size = target.Definition.Footprint;
             return new Vector3(Mathf.Clamp(from.x, target.Position.x - size.x * .5f, target.Position.x + size.x * .5f),
                 target.Position.y, Mathf.Clamp(from.z, target.Position.z - size.y * .5f, target.Position.z + size.y * .5f));
@@ -529,8 +612,9 @@ namespace Team5.Rebuild.Simulation
 
         private void AttackTower(UnitState unit, float deltaTime)
         {
-            if (!unit.IsAlive || !SquadCombatRules.CanAttackTowers(unit.Role)) return;
+            if (!allowUnitTowerAttacks || !unit.IsAlive || !SquadCombatRules.CanAttackTowers(unit.Role)) return;
             unit.AttackCooldown = Math.Max(0, unit.AttackCooldown - deltaTime);
+            if (interceptedSquads.Contains(unit.SquadId)) return;
             if (unit.AttackCooldown > 0.000001f) return;
             TowerState target = null;
             var nearest = unit.Definition.Range * unit.Definition.Range;
@@ -574,7 +658,7 @@ namespace Team5.Rebuild.Simulation
                 }
                 else
                 {
-                    member = GetMemberAtSlot(shot.TargetId);
+                    member = units.Find(unit => unit.IsAlive && unit.SlotId == shot.TargetId && unit.SquadId == shot.SquadId);
                     aim = member != null ? member.Position : SampleAnchor(((float)time + deltaTime) * definition.Unit.Speed) + SquadCombatRules.Offset(shot.TargetId);
                 }
                 bool hit;
@@ -603,7 +687,7 @@ namespace Team5.Rebuild.Simulation
             }
         }
 
-        private void DamageUnit(int sourceId, UnitState unit, float rawDamage)
+        private void DamageUnit(int sourceId, UnitState unit, float rawDamage, float armorFactor = 1f, bool magical = false)
         {
             if (!unit.IsAlive) return;
             if (unit.BarrierRemaining > 0 && unit.BarrierHits > 0)
@@ -613,7 +697,8 @@ namespace Team5.Rebuild.Simulation
                 TowerHitBlocked?.Invoke(sourceId, unit.Id);
                 return;
             }
-            var applied = Math.Min(unit.Hp, rawDamage * (1 - unit.Definition.Defense));
+            var protection = magical ? unit.Definition.MagicResistance : unit.Definition.Defense * armorFactor;
+            var applied = Math.Min(unit.Hp, rawDamage * (1 - protection));
             unit.Hp = Math.Max(0, unit.Hp - applied);
             if (unit.Hp == 0) { unit.LifeState = UnitLifeState.Dead; KilledCount++; }
             UnitDamaged?.Invoke(new DamageEvent(sourceId, unit, applied));

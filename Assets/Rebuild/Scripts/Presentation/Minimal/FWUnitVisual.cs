@@ -165,8 +165,9 @@ namespace Team5.Rebuild.Presentation
             if (simulation != null && simulation.ElapsedTime != sampledTime)
             {
                 direction = view.State.Position - sampledPosition;
+                var verticalMotion=Mathf.Abs(direction.y)>.00001f;
                 direction.y = 0;
-                moving = view.State.IsAlive && direction.sqrMagnitude > .00000001f;
+                moving = view.State.IsAlive && (verticalMotion || direction.sqrMagnitude > .00000001f);
                 var referenceMotion = simulation.SquadReferencePosition - sampledReference;
                 referenceMotion.y = 0;
                 // Local slot corrections still animate Run, but must not turn the character.

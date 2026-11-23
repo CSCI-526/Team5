@@ -13,6 +13,11 @@ namespace Team5.Rebuild.World
         [SerializeField, Min(0.01f)] private float attackInterval = 0.8f;
         [SerializeField] private TargetRule targetRule = TargetRule.FurthestAlongRoute;
         [SerializeField] private bool usesMacroFootprint;
+        [SerializeField] private BasicDefenseKind basicDefense;
+        [SerializeField, Min(0)] private float minimumShotDamage;
+        [SerializeField, Min(.01f)] private float blastRadius = 1.3f;
+        [SerializeField, Range(0, 1)] private float blastEdgeMultiplier = .5f;
+        public BasicDefenseKind BasicDefense => basicDefense;
         [SerializeField, Min(0.01f)] private float maxHp = 20;
         [SerializeField] private AttackArea attackArea = AttackArea.Square;
         [SerializeField, Min(0.01f)] private float attackWidth = 0.3f;
@@ -43,7 +48,8 @@ namespace Team5.Rebuild.World
         public float CurrentCooldown => RuntimeState?.CooldownRemaining ?? 0;
 
         public TowerDefinition CaptureDefinition(int id) =>
-            new TowerDefinition(id, transform.position, Range, IsWall && !isMinion ? 0 : damage, attackInterval, targetRule, FootprintSize, maxHp, attackArea, attackWidth, IsAoe, GoldBounty, IsWall, Footprint.y == 3, isMinion: isMinion, isWoodenGate: IsWoodenGate);
+            new TowerDefinition(id, transform.position, Range, IsWall && !isMinion ? 0 : damage, attackInterval, targetRule, FootprintSize, maxHp, attackArea, attackWidth, IsAoe, GoldBounty, IsWall, Footprint.y == 3, isMinion: isMinion, isWoodenGate: IsWoodenGate, basicDefense: basicDefense,
+                minimumShotDamage: minimumShotDamage, blastRadius: blastRadius, blastEdgeMultiplier: blastEdgeMultiplier);
 
         public void BindRuntimeState(TowerState state) => RuntimeState = state;
 

@@ -1,0 +1,174 @@
+{
+  "source": "Current Parts/*.png, not the atlas or correction copies",
+  "placement": "Existing layer order and top-center anchors; edited PNG dimensions preserved without stretching",
+  "parts": [
+    {
+      "name": "F_TAIL_STATIC",
+      "position_px": [
+        210,
+        825
+      ],
+      "size_px": [
+        272,
+        315
+      ],
+      "sha256": "57feb52806aec97e6e6d045cef5e74c1c4c87ab43cca664d1bfa4744cc19ba4a"
+    },
+    {
+      "name": "F_B_HAIR",
+      "position_px": [
+        90,
+        290
+      ],
+      "size_px": [
+        653,
+        720
+      ],
+      "sha256": "5211ef53f3ccd05945d733ce20ae9800b09ac87bf5d9f70c09c7fdb50c5c649a"
+    },
+    {
+      "name": "F_LEG_SCREEN_L",
+      "position_px": [
+        438,
+        935
+      ],
+      "size_px": [
+        160,
+        330
+      ],
+      "sha256": "adcdfce7bc18be9d031fc95859abe784c1090b470e609a7d78f561b020722143"
+    },
+    {
+      "name": "F_LEG_SCREEN_R",
+      "position_px": [
+        604,
+        935
+      ],
+      "size_px": [
+        237,
+        330
+      ],
+      "sha256": "7165944388781eb5bb17c5f3d8a2b780bb5b9fb228ed83de0d7e18e7e85603bf"
+    },
+    {
+      "name": "F_PELVIS",
+      "position_px": [
+        506,
+        837
+      ],
+      "size_px": [
+        223,
+        157
+      ],
+      "sha256": "dff7936f4f479efb4c23fb4d8d69a50f9aad111f70f478ed843b13a162b022cf"
+    },
+    {
+      "name": "F_SLEEVE_SCREEN_R",
+      "position_px": [
+        620,
+        658
+      ],
+      "size_px": [
+        158,
+        360
+      ],
+      "sha256": "159b57c2d9fb855fc63eaf9bd91bc8a5d999a05698037ba382f6f23f4f36e2ab"
+    },
+    {
+      "name": "F_SLEEVE_SCREEN_L",
+      "position_px": [
+        370,
+        655
+      ],
+      "size_px": [
+        158,
+        360
+      ],
+      "sha256": "baa652c3a493d696318ef3665bb049be9e491da758fce1360f20f7b24f2a674e"
+    },
+    {
+      "name": "F_BODY",
+      "position_px": [
+        465,
+        635
+      ],
+      "size_px": [
+        248,
+        220
+      ],
+      "sha256": "2e6919d3b48f4734a9f1a66037865cce7d7dbb22b16516080524520cc95ff6f0"
+    },
+    {
+      "name": "F_EAR_SCREEN_L",
+      "position_px": [
+        330,
+        220
+      ],
+      "size_px": [
+        195,
+        174
+      ],
+      "sha256": "9f1cf1b1e09183bb14f422cf3965c7c4eff78d0394498a7f41d0b70106d1ad20"
+    },
+    {
+      "name": "F_EAR_SCREEN_R",
+      "position_px": [
+        647,
+        196
+      ],
+      "size_px": [
+        160,
+        174
+      ],
+      "sha256": "4b8d0f4e47df84330e25487b731057b9e66dcf5f3a7d9d6aed795811b0249e23"
+    },
+    {
+      "name": "F_FACE",
+      "position_px": [
+        431,
+        339
+      ],
+      "size_px": [
+        312,
+        325
+      ],
+      "sha256": "b60f7fb827b93a074dc64553e09f142321a41d8edfc4e2fb78e748723ac7410e"
+    },
+    {
+      "name": "F_SIDE_HAIR_SCREEN_L",
+      "position_px": [
+        348,
+        367
+      ],
+      "size_px": [
+        137,
+        580
+      ],
+      "sha256": "de4ff1a4cb427c19e6a40737d1550c6899912e9147223804ce4edd85b225daf9"
+    },
+    {
+      "name": "F_SIDE_HAIR_SCREEN_R",
+      "position_px": [
+        686,
+        470
+      ],
+      "size_px": [
+        123,
+        542
+      ],
+      "sha256": "dab0e2990481eaeffde87d6199658b229c83ad81ed55ce21d055c9832b5313bf"
+    },
+    {
+      "name": "F_HAIR_FRONT",
+      "position_px": [
+        356,
+        289
+      ],
+      "size_px": [
+        422,
+        249
+      ],
+      "sha256": "629ddc954dea5b7d4192397349c89a217fef8e5d71db537ea38cea788e51a680"
+    }
+  ]
+}

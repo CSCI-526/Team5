@@ -30,6 +30,41 @@ namespace Team5.Rebuild.Simulation
             return center+RouteStep*(Mathf.Abs(direction.x)>=Mathf.Abs(direction.z)
                 ?Vector3.right*Mathf.Sign(direction.x):Vector3.forward*Mathf.Sign(direction.z));
         }
+        public static bool ExtendRouteDraft(List<Vector3> draft, Vector3 cursor, Func<Vector3, bool> passable)
+        {
+            float Snap(float n)=>Mathf.Sign(n)*Mathf.Floor((Mathf.Abs(n)+.001f)/SiegeRamMotion.RouteStep)*SiegeRamMotion.RouteStep;
+            var start=draft[0];
+            var fromStart=cursor-start;fromStart.y=0;
+            // Returning to the starting block erases the alignment connector as well.
+            if(draft.Count>1&&Mathf.Floor((cursor.x+.5f)/3)==Mathf.Floor((start.x+.5f)/3)&&
+                Mathf.Floor((cursor.z+.5f)/3)==Mathf.Floor((start.z+.5f)/3))draft.RemoveRange(1,draft.Count-1);
+            if(draft.Count==1)
+            {
+                if(fromStart.sqrMagnitude<.000001f)return true;
+                var first=SiegeRamMotion.NextBlockCenter(start,fromStart);
+                var alongX=Mathf.Abs(fromStart.x)>=Mathf.Abs(fromStart.z);
+                var reached=alongX?Mathf.Abs(fromStart.x)+.001f>=Mathf.Abs(first.x-start.x):Mathf.Abs(fromStart.z)+.001f>=Mathf.Abs(first.z-start.z);
+                if(!reached)return true;
+                var samples=Mathf.Max(1,Mathf.CeilToInt(Vector3.Distance(start,first)*5));
+                for(var sample=1;sample<=samples;sample++)
+                    if(!passable(Vector3.Lerp(start,first,(float)sample/samples))) return false;
+                draft.Add(first);
+            }
+            var anchor=draft[1];
+            var target=anchor+new Vector3(Snap(cursor.x-anchor.x),0,Snap(cursor.z-anchor.z));
+            for(var i=0;i<512;i++)
+            {
+                var previous=draft[draft.Count-1];var delta=target-previous;if(delta.sqrMagnitude<.0001f)break;
+                var next=previous+SiegeRamMotion.RouteStep*(Mathf.Abs(delta.x)>=Mathf.Abs(delta.z)?Vector3.right*Mathf.Sign(delta.x):Vector3.forward*Mathf.Sign(delta.z));
+                if(draft.Count>2&&(next-draft[draft.Count-2]).sqrMagnitude<.0001f){draft.RemoveAt(draft.Count-1);continue;}
+                var valid=true;
+                for(var sample=1;sample<=15;sample++)if(!passable(Vector3.Lerp(previous,next,sample/15f))){valid=false;break;}
+                if(!valid) return false;
+                draft.Add(next);
+            }
+            return (target - draft[draft.Count - 1]).sqrMagnitude <= .0001f;
+        }
+
         public bool TrySetRoute(IReadOnlyList<Vector3> points,Func<Vector3,bool> passable,bool alignFirstToBlockCenter=false)
         {
             if(points==null||points.Count<2||passable==null||(points[0]-Position).sqrMagnitude>.0001f)return false;
