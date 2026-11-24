@@ -16,7 +16,6 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             if (session == null || session.Grid == null) return sites;
             var grid = session.Grid;
             grid.RebuildIndex(new List<string>());
-            var groundWalkable = (session.ManualSquadMovement || session.ContinuousSquadMovement) && session.DisplayedLevelNumber >= 3;
             var blocked = new HashSet<Vector2Int>();
             foreach (var tower in session.Towers)
             {
@@ -39,8 +38,11 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                 if (cell == null || !cell.gameObject.activeInHierarchy || !grid.HasClearTop(cell)) continue;
                 var occupancy = cell.Occupancy;
                 var key = new Vector2Int(occupancy.x, occupancy.z);
-                if (cell.IsRouteSurface || groundWalkable && cell.Kind == CellKind.Ground) sites.AddWalkable(key);
+                if (session.IsMovementSurface(cell)) sites.AddWalkable(key);
                 if (cell.Kind != CellKind.Road && cell.Kind != CellKind.Ground) continue;
+                // Keep the entire three-cell route clear for a nine-member formation.
+                // Also excludes road cells from guard hopping destinations.
+                if (session.UsesTacticalRoad && cell.Kind == CellKind.Road) continue;
                 if (blocked.Contains(key) || NearThreat(cell.TopCenter, threats, 0f, MinionRules.ThreatBody)) continue;
                 if (NearThreat(cell.TopCenter, threats, 1f, MinionRules.ThreatMargin)) sites.AddStandable(key, cell.TopCenter);
                 else sites.AddHost(key, cell.TopCenter);

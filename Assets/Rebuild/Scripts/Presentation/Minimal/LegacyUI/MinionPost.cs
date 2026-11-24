@@ -57,6 +57,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             facing = startFacing;
             if (Tower != null) Tower.transform.position = Home;
             if (Rig == null || Rig.Look == null) return;
+            Rig.Look.SetActive(Tower != null && (Tower.RuntimeState == null || Tower.RuntimeState.IsAlive));
             Rig.Look.transform.localPosition = Vector3.zero;
             Rig.Look.transform.localRotation = startFacing;
         }
@@ -81,7 +82,11 @@ namespace Team5.Rebuild.Presentation.LegacyUI
 
         public void Animate(float time, float deltaTime, float simulatedDelta, int index)
         {
-            if (Rig == null || Rig.Bot == null || !IsAlive) return;
+            if (Rig == null || Rig.Bot == null) return;
+            // The death burst is only feedback; it never hides the old model. Leaving it
+            // visible makes defeated lobbers appear alive but incapable of firing.
+            if (Rig.Look != null && Rig.Look.activeSelf != IsAlive) Rig.Look.SetActive(IsAlive);
+            if (!IsAlive) return;
             slideLeft = Mathf.Max(0f, slideLeft - simulatedDelta);
             var slide = slideLeft / Mathf.Max(0.01f, slideTotal);
             if (Rig.Look != null)

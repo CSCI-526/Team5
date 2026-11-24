@@ -69,7 +69,7 @@ namespace Team5.Rebuild.Presentation
                 if (!plane.Raycast(ray, out var distance)) return;
                 var target = ray.GetPoint(distance);
                 var accepted = sim.RequestMovement(new MovementRequest(target));
-                owner.GetComponent<ContinuousMovementView>()?.ShowDestination(accepted ? sim.SquadDestination : target, accepted);
+                owner.GetComponent<ContinuousMovementView>()?.ShowDestination(target, accepted);
                 return;
             }
             if (inspect && TrySelectAt(point)) return;

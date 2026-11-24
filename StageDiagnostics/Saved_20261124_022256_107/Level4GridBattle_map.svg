@@ -1,0 +1,575 @@
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='-2 -22 30 24' width='1000' height='800'>
+<rect x='-2' y='-22' width='30' height='24' fill='#283b38'/>
+<rect x='5.5' y='-6.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (6,0,6) Ground[0] Ground</title></rect>
+<rect x='6.5' y='-6.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (7,0,6) Ground[1] Ground</title></rect>
+<rect x='7.5' y='-6.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (8,0,6) Ground[2] Ground</title></rect>
+<rect x='8.5' y='-6.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (9,0,6) Ground[3] Ground</title></rect>
+<rect x='9.5' y='-6.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (10,0,6) Ground[4] Ground</title></rect>
+<rect x='10.5' y='-6.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (11,0,6) Ground[5] Ground</title></rect>
+<rect x='11.5' y='-6.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (12,0,6) Ground[6] Ground</title></rect>
+<rect x='12.5' y='-6.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (13,0,6) Ground[7] Ground</title></rect>
+<rect x='13.5' y='-6.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (14,0,6) Ground[8] Ground</title></rect>
+<rect x='14.5' y='-6.5' width='1' height='1' fill='#8b838f' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (15,0,6) TowerPlatform[9] TowerPlatform</title></rect>
+<rect x='17.5' y='-6.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (18,0,6) Ground[10] Ground</title></rect>
+<rect x='18.5' y='-6.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (19,0,6) Ground[11] Ground</title></rect>
+<rect x='19.5' y='-6.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (20,0,6) Ground[12] Ground</title></rect>
+<rect x='20.5' y='-6.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (21,0,6) Ground[13] Ground</title></rect>
+<rect x='21.5' y='-6.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (22,0,6) Ground[14] Ground</title></rect>
+<rect x='22.5' y='-6.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (23,0,6) Ground[15] Ground</title></rect>
+<rect x='2.5' y='-7.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (3,0,7) Ground[16] Ground</title></rect>
+<rect x='3.5' y='-7.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (4,0,7) Ground[17] Ground</title></rect>
+<rect x='4.5' y='-7.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (5,0,7) Ground[18] Ground</title></rect>
+<rect x='5.5' y='-7.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (6,0,7) Ground[19] Ground</title></rect>
+<rect x='6.5' y='-7.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (7,0,7) Ground[20] Ground</title></rect>
+<rect x='7.5' y='-7.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (8,0,7) Ground[21] Ground</title></rect>
+<rect x='8.5' y='-7.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (9,0,7) Ground[22] Ground</title></rect>
+<rect x='9.5' y='-7.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (10,0,7) Ground[23] Ground</title></rect>
+<rect x='10.5' y='-7.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (11,0,7) Ground[24] Ground</title></rect>
+<rect x='11.5' y='-7.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (12,0,7) Ground[25] Ground</title></rect>
+<rect x='12.5' y='-7.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (13,0,7) Ground[26] Ground</title></rect>
+<rect x='13.5' y='-7.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (14,0,7) Ground[27] Ground</title></rect>
+<rect x='17.5' y='-7.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (18,0,7) Ground[28] Ground</title></rect>
+<rect x='18.5' y='-7.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (19,0,7) Ground[29] Ground</title></rect>
+<rect x='19.5' y='-7.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (20,0,7) Ground[30] Ground</title></rect>
+<rect x='20.5' y='-7.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (21,0,7) Ground[31] Ground</title></rect>
+<rect x='21.5' y='-7.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (22,0,7) Ground[32] Ground</title></rect>
+<rect x='22.5' y='-7.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (23,0,7) Ground[33] Ground</title></rect>
+<rect x='2.5' y='-8.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (3,0,8) Ground[34] Ground</title></rect>
+<rect x='3.5' y='-8.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (4,0,8) Ground[35] Ground</title></rect>
+<rect x='4.5' y='-8.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (5,0,8) Ground[36] Ground</title></rect>
+<rect x='5.5' y='-8.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (6,0,8) Ground[37] Ground</title></rect>
+<rect x='6.5' y='-8.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (7,0,8) Ground[38] Ground</title></rect>
+<rect x='7.5' y='-8.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (8,0,8) Ground[39] Ground</title></rect>
+<rect x='8.5' y='-8.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (9,0,8) Ground[40] Ground</title></rect>
+<rect x='9.5' y='-8.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (10,0,8) Ground[41] Ground</title></rect>
+<rect x='17.5' y='-8.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (18,0,8) Ground[42] Ground</title></rect>
+<rect x='18.5' y='-8.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (19,0,8) Ground[43] Ground</title></rect>
+<rect x='19.5' y='-8.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (20,0,8) Ground[44] Ground</title></rect>
+<rect x='20.5' y='-8.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (21,0,8) Ground[45] Ground</title></rect>
+<rect x='21.5' y='-8.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (22,0,8) Ground[46] Ground</title></rect>
+<rect x='22.5' y='-8.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (23,0,8) Ground[47] Ground</title></rect>
+<rect x='8.5' y='-9.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (9,0,9) Ground[48] Ground</title></rect>
+<rect x='9.5' y='-9.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (10,0,9) Ground[49] Ground</title></rect>
+<rect x='18.5' y='-9.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (19,0,9) Road[50] Road</title></rect>
+<rect x='19.5' y='-9.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (20,0,9) Road[51] Road</title></rect>
+<rect x='20.5' y='-9.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (21,0,9) Road[52] Road</title></rect>
+<rect x='8.5' y='-10.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (9,0,10) Ground[53] Ground</title></rect>
+<rect x='9.5' y='-10.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (10,0,10) Ground[54] Ground</title></rect>
+<rect x='18.5' y='-10.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (19,0,10) Road[55] Road</title></rect>
+<rect x='19.5' y='-10.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (20,0,10) Road[56] Road</title></rect>
+<rect x='20.5' y='-10.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (21,0,10) Road[57] Road</title></rect>
+<rect x='8.5' y='-11.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (9,0,11) Ground[58] Ground</title></rect>
+<rect x='9.5' y='-11.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (10,0,11) Ground[59] Ground</title></rect>
+<rect x='18.5' y='-11.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (19,0,11) Road[60] Road</title></rect>
+<rect x='19.5' y='-11.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (20,0,11) Road[61] Road</title></rect>
+<rect x='20.5' y='-11.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (21,0,11) Road[62] Road</title></rect>
+<rect x='2.5' y='-12.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (3,0,12) Ground[63] Ground</title></rect>
+<rect x='3.5' y='-12.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (4,0,12) Ground[64] Ground</title></rect>
+<rect x='4.5' y='-12.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (5,0,12) Ground[65] Ground</title></rect>
+<rect x='8.5' y='-12.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (9,0,12) Ground[66] Ground</title></rect>
+<rect x='9.5' y='-12.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (10,0,12) Ground[67] Ground</title></rect>
+<rect x='17.5' y='-12.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (18,0,12) Ground[68] Ground</title></rect>
+<rect x='21.5' y='-12.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (22,0,12) Ground[69] Ground</title></rect>
+<rect x='22.5' y='-12.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (23,0,12) Ground[70] Ground</title></rect>
+<rect x='2.5' y='-13.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (3,0,13) Ground[71] Ground</title></rect>
+<rect x='3.5' y='-13.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (4,0,13) Ground[72] Ground</title></rect>
+<rect x='4.5' y='-13.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (5,0,13) Ground[73] Ground</title></rect>
+<rect x='8.5' y='-13.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (9,0,13) Ground[74] Ground</title></rect>
+<rect x='9.5' y='-13.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (10,0,13) Ground[75] Ground</title></rect>
+<rect x='10.5' y='-13.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (11,0,13) Ground[76] Ground</title></rect>
+<rect x='11.5' y='-13.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (12,0,13) Ground[77] Ground</title></rect>
+<rect x='12.5' y='-13.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (13,0,13) Ground[78] Ground</title></rect>
+<rect x='13.5' y='-13.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (14,0,13) Ground[79] Ground</title></rect>
+<rect x='17.5' y='-13.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (18,0,13) Ground[80] Ground</title></rect>
+<rect x='21.5' y='-13.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (22,0,13) Ground[81] Ground</title></rect>
+<rect x='22.5' y='-13.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (23,0,13) Ground[82] Ground</title></rect>
+<rect x='2.5' y='-14.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (3,0,14) Ground[83] Ground</title></rect>
+<rect x='3.5' y='-14.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (4,0,14) Ground[84] Ground</title></rect>
+<rect x='4.5' y='-14.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (5,0,14) Ground[85] Ground</title></rect>
+<rect x='8.5' y='-14.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (9,0,14) Ground[86] Ground</title></rect>
+<rect x='9.5' y='-14.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (10,0,14) Ground[87] Ground</title></rect>
+<rect x='11.5' y='-14.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (12,0,14) Ground[88] Ground</title></rect>
+<rect x='12.5' y='-14.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (13,0,14) Ground[89] Ground</title></rect>
+<rect x='13.5' y='-14.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (14,0,14) Ground[90] Ground</title></rect>
+<rect x='17.5' y='-14.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (18,0,14) Ground[91] Ground</title></rect>
+<rect x='21.5' y='-14.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (22,0,14) Ground[92] Ground</title></rect>
+<rect x='2.5' y='-15.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (3,0,15) Ground[93] Ground</title></rect>
+<rect x='3.5' y='-15.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (4,0,15) Ground[94] Ground</title></rect>
+<rect x='4.5' y='-15.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (5,0,15) Ground[95] Ground</title></rect>
+<rect x='14.5' y='-15.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (15,0,15) Road[96] Road</title></rect>
+<rect x='15.5' y='-15.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (16,0,15) Road[97] Road</title></rect>
+<rect x='16.5' y='-15.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (17,0,15) Road[98] Road</title></rect>
+<rect x='21.5' y='-15.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (22,0,15) Ground[99] Ground</title></rect>
+<rect x='22.5' y='-15.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (23,0,15) Ground[100] Ground</title></rect>
+<rect x='2.5' y='-16.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (3,0,16) Ground[101] Ground</title></rect>
+<rect x='3.5' y='-16.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (4,0,16) Ground[102] Ground</title></rect>
+<rect x='4.5' y='-16.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (5,0,16) Ground[103] Ground</title></rect>
+<rect x='14.5' y='-16.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (15,0,16) Road[104] Road</title></rect>
+<rect x='15.5' y='-16.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (16,0,16) Road[105] Road</title></rect>
+<rect x='16.5' y='-16.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (17,0,16) Road[106] Road</title></rect>
+<rect x='21.5' y='-16.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (22,0,16) Ground[107] Ground</title></rect>
+<rect x='22.5' y='-16.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (23,0,16) Ground[108] Ground</title></rect>
+<rect x='2.5' y='-17.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (3,0,17) Ground[109] Ground</title></rect>
+<rect x='3.5' y='-17.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (4,0,17) Ground[110] Ground</title></rect>
+<rect x='4.5' y='-17.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (5,0,17) Ground[111] Ground</title></rect>
+<rect x='14.5' y='-17.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (15,0,17) Road[112] Road</title></rect>
+<rect x='15.5' y='-17.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (16,0,17) Road[113] Road</title></rect>
+<rect x='16.5' y='-17.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (17,0,17) Road[114] Road</title></rect>
+<rect x='21.5' y='-17.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (22,0,17) Ground[115] Ground</title></rect>
+<rect x='22.5' y='-17.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (23,0,17) Ground[116] Ground</title></rect>
+<rect x='2.5' y='-18.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (3,0,18) Ground[117] Ground</title></rect>
+<rect x='3.5' y='-18.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (4,0,18) Ground[118] Ground</title></rect>
+<rect x='4.5' y='-18.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (5,0,18) Ground[119] Ground</title></rect>
+<rect x='20.5' y='-18.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (21,0,18) Ground[120] Ground</title></rect>
+<rect x='21.5' y='-18.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (22,0,18) Ground[121] Ground</title></rect>
+<rect x='22.5' y='-18.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (23,0,18) Ground[122] Ground</title></rect>
+<rect x='2.5' y='-19.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (3,0,19) Ground[123] Ground</title></rect>
+<rect x='3.5' y='-19.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (4,0,19) Ground[124] Ground</title></rect>
+<rect x='4.5' y='-19.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (5,0,19) Ground[125] Ground</title></rect>
+<rect x='20.5' y='-19.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (21,0,19) Ground[126] Ground</title></rect>
+<rect x='21.5' y='-19.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (22,0,19) Ground[127] Ground</title></rect>
+<rect x='22.5' y='-19.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Small Cell (23,0,19) Ground[128] Ground</title></rect>
+<rect x='-0.5' y='-0.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (0, 0)[129] Obstacle</title></rect>
+<rect x='0.5' y='-0.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (1, 0)[130] Obstacle</title></rect>
+<rect x='1.5' y='-0.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (2, 0)[131] Obstacle</title></rect>
+<rect x='2.5' y='-0.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (3, 0)[132] Obstacle</title></rect>
+<rect x='3.5' y='-0.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (4, 0)[133] Obstacle</title></rect>
+<rect x='4.5' y='-0.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (5, 0)[134] Obstacle</title></rect>
+<rect x='5.5' y='-0.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (6, 0)[135] Obstacle</title></rect>
+<rect x='6.5' y='-0.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (7, 0)[136] Obstacle</title></rect>
+<rect x='7.5' y='-0.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (8, 0)[137] Obstacle</title></rect>
+<rect x='8.5' y='-0.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (9, 0)[138] Obstacle</title></rect>
+<rect x='9.5' y='-0.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (10, 0)[139] Obstacle</title></rect>
+<rect x='10.5' y='-0.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (11, 0)[140] Obstacle</title></rect>
+<rect x='11.5' y='-0.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (12, 0)[141] Obstacle</title></rect>
+<rect x='12.5' y='-0.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (13, 0)[142] Obstacle</title></rect>
+<rect x='13.5' y='-0.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (14, 0)[143] Obstacle</title></rect>
+<rect x='14.5' y='-0.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (15, 0)[144] Obstacle</title></rect>
+<rect x='15.5' y='-0.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (16, 0)[145] Obstacle</title></rect>
+<rect x='16.5' y='-0.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (17, 0)[146] Obstacle</title></rect>
+<rect x='17.5' y='-0.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (18, 0)[147] Obstacle</title></rect>
+<rect x='18.5' y='-0.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (19, 0)[148] Obstacle</title></rect>
+<rect x='19.5' y='-0.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (20, 0)[149] Obstacle</title></rect>
+<rect x='20.5' y='-0.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (21, 0)[150] Obstacle</title></rect>
+<rect x='21.5' y='-0.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (22, 0)[151] Obstacle</title></rect>
+<rect x='22.5' y='-0.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (23, 0)[152] Obstacle</title></rect>
+<rect x='23.5' y='-0.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (24, 0)[153] Obstacle</title></rect>
+<rect x='24.5' y='-0.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (25, 0)[154] Obstacle</title></rect>
+<rect x='25.5' y='-0.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (26, 0)[155] Obstacle</title></rect>
+<rect x='-0.5' y='-1.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (0, 1)[156] Obstacle</title></rect>
+<rect x='0.5' y='-1.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (1, 1)[157] Ground</title></rect>
+<rect x='1.5' y='-1.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (2, 1)[158] Ground</title></rect>
+<rect x='2.5' y='-1.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (3, 1)[159] Ground</title></rect>
+<rect x='3.5' y='-1.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (4, 1)[160] Ground</title></rect>
+<rect x='4.5' y='-1.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (5, 1)[161] Ground</title></rect>
+<rect x='5.5' y='-1.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (6, 1)[162] Ground</title></rect>
+<rect x='6.5' y='-1.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (7, 1)[163] Ground</title></rect>
+<rect x='7.5' y='-1.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (8, 1)[164] Ground</title></rect>
+<rect x='8.5' y='-1.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (9, 1)[165] Ground</title></rect>
+<rect x='9.5' y='-1.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (10, 1)[166] Ground</title></rect>
+<rect x='10.5' y='-1.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (11, 1)[167] Ground</title></rect>
+<rect x='11.5' y='-1.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (12, 1)[168] Ground</title></rect>
+<rect x='12.5' y='-1.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (13, 1)[169] Ground</title></rect>
+<rect x='13.5' y='-1.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (14, 1)[170] Ground</title></rect>
+<rect x='14.5' y='-1.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (15, 1)[171] Ground</title></rect>
+<rect x='15.5' y='-1.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (16, 1)[172] Ground</title></rect>
+<rect x='16.5' y='-1.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (17, 1)[173] Ground</title></rect>
+<rect x='17.5' y='-1.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (18, 1)[174] Ground</title></rect>
+<rect x='18.5' y='-1.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (19, 1)[175] Ground</title></rect>
+<rect x='19.5' y='-1.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (20, 1)[176] Ground</title></rect>
+<rect x='20.5' y='-1.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (21, 1)[177] Ground</title></rect>
+<rect x='21.5' y='-1.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (22, 1)[178] Ground</title></rect>
+<rect x='22.5' y='-1.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (23, 1)[179] Ground</title></rect>
+<rect x='23.5' y='-1.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (24, 1)[180] Ground</title></rect>
+<rect x='24.5' y='-1.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (25, 1)[181] Ground</title></rect>
+<rect x='25.5' y='-1.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (26, 1)[182] Obstacle</title></rect>
+<rect x='-0.5' y='-2.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (0, 2)[183] Obstacle</title></rect>
+<rect x='0.5' y='-2.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (1, 2)[184] Ground</title></rect>
+<rect x='1.5' y='-2.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (2, 2)[185] Ground</title></rect>
+<rect x='2.5' y='-2.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (3, 2)[186] Ground</title></rect>
+<rect x='3.5' y='-2.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (4, 2)[187] Ground</title></rect>
+<rect x='4.5' y='-2.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (5, 2)[188] Ground</title></rect>
+<rect x='5.5' y='-2.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (6, 2)[189] Ground</title></rect>
+<rect x='6.5' y='-2.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (7, 2)[190] Ground</title></rect>
+<rect x='7.5' y='-2.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (8, 2)[191] Ground</title></rect>
+<rect x='8.5' y='-2.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (9, 2)[192] Ground</title></rect>
+<rect x='9.5' y='-2.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (10, 2)[193] Ground</title></rect>
+<rect x='10.5' y='-2.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (11, 2)[194] Ground</title></rect>
+<rect x='11.5' y='-2.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (12, 2)[195] Ground</title></rect>
+<rect x='12.5' y='-2.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (13, 2)[196] Ground</title></rect>
+<rect x='13.5' y='-2.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (14, 2)[197] Ground</title></rect>
+<rect x='14.5' y='-2.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (15, 2)[198] Ground</title></rect>
+<rect x='15.5' y='-2.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (16, 2)[199] Ground</title></rect>
+<rect x='16.5' y='-2.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (17, 2)[200] Ground</title></rect>
+<rect x='17.5' y='-2.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (18, 2)[201] Ground</title></rect>
+<rect x='18.5' y='-2.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (19, 2)[202] Ground</title></rect>
+<rect x='19.5' y='-2.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (20, 2)[203] Ground</title></rect>
+<rect x='20.5' y='-2.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (21, 2)[204] Ground</title></rect>
+<rect x='21.5' y='-2.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (22, 2)[205] Ground</title></rect>
+<rect x='22.5' y='-2.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (23, 2)[206] Ground</title></rect>
+<rect x='23.5' y='-2.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (24, 2)[207] Ground</title></rect>
+<rect x='24.5' y='-2.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (25, 2)[208] Ground</title></rect>
+<rect x='25.5' y='-2.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (26, 2)[209] Obstacle</title></rect>
+<rect x='-0.5' y='-3.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (0, 3)[210] Obstacle</title></rect>
+<rect x='0.5' y='-3.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (1, 3)[211] Ground</title></rect>
+<rect x='1.5' y='-3.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (2, 3)[212] Ground</title></rect>
+<rect x='2.5' y='-3.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (3, 3)[213] Ground</title></rect>
+<rect x='3.5' y='-3.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (4, 3)[214] Ground</title></rect>
+<rect x='4.5' y='-3.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (5, 3)[215] Ground</title></rect>
+<rect x='5.5' y='-3.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (6, 3)[216] Ground</title></rect>
+<rect x='6.5' y='-3.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (7, 3)[217] Ground</title></rect>
+<rect x='7.5' y='-3.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (8, 3)[218] Ground</title></rect>
+<rect x='8.5' y='-3.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (9, 3)[219] Ground</title></rect>
+<rect x='9.5' y='-3.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (10, 3)[220] Ground</title></rect>
+<rect x='10.5' y='-3.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (11, 3)[221] Ground</title></rect>
+<rect x='11.5' y='-3.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (12, 3)[222] Ground</title></rect>
+<rect x='12.5' y='-3.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (13, 3)[223] Ground</title></rect>
+<rect x='13.5' y='-3.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (14, 3)[224] Ground</title></rect>
+<rect x='14.5' y='-3.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (15, 3)[225] Ground</title></rect>
+<rect x='15.5' y='-3.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (16, 3)[226] Ground</title></rect>
+<rect x='16.5' y='-3.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (17, 3)[227] Ground</title></rect>
+<rect x='17.5' y='-3.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (18, 3)[228] Ground</title></rect>
+<rect x='18.5' y='-3.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (19, 3)[229] Ground</title></rect>
+<rect x='19.5' y='-3.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (20, 3)[230] Obstacle</title></rect>
+<rect x='20.5' y='-3.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (21, 3)[231] Obstacle</title></rect>
+<rect x='21.5' y='-3.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (22, 3)[232] Obstacle</title></rect>
+<rect x='22.5' y='-3.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (23, 3)[233] Ground</title></rect>
+<rect x='23.5' y='-3.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (24, 3)[234] Ground</title></rect>
+<rect x='24.5' y='-3.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (25, 3)[235] Ground</title></rect>
+<rect x='25.5' y='-3.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (26, 3)[236] Obstacle</title></rect>
+<rect x='-0.5' y='-4.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (0, 4)[237] Obstacle</title></rect>
+<rect x='0.5' y='-4.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (1, 4)[238] Ground</title></rect>
+<rect x='1.5' y='-4.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (2, 4)[239] Ground</title></rect>
+<rect x='2.5' y='-4.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (3, 4)[240] Obstacle</title></rect>
+<rect x='3.5' y='-4.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (4, 4)[241] Obstacle</title></rect>
+<rect x='4.5' y='-4.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (5, 4)[242] Obstacle</title></rect>
+<rect x='5.5' y='-4.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (6, 4)[243] Ground</title></rect>
+<rect x='6.5' y='-4.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (7, 4)[244] Ground</title></rect>
+<rect x='7.5' y='-4.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (8, 4)[245] Ground</title></rect>
+<rect x='8.5' y='-4.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (9, 4)[246] Ground</title></rect>
+<rect x='9.5' y='-4.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (10, 4)[247] Ground</title></rect>
+<rect x='10.5' y='-4.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (11, 4)[248] Ground</title></rect>
+<rect x='11.5' y='-4.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (12, 4)[249] Ground</title></rect>
+<rect x='12.5' y='-4.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (13, 4)[250] Ground</title></rect>
+<rect x='13.5' y='-4.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (14, 4)[251] Ground</title></rect>
+<rect x='14.5' y='-4.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (15, 4)[252] Ground</title></rect>
+<rect x='15.5' y='-4.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (16, 4)[253] Ground</title></rect>
+<rect x='16.5' y='-4.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (17, 4)[254] Ground</title></rect>
+<rect x='17.5' y='-4.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (18, 4)[255] Ground</title></rect>
+<rect x='18.5' y='-4.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (19, 4)[256] Ground</title></rect>
+<rect x='19.5' y='-4.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (20, 4)[257] Obstacle</title></rect>
+<rect x='20.5' y='-4.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (21, 4)[258] Obstacle</title></rect>
+<rect x='21.5' y='-4.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (22, 4)[259] Obstacle</title></rect>
+<rect x='22.5' y='-4.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (23, 4)[260] Ground</title></rect>
+<rect x='23.5' y='-4.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (24, 4)[261] Ground</title></rect>
+<rect x='24.5' y='-4.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (25, 4)[262] Ground</title></rect>
+<rect x='25.5' y='-4.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (26, 4)[263] Obstacle</title></rect>
+<rect x='-0.5' y='-5.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (0, 5)[264] Obstacle</title></rect>
+<rect x='0.5' y='-5.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (1, 5)[265] Ground</title></rect>
+<rect x='1.5' y='-5.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (2, 5)[266] Ground</title></rect>
+<rect x='2.5' y='-5.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (3, 5)[267] Obstacle</title></rect>
+<rect x='3.5' y='-5.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (4, 5)[268] Obstacle</title></rect>
+<rect x='4.5' y='-5.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (5, 5)[269] Obstacle</title></rect>
+<rect x='5.5' y='-5.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (6, 5)[270] Ground</title></rect>
+<rect x='6.5' y='-5.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (7, 5)[271] Ground</title></rect>
+<rect x='7.5' y='-5.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (8, 5)[272] Ground</title></rect>
+<rect x='8.5' y='-5.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (9, 5)[273] Ground</title></rect>
+<rect x='9.5' y='-5.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (10, 5)[274] Ground</title></rect>
+<rect x='10.5' y='-5.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (11, 5)[275] Ground</title></rect>
+<rect x='11.5' y='-5.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (12, 5)[276] Ground</title></rect>
+<rect x='12.5' y='-5.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (13, 5)[277] Ground</title></rect>
+<rect x='13.5' y='-5.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (14, 5)[278] Ground</title></rect>
+<rect x='14.5' y='-5.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (15, 5)[279] Ground</title></rect>
+<rect x='15.5' y='-5.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (16, 5)[280] Ground</title></rect>
+<rect x='16.5' y='-5.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (17, 5)[281] Ground</title></rect>
+<rect x='17.5' y='-5.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (18, 5)[282] Ground</title></rect>
+<rect x='18.5' y='-5.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (19, 5)[283] Ground</title></rect>
+<rect x='19.5' y='-5.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (20, 5)[284] Obstacle</title></rect>
+<rect x='20.5' y='-5.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (21, 5)[285] Obstacle</title></rect>
+<rect x='21.5' y='-5.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (22, 5)[286] Obstacle</title></rect>
+<rect x='22.5' y='-5.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (23, 5)[287] Ground</title></rect>
+<rect x='23.5' y='-5.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (24, 5)[288] Ground</title></rect>
+<rect x='24.5' y='-5.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (25, 5)[289] Ground</title></rect>
+<rect x='25.5' y='-5.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (26, 5)[290] Obstacle</title></rect>
+<rect x='-0.5' y='-6.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (0, 6)[291] Obstacle</title></rect>
+<rect x='0.5' y='-6.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (1, 6)[292] Ground</title></rect>
+<rect x='1.5' y='-6.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (2, 6)[293] Ground</title></rect>
+<rect x='2.5' y='-6.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (3, 6)[294] Obstacle</title></rect>
+<rect x='3.5' y='-6.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (4, 6)[295] Obstacle</title></rect>
+<rect x='4.5' y='-6.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (5, 6)[296] Obstacle</title></rect>
+<rect x='15.5' y='-6.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (16, 6)[297] Ground</title></rect>
+<rect x='16.5' y='-6.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (17, 6)[298] Ground</title></rect>
+<rect x='23.5' y='-6.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (24, 6)[299] Ground</title></rect>
+<rect x='24.5' y='-6.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (25, 6)[300] Ground</title></rect>
+<rect x='25.5' y='-6.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (26, 6)[301] Obstacle</title></rect>
+<rect x='-0.5' y='-7.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (0, 7)[302] Obstacle</title></rect>
+<rect x='0.5' y='-7.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (1, 7)[303] Ground</title></rect>
+<rect x='1.5' y='-7.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (2, 7)[304] Ground</title></rect>
+<rect x='14.5' y='-7.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (15, 7)[305] Ground</title></rect>
+<rect x='15.5' y='-7.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (16, 7)[306] Ground</title></rect>
+<rect x='16.5' y='-7.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (17, 7)[307] Ground</title></rect>
+<rect x='23.5' y='-7.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (24, 7)[308] Ground</title></rect>
+<rect x='24.5' y='-7.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (25, 7)[309] Ground</title></rect>
+<rect x='25.5' y='-7.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (26, 7)[310] Obstacle</title></rect>
+<rect x='-0.5' y='-8.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (0, 8)[311] Obstacle</title></rect>
+<rect x='0.5' y='-8.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (1, 8)[312] Ground</title></rect>
+<rect x='1.5' y='-8.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (2, 8)[313] Ground</title></rect>
+<rect x='10.5' y='-8.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (11, 8)[314] Obstacle</title></rect>
+<rect x='11.5' y='-8.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (12, 8)[315] Obstacle</title></rect>
+<rect x='12.5' y='-8.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (13, 8)[316] Obstacle</title></rect>
+<rect x='13.5' y='-8.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (14, 8)[317] Obstacle</title></rect>
+<rect x='14.5' y='-8.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (15, 8)[318] Obstacle</title></rect>
+<rect x='15.5' y='-8.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (16, 8)[319] Ground</title></rect>
+<rect x='16.5' y='-8.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (17, 8)[320] Ground</title></rect>
+<rect x='23.5' y='-8.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (24, 8)[321] Ground</title></rect>
+<rect x='24.5' y='-8.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (25, 8)[322] Ground</title></rect>
+<rect x='25.5' y='-8.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (26, 8)[323] Obstacle</title></rect>
+<rect x='-0.5' y='-9.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (0, 9)[324] Obstacle</title></rect>
+<rect x='0.5' y='-9.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (1, 9)[325] Ground</title></rect>
+<rect x='1.5' y='-9.5' width='1' height='1' fill='#438bdd' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Spawn (2, 9)[326] Spawn</title></rect>
+<rect x='2.5' y='-9.5' width='1' height='1' fill='#438bdd' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Spawn (3, 9)[327] Spawn</title></rect>
+<rect x='3.5' y='-9.5' width='1' height='1' fill='#438bdd' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Spawn (4, 9)[328] Spawn</title></rect>
+<rect x='4.5' y='-9.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (5, 9)[329] Road</title></rect>
+<rect x='5.5' y='-9.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (6, 9)[330] Road</title></rect>
+<rect x='6.5' y='-9.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (7, 9)[331] Road</title></rect>
+<rect x='7.5' y='-9.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (8, 9)[332] Road</title></rect>
+<rect x='10.5' y='-9.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (11, 9)[333] Obstacle</title></rect>
+<rect x='11.5' y='-9.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (12, 9)[334] Obstacle</title></rect>
+<rect x='12.5' y='-9.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (13, 9)[335] Obstacle</title></rect>
+<rect x='13.5' y='-9.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (14, 9)[336] Obstacle</title></rect>
+<rect x='14.5' y='-9.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (15, 9)[337] Obstacle</title></rect>
+<rect x='15.5' y='-9.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (16, 9)[338] Ground</title></rect>
+<rect x='16.5' y='-9.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (17, 9)[339] Ground</title></rect>
+<rect x='17.5' y='-9.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (18, 9)[340] Ground</title></rect>
+<rect x='21.5' y='-9.5' width='1' height='1' fill='#47c89b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Goal (22, 9)[341] Goal</title></rect>
+<rect x='22.5' y='-9.5' width='1' height='1' fill='#47c89b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Goal (23, 9)[342] Goal</title></rect>
+<rect x='23.5' y='-9.5' width='1' height='1' fill='#47c89b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Goal (24, 9)[343] Goal</title></rect>
+<rect x='24.5' y='-9.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (25, 9)[344] Ground</title></rect>
+<rect x='25.5' y='-9.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (26, 9)[345] Obstacle</title></rect>
+<rect x='-0.5' y='-10.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (0, 10)[346] Obstacle</title></rect>
+<rect x='0.5' y='-10.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (1, 10)[347] Ground</title></rect>
+<rect x='1.5' y='-10.5' width='1' height='1' fill='#438bdd' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Spawn (2, 10)[348] Spawn</title></rect>
+<rect x='2.5' y='-10.5' width='1' height='1' fill='#438bdd' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Spawn (3, 10)[349] Spawn</title></rect>
+<rect x='3.5' y='-10.5' width='1' height='1' fill='#438bdd' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Spawn (4, 10)[350] Spawn</title></rect>
+<rect x='4.5' y='-10.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (5, 10)[351] Road</title></rect>
+<rect x='5.5' y='-10.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (6, 10)[352] Road</title></rect>
+<rect x='6.5' y='-10.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (7, 10)[353] Road</title></rect>
+<rect x='7.5' y='-10.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (8, 10)[354] Road</title></rect>
+<rect x='10.5' y='-10.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (11, 10)[355] Obstacle</title></rect>
+<rect x='11.5' y='-10.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (12, 10)[356] Obstacle</title></rect>
+<rect x='12.5' y='-10.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (13, 10)[357] Obstacle</title></rect>
+<rect x='13.5' y='-10.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (14, 10)[358] Obstacle</title></rect>
+<rect x='14.5' y='-10.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (15, 10)[359] Obstacle</title></rect>
+<rect x='15.5' y='-10.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (16, 10)[360] Ground</title></rect>
+<rect x='16.5' y='-10.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (17, 10)[361] Ground</title></rect>
+<rect x='17.5' y='-10.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (18, 10)[362] Ground</title></rect>
+<rect x='21.5' y='-10.5' width='1' height='1' fill='#47c89b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Goal (22, 10)[363] Goal</title></rect>
+<rect x='22.5' y='-10.5' width='1' height='1' fill='#47c89b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Goal (23, 10)[364] Goal</title></rect>
+<rect x='23.5' y='-10.5' width='1' height='1' fill='#47c89b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Goal (24, 10)[365] Goal</title></rect>
+<rect x='24.5' y='-10.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (25, 10)[366] Ground</title></rect>
+<rect x='25.5' y='-10.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (26, 10)[367] Obstacle</title></rect>
+<rect x='-0.5' y='-11.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (0, 11)[368] Obstacle</title></rect>
+<rect x='0.5' y='-11.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (1, 11)[369] Ground</title></rect>
+<rect x='1.5' y='-11.5' width='1' height='1' fill='#438bdd' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Spawn (2, 11)[370] Spawn</title></rect>
+<rect x='2.5' y='-11.5' width='1' height='1' fill='#438bdd' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Spawn (3, 11)[371] Spawn</title></rect>
+<rect x='3.5' y='-11.5' width='1' height='1' fill='#438bdd' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Spawn (4, 11)[372] Spawn</title></rect>
+<rect x='4.5' y='-11.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (5, 11)[373] Road</title></rect>
+<rect x='5.5' y='-11.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (6, 11)[374] Road</title></rect>
+<rect x='6.5' y='-11.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (7, 11)[375] Road</title></rect>
+<rect x='7.5' y='-11.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (8, 11)[376] Road</title></rect>
+<rect x='10.5' y='-11.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (11, 11)[377] Obstacle</title></rect>
+<rect x='11.5' y='-11.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (12, 11)[378] Obstacle</title></rect>
+<rect x='12.5' y='-11.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (13, 11)[379] Obstacle</title></rect>
+<rect x='13.5' y='-11.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (14, 11)[380] Obstacle</title></rect>
+<rect x='14.5' y='-11.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (15, 11)[381] Obstacle</title></rect>
+<rect x='15.5' y='-11.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (16, 11)[382] Ground</title></rect>
+<rect x='16.5' y='-11.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (17, 11)[383] Ground</title></rect>
+<rect x='17.5' y='-11.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (18, 11)[384] Ground</title></rect>
+<rect x='21.5' y='-11.5' width='1' height='1' fill='#47c89b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Goal (22, 11)[385] Goal</title></rect>
+<rect x='22.5' y='-11.5' width='1' height='1' fill='#47c89b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Goal (23, 11)[386] Goal</title></rect>
+<rect x='23.5' y='-11.5' width='1' height='1' fill='#47c89b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Goal (24, 11)[387] Goal</title></rect>
+<rect x='24.5' y='-11.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (25, 11)[388] Ground</title></rect>
+<rect x='25.5' y='-11.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (26, 11)[389] Obstacle</title></rect>
+<rect x='-0.5' y='-12.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (0, 12)[390] Obstacle</title></rect>
+<rect x='0.5' y='-12.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (1, 12)[391] Ground</title></rect>
+<rect x='1.5' y='-12.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (2, 12)[392] Ground</title></rect>
+<rect x='5.5' y='-12.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (6, 12)[393] Road</title></rect>
+<rect x='6.5' y='-12.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (7, 12)[394] Road</title></rect>
+<rect x='7.5' y='-12.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (8, 12)[395] Road</title></rect>
+<rect x='10.5' y='-12.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (11, 12)[396] Obstacle</title></rect>
+<rect x='11.5' y='-12.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (12, 12)[397] Obstacle</title></rect>
+<rect x='12.5' y='-12.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (13, 12)[398] Obstacle</title></rect>
+<rect x='13.5' y='-12.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (14, 12)[399] Obstacle</title></rect>
+<rect x='14.5' y='-12.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (15, 12)[400] Obstacle</title></rect>
+<rect x='15.5' y='-12.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (16, 12)[401] Ground</title></rect>
+<rect x='16.5' y='-12.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (17, 12)[402] Ground</title></rect>
+<rect x='18.5' y='-12.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (19, 12)[403] Road</title></rect>
+<rect x='19.5' y='-12.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (20, 12)[404] Road</title></rect>
+<rect x='20.5' y='-12.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (21, 12)[405] Road</title></rect>
+<rect x='23.5' y='-12.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (24, 12)[406] Ground</title></rect>
+<rect x='24.5' y='-12.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (25, 12)[407] Ground</title></rect>
+<rect x='25.5' y='-12.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (26, 12)[408] Obstacle</title></rect>
+<rect x='-0.5' y='-13.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (0, 13)[409] Obstacle</title></rect>
+<rect x='0.5' y='-13.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (1, 13)[410] Ground</title></rect>
+<rect x='1.5' y='-13.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (2, 13)[411] Ground</title></rect>
+<rect x='5.5' y='-13.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (6, 13)[412] Road</title></rect>
+<rect x='6.5' y='-13.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (7, 13)[413] Road</title></rect>
+<rect x='7.5' y='-13.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (8, 13)[414] Road</title></rect>
+<rect x='14.5' y='-13.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (15, 13)[415] Ground</title></rect>
+<rect x='15.5' y='-13.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (16, 13)[416] Ground</title></rect>
+<rect x='16.5' y='-13.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (17, 13)[417] Ground</title></rect>
+<rect x='18.5' y='-13.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (19, 13)[418] Road</title></rect>
+<rect x='19.5' y='-13.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (20, 13)[419] Road</title></rect>
+<rect x='20.5' y='-13.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (21, 13)[420] Road</title></rect>
+<rect x='23.5' y='-13.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (24, 13)[421] Ground</title></rect>
+<rect x='24.5' y='-13.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (25, 13)[422] Ground</title></rect>
+<rect x='25.5' y='-13.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (26, 13)[423] Obstacle</title></rect>
+<rect x='-0.5' y='-14.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (0, 14)[424] Obstacle</title></rect>
+<rect x='0.5' y='-14.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (1, 14)[425] Ground</title></rect>
+<rect x='1.5' y='-14.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (2, 14)[426] Ground</title></rect>
+<rect x='5.5' y='-14.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (6, 14)[427] Road</title></rect>
+<rect x='6.5' y='-14.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (7, 14)[428] Road</title></rect>
+<rect x='7.5' y='-14.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (8, 14)[429] Road</title></rect>
+<rect x='10.5' y='-14.5' width='1' height='1' fill='#8b838f' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/TowerPlatform (11, 14)[430] TowerPlatform</title></rect>
+<rect x='14.5' y='-14.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (15, 14)[431] Ground</title></rect>
+<rect x='15.5' y='-14.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (16, 14)[432] Ground</title></rect>
+<rect x='16.5' y='-14.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (17, 14)[433] Ground</title></rect>
+<rect x='18.5' y='-14.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (19, 14)[434] Road</title></rect>
+<rect x='19.5' y='-14.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (20, 14)[435] Road</title></rect>
+<rect x='20.5' y='-14.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (21, 14)[436] Road</title></rect>
+<rect x='22.5' y='-14.5' width='1' height='1' fill='#8b838f' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/TowerPlatform (23, 14)[437] TowerPlatform</title></rect>
+<rect x='23.5' y='-14.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (24, 14)[438] Ground</title></rect>
+<rect x='24.5' y='-14.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (25, 14)[439] Ground</title></rect>
+<rect x='25.5' y='-14.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (26, 14)[440] Obstacle</title></rect>
+<rect x='-0.5' y='-15.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (0, 15)[441] Obstacle</title></rect>
+<rect x='0.5' y='-15.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (1, 15)[442] Ground</title></rect>
+<rect x='1.5' y='-15.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (2, 15)[443] Ground</title></rect>
+<rect x='5.5' y='-15.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (6, 15)[444] Road</title></rect>
+<rect x='6.5' y='-15.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (7, 15)[445] Road</title></rect>
+<rect x='7.5' y='-15.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (8, 15)[446] Road</title></rect>
+<rect x='8.5' y='-15.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (9, 15)[447] Road</title></rect>
+<rect x='9.5' y='-15.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (10, 15)[448] Road</title></rect>
+<rect x='10.5' y='-15.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (11, 15)[449] Road</title></rect>
+<rect x='11.5' y='-15.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (12, 15)[450] Road</title></rect>
+<rect x='12.5' y='-15.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (13, 15)[451] Road</title></rect>
+<rect x='13.5' y='-15.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (14, 15)[452] Road</title></rect>
+<rect x='17.5' y='-15.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (18, 15)[453] Road</title></rect>
+<rect x='18.5' y='-15.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (19, 15)[454] Road</title></rect>
+<rect x='19.5' y='-15.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (20, 15)[455] Road</title></rect>
+<rect x='20.5' y='-15.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (21, 15)[456] Road</title></rect>
+<rect x='23.5' y='-15.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (24, 15)[457] Ground</title></rect>
+<rect x='24.5' y='-15.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (25, 15)[458] Ground</title></rect>
+<rect x='25.5' y='-15.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (26, 15)[459] Obstacle</title></rect>
+<rect x='-0.5' y='-16.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (0, 16)[460] Obstacle</title></rect>
+<rect x='0.5' y='-16.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (1, 16)[461] Ground</title></rect>
+<rect x='1.5' y='-16.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (2, 16)[462] Ground</title></rect>
+<rect x='5.5' y='-16.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (6, 16)[463] Road</title></rect>
+<rect x='6.5' y='-16.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (7, 16)[464] Road</title></rect>
+<rect x='7.5' y='-16.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (8, 16)[465] Road</title></rect>
+<rect x='8.5' y='-16.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (9, 16)[466] Road</title></rect>
+<rect x='9.5' y='-16.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (10, 16)[467] Road</title></rect>
+<rect x='10.5' y='-16.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (11, 16)[468] Road</title></rect>
+<rect x='11.5' y='-16.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (12, 16)[469] Road</title></rect>
+<rect x='12.5' y='-16.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (13, 16)[470] Road</title></rect>
+<rect x='13.5' y='-16.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (14, 16)[471] Road</title></rect>
+<rect x='17.5' y='-16.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (18, 16)[472] Road</title></rect>
+<rect x='18.5' y='-16.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (19, 16)[473] Road</title></rect>
+<rect x='19.5' y='-16.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (20, 16)[474] Road</title></rect>
+<rect x='20.5' y='-16.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (21, 16)[475] Road</title></rect>
+<rect x='23.5' y='-16.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (24, 16)[476] Ground</title></rect>
+<rect x='24.5' y='-16.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (25, 16)[477] Ground</title></rect>
+<rect x='25.5' y='-16.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (26, 16)[478] Obstacle</title></rect>
+<rect x='-0.5' y='-17.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (0, 17)[479] Obstacle</title></rect>
+<rect x='0.5' y='-17.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (1, 17)[480] Ground</title></rect>
+<rect x='1.5' y='-17.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (2, 17)[481] Ground</title></rect>
+<rect x='5.5' y='-17.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (6, 17)[482] Road</title></rect>
+<rect x='6.5' y='-17.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (7, 17)[483] Road</title></rect>
+<rect x='7.5' y='-17.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (8, 17)[484] Road</title></rect>
+<rect x='8.5' y='-17.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (9, 17)[485] Road</title></rect>
+<rect x='9.5' y='-17.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (10, 17)[486] Road</title></rect>
+<rect x='10.5' y='-17.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (11, 17)[487] Road</title></rect>
+<rect x='11.5' y='-17.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (12, 17)[488] Road</title></rect>
+<rect x='12.5' y='-17.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (13, 17)[489] Road</title></rect>
+<rect x='13.5' y='-17.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (14, 17)[490] Road</title></rect>
+<rect x='17.5' y='-17.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (18, 17)[491] Road</title></rect>
+<rect x='18.5' y='-17.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (19, 17)[492] Road</title></rect>
+<rect x='19.5' y='-17.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (20, 17)[493] Road</title></rect>
+<rect x='20.5' y='-17.5' width='1' height='1' fill='#cfbc8b' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Road (21, 17)[494] Road</title></rect>
+<rect x='23.5' y='-17.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (24, 17)[495] Ground</title></rect>
+<rect x='24.5' y='-17.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (25, 17)[496] Ground</title></rect>
+<rect x='25.5' y='-17.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (26, 17)[497] Obstacle</title></rect>
+<rect x='-0.5' y='-18.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (0, 18)[498] Obstacle</title></rect>
+<rect x='0.5' y='-18.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (1, 18)[499] Ground</title></rect>
+<rect x='1.5' y='-18.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (2, 18)[500] Ground</title></rect>
+<rect x='5.5' y='-18.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (6, 18)[501] Ground</title></rect>
+<rect x='6.5' y='-18.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (7, 18)[502] Ground</title></rect>
+<rect x='7.5' y='-18.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (8, 18)[503] Ground</title></rect>
+<rect x='8.5' y='-18.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (9, 18)[504] Ground</title></rect>
+<rect x='9.5' y='-18.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (10, 18)[505] Ground</title></rect>
+<rect x='10.5' y='-18.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (11, 18)[506] Ground</title></rect>
+<rect x='11.5' y='-18.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (12, 18)[507] Ground</title></rect>
+<rect x='12.5' y='-18.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (13, 18)[508] Ground</title></rect>
+<rect x='13.5' y='-18.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (14, 18)[509] Ground</title></rect>
+<rect x='14.5' y='-18.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (15, 18)[510] Ground</title></rect>
+<rect x='15.5' y='-18.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (16, 18)[511] Ground</title></rect>
+<rect x='16.5' y='-18.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (17, 18)[512] Ground</title></rect>
+<rect x='17.5' y='-18.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (18, 18)[513] Ground</title></rect>
+<rect x='18.5' y='-18.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (19, 18)[514] Ground</title></rect>
+<rect x='19.5' y='-18.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (20, 18)[515] Ground</title></rect>
+<rect x='23.5' y='-18.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (24, 18)[516] Ground</title></rect>
+<rect x='24.5' y='-18.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (25, 18)[517] Ground</title></rect>
+<rect x='25.5' y='-18.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (26, 18)[518] Obstacle</title></rect>
+<rect x='-0.5' y='-19.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (0, 19)[519] Obstacle</title></rect>
+<rect x='0.5' y='-19.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (1, 19)[520] Ground</title></rect>
+<rect x='1.5' y='-19.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (2, 19)[521] Ground</title></rect>
+<rect x='5.5' y='-19.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (6, 19)[522] Ground</title></rect>
+<rect x='6.5' y='-19.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (7, 19)[523] Ground</title></rect>
+<rect x='7.5' y='-19.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (8, 19)[524] Ground</title></rect>
+<rect x='8.5' y='-19.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (9, 19)[525] Ground</title></rect>
+<rect x='9.5' y='-19.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (10, 19)[526] Ground</title></rect>
+<rect x='10.5' y='-19.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (11, 19)[527] Ground</title></rect>
+<rect x='11.5' y='-19.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (12, 19)[528] Ground</title></rect>
+<rect x='12.5' y='-19.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (13, 19)[529] Ground</title></rect>
+<rect x='13.5' y='-19.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (14, 19)[530] Ground</title></rect>
+<rect x='14.5' y='-19.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (15, 19)[531] Ground</title></rect>
+<rect x='15.5' y='-19.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (16, 19)[532] Ground</title></rect>
+<rect x='16.5' y='-19.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (17, 19)[533] Ground</title></rect>
+<rect x='17.5' y='-19.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (18, 19)[534] Ground</title></rect>
+<rect x='18.5' y='-19.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (19, 19)[535] Ground</title></rect>
+<rect x='19.5' y='-19.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (20, 19)[536] Ground</title></rect>
+<rect x='23.5' y='-19.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (24, 19)[537] Ground</title></rect>
+<rect x='24.5' y='-19.5' width='1' height='1' fill='#658b75' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Ground (25, 19)[538] Ground</title></rect>
+<rect x='25.5' y='-19.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (26, 19)[539] Obstacle</title></rect>
+<rect x='-0.5' y='-20.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (0, 20)[540] Obstacle</title></rect>
+<rect x='0.5' y='-20.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (1, 20)[541] Obstacle</title></rect>
+<rect x='1.5' y='-20.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (2, 20)[542] Obstacle</title></rect>
+<rect x='2.5' y='-20.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (3, 20)[543] Obstacle</title></rect>
+<rect x='3.5' y='-20.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (4, 20)[544] Obstacle</title></rect>
+<rect x='4.5' y='-20.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (5, 20)[545] Obstacle</title></rect>
+<rect x='5.5' y='-20.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (6, 20)[546] Obstacle</title></rect>
+<rect x='6.5' y='-20.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (7, 20)[547] Obstacle</title></rect>
+<rect x='7.5' y='-20.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (8, 20)[548] Obstacle</title></rect>
+<rect x='8.5' y='-20.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (9, 20)[549] Obstacle</title></rect>
+<rect x='9.5' y='-20.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (10, 20)[550] Obstacle</title></rect>
+<rect x='10.5' y='-20.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (11, 20)[551] Obstacle</title></rect>
+<rect x='11.5' y='-20.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (12, 20)[552] Obstacle</title></rect>
+<rect x='12.5' y='-20.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (13, 20)[553] Obstacle</title></rect>
+<rect x='13.5' y='-20.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (14, 20)[554] Obstacle</title></rect>
+<rect x='14.5' y='-20.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (15, 20)[555] Obstacle</title></rect>
+<rect x='15.5' y='-20.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (16, 20)[556] Obstacle</title></rect>
+<rect x='16.5' y='-20.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (17, 20)[557] Obstacle</title></rect>
+<rect x='17.5' y='-20.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (18, 20)[558] Obstacle</title></rect>
+<rect x='18.5' y='-20.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (19, 20)[559] Obstacle</title></rect>
+<rect x='19.5' y='-20.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (20, 20)[560] Obstacle</title></rect>
+<rect x='20.5' y='-20.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (21, 20)[561] Obstacle</title></rect>
+<rect x='21.5' y='-20.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (22, 20)[562] Obstacle</title></rect>
+<rect x='22.5' y='-20.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (23, 20)[563] Obstacle</title></rect>
+<rect x='23.5' y='-20.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (24, 20)[564] Obstacle</title></rect>
+<rect x='24.5' y='-20.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (25, 20)[565] Obstacle</title></rect>
+<rect x='25.5' y='-20.5' width='1' height='1' fill='#344e48' stroke='#35463e' stroke-width='.025'><title>Level 4 Grid Battle[0]/GameplayGrid[0]/Obstacle (26, 20)[566] Obstacle</title></rect>
+<circle cx='11' cy='-14' r='.32' fill='#e45950' stroke='white' stroke-width='.06'><title>Level 4 Grid Battle[0]/Tower_Attack_1x1[8] | active=True</title></circle>
+<circle cx='15' cy='-6' r='.32' fill='#e45950' stroke='white' stroke-width='.06'><title>Level 4 Grid Battle[0]/Tower_Attack_1x1[9] | active=True</title></circle>
+<circle cx='23' cy='-14' r='.32' fill='#e45950' stroke='white' stroke-width='.06'><title>Level 4 Grid Battle[0]/Tower_Attack_1x1[10] | active=True</title></circle>
+<circle cx='14' cy='-16' r='.32' fill='#f6b34e' stroke='white' stroke-width='.06'><title>Stage V3 Encounters[2]/Pulse Trap[0] | active=True</title></circle>
+<circle cx='17' cy='-5' r='.32' fill='#f6b34e' stroke='white' stroke-width='.06'><title>Stage V3 Encounters[2]/Sentry[1] | active=True</title></circle>
+</svg>

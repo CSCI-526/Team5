@@ -171,6 +171,15 @@ namespace Team5.Rebuild.Presentation.LegacyUI
 
         private bool PrepareMap()
         {
+            var tactical = false;
+            foreach (var sceneRoot in scene.GetRootGameObjects())
+            {
+                var battle = sceneRoot.GetComponentInChildren<BattleSession>(true);
+                if (battle == null) continue;
+                tactical = battle.UsesTacticalRoad;
+                TacticalRoadView.Create(battle, sceneRoot.transform, PreviewLayer);
+                break;
+            }
             data = NextMapData.Capture(scene);
             if (!data.HasMap) return false;
             for (var i = 0; i < data.Towers.Count; i++)
@@ -205,7 +214,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             lightObject.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
             var count = data.Towers.Count;
             facts.text = count + (count == 1 ? " tower" : " towers") +
-                (BattleSceneFlow.NextBattleLevelNumber >= 3 ? "  |  OPEN ARENA" : "  |  CORRIDOR") +
+                (tactical ? "  |  TACTICAL ROAD" : "  |  CLICK ROUTE") +
                 "  |  CLICK TO MOVE";
             overlayRoot.gameObject.SetActive(true);
             overlayRoot.gameObject.AddComponent<NextMapOverlay>().Build(data, projection, ranges);

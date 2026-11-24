@@ -21,7 +21,7 @@ namespace Team5.Rebuild.Editor
     public static class ClickMoveStageInstaller
     {
         private const string CatalogPath = "Assets/Rebuild/Editor/StageV3StageCatalog.json";
-        private const string BackupFolder = "Logs/StageV3Backups";
+        private const string BackupFolder = "Logs/StageV4Backups";
         private const string EncounterRoot = "Stage V3 Encounters";
         private const string LandmarkRoot = "Stage V3 Landmarks";
         private static readonly string[] Scenes =
@@ -47,6 +47,7 @@ namespace Team5.Rebuild.Editor
             public int x, z;
             public string shape;
             public float range, damage, interval, hp;
+            public bool sniperOutpost;
         }
         [Serializable] private sealed class ThreatPlan
         {
@@ -55,7 +56,7 @@ namespace Team5.Rebuild.Editor
             public float radius, damage, interval;
         }
 
-        [MenuItem("Team5/Rebuild/Build Playable Stages V3 (1-7)")]
+        [MenuItem("Team5/Rebuild/Rebuild Tactical Stages V4 (1-7)")]
         public static void Apply()
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode) throw new InvalidOperationException("Leave Play Mode before rebuilding levels.");
@@ -63,6 +64,15 @@ namespace Team5.Rebuild.Editor
             var catalog = ReadCatalog();
             Directory.CreateDirectory(BackupFolder);
             var completed = 0;
+            var previous = EditorSceneManager.GetSceneManagerSetup();
+            // Validate the entire catalog before changing any saved scene.
+            foreach (var plan in catalog.stages)
+            {
+                var errors = ValidateCatalogGeometry(plan.stage);
+                if (errors.Count != 0) throw new InvalidDataException(string.Join(" | ", errors));
+            }
+            try
+            {
             for (var stage = 1; stage <= 7; stage++)
             {
                 try
@@ -71,11 +81,20 @@ namespace Team5.Rebuild.Editor
                     ApplyStage(plan);
                     completed++;
                 }
-                catch (Exception error) { Debug.LogError("Stage V3 " + stage + " failed. Its scene was not saved: " + error); }
+                catch (Exception error)
+                {
+                    Debug.LogError("Stage V4 " + stage + " failed. Its scene was not saved: " + error);
+                    if (File.Exists(Scenes[stage - 1])) EditorSceneManager.OpenScene(Scenes[stage - 1], OpenSceneMode.Single);
+                }
             }
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            Debug.Log($"Stage V3 completed {completed}/7 stages. Review all scene errors and Play Mode behavior before shipping.");
+            Debug.Log($"Stage V4 completed {completed}/7 stages. Review all scene errors and Play Mode behavior before shipping.");
+            }
+            finally
+            {
+                if (previous != null && previous.Length > 0) EditorSceneManager.RestoreSceneManagerSetup(previous);
+            }
         }
 
         private static StageCatalog ReadCatalog()
@@ -94,8 +113,9 @@ namespace Team5.Rebuild.Editor
             var existing = File.Exists(path);
             if (existing)
             {
-                var backup = BackupFolder + "/" + Path.GetFileName(path);
-                if (!File.Exists(backup)) File.Copy(path, backup);
+                var backup = BackupFolder + "/" + Path.GetFileNameWithoutExtension(path) + "_" +
+                    DateTime.UtcNow.ToString("yyyyMMdd_HHmmss_fff") + ".unity";
+                File.Copy(path, backup, false);
             }
             var draft = BuildDraft(plan);
             try
@@ -105,16 +125,17 @@ namespace Team5.Rebuild.Editor
                 if (existing)
                 {
                     scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Single);
-                    try { session = MapBuilderUtility.ApplyToScene(draft, scene); }
-                    catch (Exception error)
-                    {
-                        // Multi-layer legacy maps cannot be edited in place. Build from the standard
-                        // BattleRig ONLY after preserving the original scene, and report that fact.
-                        Debug.LogWarning($"Stage {plan.stage}: incompatible legacy scene ({error.Message}). " +
-                            "Using a fresh BattleRig; preserve scene-specific artwork from the backup if needed.");
-                        scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-                        session = MapBuilderUtility.Populate(draft, scene);
-                    }
+                    // Preserve the scene's own BattleRig, HUD, roster and tutorial bindings.
+                    // Never silently replace a configured scene with a generic rig.
+                    // L5-7 are BattleRig prefab instances with added tile/tower prefabs.
+                    // Unpack only the outer rig so Unity permits removal of its old map children.
+                    // Nested tile/tower prefab links and resolved scene overrides are retained.
+                    foreach (var root in scene.GetRootGameObjects())
+                        if (root.GetComponentInChildren<BattleSession>(true) != null &&
+                            PrefabUtility.IsAnyPrefabInstanceRoot(root))
+                            PrefabUtility.UnpackPrefabInstance(root, PrefabUnpackMode.OutermostRoot, InteractionMode.AutomatedAction);
+                    ClearLegacyDecor(scene);
+                    session = MapBuilderUtility.ApplyToScene(draft, scene);
                 }
                 else
                 {
@@ -127,16 +148,20 @@ namespace Team5.Rebuild.Editor
                 ReplaceRoadArtwork(scene);
                 if (plan.stage <= 2) RemoveRailArtwork(scene);
                 CreateEncounters(scene, draft, plan);
-                CreateLandmarks(scene, draft, plan);
+                // The runtime objective portal is the sole battle landmark; preview pins are separate.
                 ConfigureCamera(scene, session, draft, plan.stage);
+                // Rebuild border dressing against the NEW cell bounds, then replace its floor slabs.
+                PaintSquadLevelDressing.Dress(scene);
+                StageV33VisualPolish.Polish(scene, plan.stage);
                 ConfigureTutorial(session, plan.stage);
+                ValidateBuiltScene(scene, session, draft, plan);
                 var errors = session.ValidateConfiguration();
                 errors.AddRange(LevelValidation.Validate(scene).Where(issue => issue.IsError).Select(issue => issue.Message));
                 if (errors.Count != 0)
                     throw new InvalidOperationException("Generated stage validation failed: " + string.Join(" | ", errors.Take(15)));
                 EditorSceneManager.MarkSceneDirty(scene);
                 if (!EditorSceneManager.SaveScene(scene, path)) throw new IOException("Unable to save scene " + path);
-                Debug.Log($"Stage V3 {plan.stage} ({plan.name}): {draft.width}x{draft.length}, " +
+                Debug.Log($"Stage V4 {plan.stage} ({plan.name}): {draft.width}x{draft.length}, " +
                     $"{session.Towers.Count} towers, {plan.hazards.Length} hazards. Saved {path}");
             }
             finally { Object.DestroyImmediate(draft); }
@@ -165,23 +190,87 @@ namespace Team5.Rebuild.Editor
                     }
                 }
                 if (!seen.Contains(goal)) errors.Add($"Level {stage}: goal cannot be reached by a 3x3 squad.");
+                var route = draft.route.Select(p => draft.Position(p)).ToArray();
+                var road = Enumerable.Range(0, draft.length).SelectMany(z => Enumerable.Range(0, draft.width)
+                    .Select(x => new Vector2Int(x, z))).Where(p => RoadSurface(draft.Tile(p))).ToArray();
                 foreach (var planTower in plan.towers)
-                    if (draft.Tile(new Vector2Int(planTower.x, planTower.z)) != (int)CellKind.TowerPlatform)
+                {
+                    var point = new Vector2Int(planTower.x, planTower.z);
+                    var shape = (AttackArea)Enum.Parse(typeof(AttackArea), planTower.shape);
+                    if (draft.Tile(point) != (int)CellKind.TowerPlatform)
                         errors.Add($"Level {stage}: tower overlaps the route.");
+                    if (!route.Any(p => SquadCombatRules.Contains(p - draft.Position(point), shape, planTower.range, .6f)) ||
+                        road.Count(p => SquadCombatRules.Contains(draft.Position(p) - draft.Position(point), shape, planTower.range, .6f)) < 3)
+                        errors.Add($"Level {stage}: tower at {point} has insufficient authored road coverage.");
+                    if (shape == AttackArea.Circle)
+                        ValidateCircle(planTower, draft, road, errors, stage);
+                    else if (planTower.sniperOutpost)
+                        errors.Add($"Level {stage}: sniper outposts must use circular coverage.");
+                }
                 foreach (var danger in plan.hazards)
-                    if (!Passable(draft.Tile(new Vector2Int(danger.x, danger.z))))
-                        errors.Add($"Level {stage}: hazard is in a wall.");
+                {
+                    var point = new Vector2Int(danger.x, danger.z);
+                    if (!Passable(draft.Tile(point)) || !road.Any(p => Vector2Int.Distance(p, point) <= danger.radius))
+                        errors.Add($"Level {stage}: hazard at {point} is in a wall or cannot reach the road.");
+                }
                 return errors;
             }
             finally { Object.DestroyImmediate(draft); }
         }
 
+        // A circle must threaten a real road segment, or be an intentional sniper outpost
+        // with an escape lane. A tiny incidental intersection no longer passes validation.
+        private static void ValidateCircle(TowerPlan tower, MapDraft draft, Vector2Int[] road,
+            List<string> errors, int stage)
+        {
+            var origin = new Vector2Int(tower.x, tower.z);
+            var covered = new HashSet<Vector2Int>(road.Where(p => Vector2Int.Distance(p, origin) <= tower.range + .0001f));
+            if (!tower.sniperOutpost)
+            {
+                var full = 0;
+                foreach (var center in draft.route)
+                {
+                    var fits = true;
+                    for (var z = -1; z <= 1; z++) for (var x = -1; x <= 1; x++)
+                        if (!covered.Contains(center + new Vector2Int(x, z))) fits = false;
+                    if (fits) full++;
+                }
+                if (covered.Count < 24 || full < 5)
+                    errors.Add($"Level {stage}: circle at {origin} must cover at least 24 road cells and five full 3x3 formation positions.");
+                return;
+            }
+            var normalRange = new[] { UnitRole.Attack, UnitRole.Captain, UnitRole.Vanguard, UnitRole.Demolisher }
+                .Max(role => SquadCombatRules.Create(role).Range);
+            var sniperRange = SquadCombatRules.Create(UnitRole.Sniper).Range;
+            var edgeDistance = road.Min(p => new Vector2(Mathf.Max(0, Mathf.Abs(p.x - origin.x) - .5f),
+                Mathf.Max(0, Mathf.Abs(p.y - origin.y) - .5f)).magnitude);
+            var centerDistance = road.Min(p => Vector2Int.Distance(p, origin));
+            if (edgeDistance <= normalRange + .1f || centerDistance > sniperRange - .1f)
+                errors.Add($"Level {stage}: sniper outpost at {origin} is not within the sniper-only normal attack range band.");
+            var safe = new HashSet<Vector2Int>(road.Where(p => !covered.Contains(p)));
+            var start = draft.route.First(); var goal = draft.route.Last();
+            var seen = new HashSet<Vector2Int>(); var queue = new Queue<Vector2Int>();
+            if (safe.Contains(start)) { queue.Enqueue(start); seen.Add(start); }
+            while (queue.Count > 0)
+            {
+                var current = queue.Dequeue();
+                foreach (var offset in new[] { Vector2Int.up, Vector2Int.down, Vector2Int.left, Vector2Int.right })
+                {
+                    var next = current + offset;
+                    if (safe.Contains(next) && seen.Add(next)) queue.Enqueue(next);
+                }
+            }
+            if (!seen.Contains(goal))
+                errors.Add($"Level {stage}: sniper outpost at {origin} has no continuous safe tile-center lane.");
+        }
+
         private static bool Passable(int tile) => tile == (int)CellKind.Road || tile == (int)CellKind.Ground ||
             tile == (int)CellKind.Spawn || tile == (int)CellKind.Goal;
+        private static bool RoadSurface(int tile) => tile == (int)CellKind.Road || tile == (int)CellKind.Spawn || tile == (int)CellKind.Goal;
         private static bool Clearance(MapDraft draft, Vector2Int pos)
         {
             for (var z = -1; z <= 1; z++) for (var x = -1; x <= 1; x++)
-                if (!Passable(draft.Tile(pos + new Vector2Int(x, z)))) return false;
+                if (!RoadSurface(draft.Tile(pos + new Vector2Int(x, z)))) return false;
             return true;
         }
 
@@ -283,7 +372,7 @@ namespace Team5.Rebuild.Editor
             var data = new SerializedObject(session);
             Bool(data, "squadCombat", true); Int(data, "formationSize", 3); Int(data, "unitCount", 6);
             Bool(data, "manualSquadMovement", false); Bool(data, "continuousSquadMovement", true);
-            Bool(data, "compactSquadMovement", false); Float(data, "continuousFormationSpacing", .96f);
+            Bool(data, "restrictToTacticalRoad", true); Bool(data, "compactSquadMovement", false); Float(data, "continuousFormationSpacing", .96f);
             Float(data, "continuousSoldierRadius", .2f); Float(data, "continuousVisualFootprint", .43f);
             Float(data, "levelTimeMultiplier", 1.16f); Int(data, "displayedLevelNumber", stage);
             data.ApplyModifiedPropertiesWithoutUndo();
@@ -303,7 +392,10 @@ namespace Team5.Rebuild.Editor
             if (found.Length != plan.towers.Length) throw new InvalidOperationException("Tower count mismatch after map build.");
             for (var i = 0; i < found.Length; i++)
             {
-                var tower = found[i]; var stat = plan.towers[i]; var data = new SerializedObject(tower);
+                var stat = plan.towers[i];
+                var tower = found.Single(t => Mathf.RoundToInt(t.transform.position.x) == stat.x &&
+                    Mathf.RoundToInt(t.transform.position.z) == stat.z);
+                var data = new SerializedObject(tower);
                 Float(data, "range", stat.range); Float(data, "damage", stat.damage);
                 Float(data, "attackInterval", stat.interval); Float(data, "maxHp", stat.hp);
                 Float(data, "attackWidth", .60f); Bool(data, "isAoe", false);
@@ -312,23 +404,45 @@ namespace Team5.Rebuild.Editor
                 data.ApplyModifiedPropertiesWithoutUndo();
                 foreach (var child in tower.GetComponentsInChildren<Transform>(true).Where(t => t != tower.transform && t.name == "Stage V3 Threat Class").ToArray())
                     Object.DestroyImmediate(child.gameObject);
-                var mark = new GameObject("Stage V3 Threat Class"); mark.transform.SetParent(tower.transform, false);
-                mark.transform.localPosition = new Vector3(0, .80f, 0);
-                var isLaser = SquadCombatRules.IsLaser((AttackArea)Enum.Parse(typeof(AttackArea), stat.shape));
-                var isCone = SquadCombatRules.IsCone((AttackArea)Enum.Parse(typeof(AttackArea), stat.shape));
-                var cap = GameObject.CreatePrimitive(isLaser ? PrimitiveType.Cylinder : PrimitiveType.Sphere);
-                cap.transform.SetParent(mark.transform, false);
-                cap.transform.localScale = isLaser ? new Vector3(.21f, .45f, .21f) : Vector3.one * .42f;
-                Object.DestroyImmediate(cap.GetComponent<Collider>());
-                cap.GetComponent<Renderer>().sharedMaterial = AccentMaterial(isLaser ? "Laser" : isCone ? "Cone" : "Circle");
+                tower.AlignVisual(session.CaptureTowerDefinition(tower, i + 1, session.Route.CaptureTopCenters()),
+                    session.Route.CaptureTopCenters());
+                PrefabUtility.RecordPrefabInstancePropertyModifications(tower.transform);
             }
+        }
+
+        private static void ValidateBuiltScene(Scene scene, BattleSession session, MapDraft draft, StagePlan plan)
+        {
+            var all = scene.GetRootGameObjects();
+            var towers = all.SelectMany(r => r.GetComponentsInChildren<BattleTower>(true)).ToArray();
+            var threats = all.SelectMany(r => r.GetComponentsInChildren<OpenStageThreat>(true)).ToArray();
+            var cells = all.SelectMany(r => r.GetComponentsInChildren<BattleCell>(true)).ToArray();
+            if (towers.Length != plan.towers.Length || towers.Any(t => !session.Towers.Contains(t)))
+                throw new InvalidOperationException("Scene contains unexpected or unregistered towers.");
+            if (threats.Length != plan.hazards.Length || cells.Length != draft.width * draft.length)
+                throw new InvalidOperationException("Scene contains unexpected hazards or cells.");
+            // Match runtime minion planning, including ground-only hosting and actual tower coverage.
+            var route = session.Route.CaptureTopCenters();
+            var definitions = session.Towers.Select((t, i) => session.CaptureTowerDefinition(t, i + 1, route)).ToArray();
+            var placements = MinionPlanner.Plan(route, definitions, plan.stage, MinionSiteScan.Scan(session));
+            if (placements.Count != MinionRules.Kinds(plan.stage).Count)
+                Debug.LogWarning($"Stage {plan.stage}: {placements.Count}/{MinionRules.Kinds(plan.stage).Count} support groups can be placed; inspect minion placement in Play Mode.");
+            if (all.Count(r => r.name == "Stage V3.3 Seamless Terrain") != 1 ||
+                all.Count(r => r.name == PaintSquadLevelDressing.RootName) != 1 ||
+                all.Any(r => r.name == LandmarkRoot))
+                throw new InvalidOperationException("Scene contains duplicate terrain or legacy objective art.");
         }
 
         private static void ClearLegacyDecor(Scene scene)
         {
             foreach (var obj in scene.GetRootGameObjects().ToArray())
                 if (obj.name == "Open Stage Hazards" || obj.name == "Stage V2 Encounters" ||
-                    obj.name == EncounterRoot || obj.name == LandmarkRoot) Object.DestroyImmediate(obj);
+                    obj.name == EncounterRoot || obj.name == LandmarkRoot ||
+                    obj.name == "Stage V3.3 Seamless Terrain" || obj.name == PaintSquadLevelDressing.RootName)
+                    Object.DestroyImmediate(obj);
+            foreach (var t in scene.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<Transform>(true)).ToArray())
+                if (t != null && t.name == "Decorative Border Tiles" &&
+                    t.GetComponentInChildren<BattleCell>(true) == null && t.GetComponentInChildren<BattleTower>(true) == null)
+                    Object.DestroyImmediate(t.gameObject);
         }
         private static void RemoveRailArtwork(Scene scene)
         {

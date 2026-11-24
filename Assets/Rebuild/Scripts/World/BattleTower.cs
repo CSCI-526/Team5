@@ -49,8 +49,27 @@ namespace Team5.Rebuild.World
 
         public void BindRuntimeState(TowerState state) => RuntimeState = state;
 
+        // The authored 1x1 cannon muzzle faces local -X. Infer the actual local
+        // barrel direction from its named muzzle, so nested visuals also work.
+        // Never rotate a wall, whose logical footprint depends on its yaw.
+        public void AlignVisual(TowerDefinition definition, IReadOnlyList<Vector3> routePoints)
+        {
+            if (IsWall || definition == null) return;
+            var desired = TacticalStageRules.Facing(definition, routePoints);
+            if (desired.sqrMagnitude < .0001f) return;
+            Transform muzzle = null;
+            foreach (var child in GetComponentsInChildren<Transform>(true))
+                if (child.name == "Muzzle Opening" || child.name == "Muzzle Rim" || child.name == "Cannon Barrel")
+                { muzzle = child; if (child.name == "Muzzle Opening") break; }
+            if (muzzle == null) return;
+            var local = transform.InverseTransformPoint(muzzle.position); local.y = 0;
+            if (local.sqrMagnitude < .0001f) return;
+            var angle = Vector3.SignedAngle(local, desired, Vector3.up);
+            transform.rotation = Quaternion.Euler(0, angle, 0);
+        }
+
         public bool HasValidConfiguration => float.IsFinite(range) && range >= 0 &&
-            (isWall || (float.IsFinite(damage) && damage > 0)) && float.IsFinite(attackInterval) && attackInterval > 0 &&
+            (IsWall ? !IsMinion || (float.IsFinite(damage) && damage >= 0) : (float.IsFinite(damage) && damage > 0)) && float.IsFinite(attackInterval) && attackInterval > 0 &&
             float.IsFinite(transform.position.x) && float.IsFinite(transform.position.y) && float.IsFinite(transform.position.z) &&
             Enum.IsDefined(typeof(TargetRule), targetRule) && float.IsFinite(maxHp) && maxHp > 0 &&
             float.IsFinite(attackWidth) && attackWidth > 0 && Enum.IsDefined(typeof(AttackArea), attackArea) &&

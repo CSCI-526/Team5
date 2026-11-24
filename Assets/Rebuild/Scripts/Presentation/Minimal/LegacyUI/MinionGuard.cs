@@ -35,7 +35,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
 
         public void Reset() => desired = -1;
 
-        public void Tick(Vector3 squad, HashSet<Vector2Int> blocked)
+        public void Tick(Vector3 squad, HashSet<Vector2Int> blocked, HashSet<Vector2Int> unitBlocked = null)
         {
             var direction = new Vector3(squad.x - center.x, 0f, squad.z - center.y);
             if (direction.sqrMagnitude < 0.01f) return;
@@ -70,7 +70,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                 for (var i = 0; i < passable.Length; i++) passable[i] = open[i] && !blocked.Contains(center + MinionGuardRules.Ring[i]);
                 var next = from < 0 ? (passable[target] ? target : -1) : MinionGuardRules.Step(from, target, open, passable);
                 if (next < 0) continue;
-                blocked.Remove(mover.Cell);
+                if (unitBlocked == null || !unitBlocked.Contains(mover.Cell)) blocked.Remove(mover.Cell);
                 blocked.Add(center + MinionGuardRules.Ring[next]);
                 mover.Hop(tops[next], HopSeconds);
             }

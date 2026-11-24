@@ -21,8 +21,12 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         public static StartWaveNotice Attach(LegacyUpgradeScene owner, RectTransform root)
         {
             if (owner == null || root == null || owner.StartWaveButton == null) return null;
-            var label = LegacyUiKit.CreateText(root, "Start Wave Notice", Message, Vector2.zero, new Vector2(480f, 26f), 17,
+            var existing = root.Find("Start Wave Notice");
+            if (existing != null && existing.TryGetComponent<StartWaveNotice>(out var current)) return current;
+            var label = LegacyUiKit.CreateText(root, "Start Wave Notice", Message, Vector2.zero, new Vector2(276f, 30f), 15,
                 LegacyUiKit.RedDark, FontStyles.Bold, 1);
+            label.enableAutoSizing = true;
+            label.fontSizeMin = 11; label.fontSizeMax = 15;
             label.enabled = false;
             var notice = label.gameObject.AddComponent<StartWaveNotice>();
             notice.owner = owner;

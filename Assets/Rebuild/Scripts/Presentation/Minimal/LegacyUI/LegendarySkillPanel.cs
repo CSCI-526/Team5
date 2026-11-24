@@ -57,6 +57,13 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             return null;
         }
 
+        public string HotkeyForRole(UnitRole role)
+        {
+            for (var i = 0; i < icons.Count; i++)
+                if (icons[i].Role == role) return BattleHotkeys.SkillLabel(i);
+            return "";
+        }
+
         private void Bind(LegacyBattleHud owner)
         {
             hud = owner;
@@ -283,6 +290,10 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             };
 
             icons.Add(entry);
+            var key = BattleHotkeys.SkillLabel(index);
+            if (key.Length > 0)
+                BattleHotkeys.CreateKeycap(rect, key, Vector2.zero, Vector2.zero,
+                    new Vector2(1f, 1f) * uiScale, new Vector2(19f, 19f) * uiScale, 13f * uiScale);
 
             button.onClick.AddListener(() => Activate(entry));
         }
@@ -303,7 +314,8 @@ namespace Team5.Rebuild.Presentation.LegacyUI
 
         private bool IsHudFree =>
             hud != null &&
-            hud.Session != null &&
+            hud.HotkeyHudActive &&
+            Time.timeScale > 0f &&
             !hud.Session.IsUnitInspectionActive &&
             !hud.TutorialOwnsPause &&
             (hud.FormationEditor == null ||
@@ -323,11 +335,29 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             }
 
             RefreshIcons();
+            ReadSkillHotkeys();
 
             if (aiming)
                 UpdateTargeting();
             else
                 UpdateTooltip();
+        }
+
+        private void ReadSkillHotkeys()
+        {
+            if (!IsHudFree || !BattleHotkeys.CanReadKeyboard || simulation == null ||
+                simulation.IsPaused || aiming || root == null || !root.gameObject.activeInHierarchy) return;
+            // Space takes precedence if a player presses pause and a skill together.
+            if (Keyboard.current.spaceKey.wasPressedThisFrame) return;
+            for (var i = 0; i < icons.Count && i < BattleHotkeys.SkillSlotCount; i++)
+            {
+                var button = icons[i].Button;
+                if (!BattleHotkeys.SkillPressed(i) || button == null ||
+                    !button.gameObject.activeInHierarchy || !button.IsInteractable()) continue;
+                // Use exactly the same listener as a mouse click, including targeting and analytics.
+                button.onClick.Invoke();
+                break;
+            }
         }
 
         private void RefreshIcons()
@@ -376,7 +406,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
 
         private void Activate(SkillIcon icon)
         {
-            if (!IsHudFree ||
+            if (!IsHudFree || aiming ||
                 simulation == null ||
                 simulation.IsPaused)
                 return;
@@ -497,11 +527,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             {
                 var rect = (RectTransform)icon.Button.transform;
 
-                if (!RectTransformUtility
-                    .RectangleContainsScreenPoint(
-                        rect,
-                        mouse,
-                        null))
+                if (!BattleHotkeys.PointerOn(rect, mouse))
                     continue;
 
                 string description =
@@ -532,9 +558,10 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             tooltipPanel.anchoredPosition =
                 new Vector2(92f, y + 10f) * uiScale;
 
+            var key = BattleHotkeys.SkillLabel(index);
             tooltipText.text =
                 LegendarySkillRules.ShortName(icon.Role) +
-                "\n" + message;
+                (key.Length > 0 ? "  [" + key + "]" : "") + "\n" + message;
 
             tooltipPanel.gameObject.SetActive(true);
             tooltipPanel.SetAsLastSibling();

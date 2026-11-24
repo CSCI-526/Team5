@@ -27,15 +27,19 @@ namespace Team5.Rebuild.Simulation
         public static bool ValidContinuousBodySettings(float formationSpacing, float soldierRadius, bool compactSquad = false) =>
             BattleNumbers.Finite(formationSpacing) && BattleNumbers.Finite(soldierRadius) && soldierRadius >= .02f &&
             (compactSquad ? formationSpacing >= .05f : formationSpacing + .00001f >= soldierRadius * 2 + .01f);
-        public void EnableContinuousMovement(float formationSpacing = .48f, float soldierRadius = .2f, bool compactSquad = false)
+        public void EnableContinuousMovement(float formationSpacing = .48f, float soldierRadius = .2f, bool compactSquad = false, bool followRoadInFormation = false)
         {
             if (!ValidContinuousBodySettings(formationSpacing, soldierRadius, compactSquad))
                 throw new ArgumentException("Invalid continuous formation spacing or obstacle collision radius.");
             EnableManualMovement();
-            continuous = new ContinuousMovement(this, definition.Waypoints[0], formationSpacing, soldierRadius, compactSquad);
+            continuous = new ContinuousMovement(this, definition.Waypoints[0], formationSpacing, soldierRadius, compactSquad, followRoadInFormation);
         }
-        public bool RequestMovement(MovementRequest request) => !stepping && continuous != null &&
-            Outcome == BattleOutcome.Running && PendingSpawnCount == 0 && continuous.Request(request);
+        public bool RequestMovement(MovementRequest request)
+        {
+            if (stepping || continuous == null || Outcome != BattleOutcome.Running || PendingSpawnCount != 0 || !continuous.Request(request)) return false;
+            if (!IsSquadReadyToCapture) goalHoldElapsed = 0f;
+            return true;
+        }
 
         // Continuous navigation owns no transforms, physics bodies or SlotIds. Callers specify actual endpoints.
         private sealed class ContinuousMovement
@@ -49,7 +53,8 @@ namespace Team5.Rebuild.Simulation
             private readonly Dictionary<int, Travel> travels = new Dictionary<int, Travel>();
             private readonly float Spacing, Radius;
             public float FormationSpacing => Spacing;
-            private readonly bool Compact;
+            public float GoalZoneRadius => Mathf.Max(1.1f, Spacing * Mathf.Sqrt(2f) + Radius + .10f);
+            private readonly bool Compact, FollowRoadInFormation;
             private bool reforming, pendingReform, continueAfterReform;
             private Dictionary<int, Vector3> previousOffsets = new Dictionary<int, Vector3>();
             private sealed class Travel
@@ -65,22 +70,23 @@ namespace Team5.Rebuild.Simulation
                 public int[] WaitForPaths, YieldFor;
                 public List<int> SharedStages;
                 public MovementCommandSource Source;
-                public Travel Copy() => new Travel { Goal = Goal, Path = new List<Vector3>(Path), Next = Next, Blocked = Blocked, Departed = Departed, QueueForward = QueueForward, Source = Source, Yielding = Yielding, WaitFor = WaitFor,
+                public bool SquadCommand;
+                public Travel Copy() => new Travel { Goal = Goal, Path = new List<Vector3>(Path), Next = Next, Blocked = Blocked, Departed = Departed, QueueForward = QueueForward, Source = Source, SquadCommand = SquadCommand, Yielding = Yielding, WaitFor = WaitFor,
                     WaitForPaths = WaitForPaths == null ? null : (int[])WaitForPaths.Clone(), YieldFor = YieldFor == null ? null : (int[])YieldFor.Clone(),
                     SharedStages = SharedStages == null ? null : new List<int>(SharedStages) };
             }
-            public bool Moving => travels.Any(t => sim.units.Any(u => u.Id == t.Key && u.IsAlive &&
+            public bool Moving => (referencePath.Count > 1 && sim.units.Any(u => u.IsAlive)) || travels.Any(t => sim.units.Any(u => u.Id == t.Key && u.IsAlive &&
                 (t.Value.Next < t.Value.Path.Count || (u.Position - t.Value.Goal).sqrMagnitude > .000001f)));
             public bool Reforming => reforming || pendingReform;
             private bool IsTravelling(int id) => sim.units.Any(u => u.Id == id && u.IsAlive) &&
                 travels.TryGetValue(id, out var travel) && travel.Next < travel.Path.Count;
-            public ContinuousMovement(BattleSimulation owner, Vector3 origin, float spacing, float radius, bool compact = false)
-            { sim = owner; Reference = destination = origin; Spacing = spacing; Radius = radius; Compact = compact; }
+            public ContinuousMovement(BattleSimulation owner, Vector3 origin, float spacing, float radius, bool compact = false, bool followRoadInFormation = false)
+            { sim = owner; Reference = destination = origin; Spacing = spacing; Radius = radius; Compact = compact; FollowRoadInFormation = followRoadInFormation; }
             public bool CanPlaceFormation(Vector3 anchor) => Mathf.Abs(anchor.y - Reference.y) < .01f && sim.units.Any(u => u.IsAlive) &&
                 sim.units.Where(u => u.IsAlive).All(u => Stand(anchor + u.FormationOffset, Radius));
             public ContinuousMovement Copy(BattleSimulation owner)
             {
-                var copy = new ContinuousMovement(owner, Reference, Spacing, Radius, Compact) { destination = destination, lastHeading = lastHeading, referencePath = new List<Vector3>(referencePath) };
+                var copy = new ContinuousMovement(owner, Reference, Spacing, Radius, Compact, FollowRoadInFormation) { destination = destination, lastHeading = lastHeading, referencePath = new List<Vector3>(referencePath) };
                 foreach (var item in travels) copy.travels.Add(item.Key, item.Value.Copy());
                 copy.reforming = reforming; copy.pendingReform = pendingReform; copy.continueAfterReform = continueAfterReform;
                 copy.previousOffsets = new Dictionary<int, Vector3>(previousOffsets);
@@ -88,7 +94,29 @@ namespace Team5.Rebuild.Simulation
             }
             // Spawned reinforcements must fit a free formation slot at the CURRENT squad anchor.
             // This is checked before TrySpawnExtra creates a UnitState, so failed calls are harmless.
-            public bool CanSpawnInSlot(int slot) => Stand(Reference + SquadCombatRules.Offset(slot) * Spacing, Radius);
+            public bool CanSpawnInSlot(int slot)
+            {
+                var position = Reference + SquadCombatRules.Offset(slot) * Spacing;
+                // Use the same conservative obstacle test as actual movement. In non-compact
+                // mode an empty slot may still be physically occupied during a turn or queue.
+                if (!Stand(position, Radius) || !Segment(position, position, Radius)) return false;
+                return Compact || sim.units.All(u => !u.IsAlive ||
+                    Vector3.Distance(u.Position, position) >= Radius + u.CollisionRadius + .005f);
+            }
+
+            public bool JoinReinforcement(UnitState unit)
+            {
+                // Spawn state is provisional: caller commits it only after a valid route exists.
+                Spawn(unit);
+                if (Reforming) return false;
+                var squadMoving = referencePath.Count > 1 || travels.Any(t => t.Value.SquadCommand &&
+                    sim.units.Any(u => u.Id == t.Key && u.IsAlive &&
+                        (t.Value.Next < t.Value.Path.Count || (u.Position - t.Value.Goal).sqrMagnitude > .000001f)));
+                if (!squadMoving) return true;
+                // Rebuild together, so the new member uses the same shared route stages and
+                // queue as the existing squad. Request commits only after ALL paths validate.
+                return Request(new MovementRequest(destination), preserveDestination: true);
+            }
             public void Spawn(UnitState unit)
             {
                 unit.ContinuousPosition = true;
@@ -191,7 +219,7 @@ namespace Team5.Rebuild.Simulation
                     local[a.Id].WaitForPaths = local[b.Id].WaitForPaths = yields.Keys.ToArray();
                 }
             }
-            public bool Request(MovementRequest request)
+            public bool Request(MovementRequest request, bool preserveDestination = false)
             {
                 if (!BattleNumbers.Finite(request.Target) || Mathf.Abs(request.Target.y - Reference.y) > .01f) return false;
                 var living = sim.units.Where(u => u.IsAlive && (!request.MemberId.HasValue || u.Id == request.MemberId)).OrderBy(u => u.Id).ToArray();
@@ -199,9 +227,32 @@ namespace Team5.Rebuild.Simulation
                 if (request.Source == MovementCommandSource.AI && living.Any(u => travels.TryGetValue(u.Id, out var active) &&
                     active.Source == MovementCommandSource.Player && active.Next < active.Path.Count)) return false;
                 var target = request.Target;
+                // Player ground clicks are forgiving on tactical roads. Project invalid clicks
+                // to the closest reachable anchor that fits the entire living formation.
+                if (!preserveDestination && FollowRoadInFormation && !request.MemberId.HasValue &&
+                    request.Source == MovementCommandSource.Player && sim.walkable != null &&
+                    (!Stand(target, Radius) || !Segment(target, target, Radius)))
+                    return TryProjectRoadClick(request, living);
                 // A single blocked ideal slot near a wall does not mean the surrounding area is a corridor.
-                if (!request.MemberId.HasValue && TryNearbyFormation(target, living, out var adjusted)) target = adjusted;
-                var centerPath = FindPath(Reference, target, Radius);
+                if (!preserveDestination && !request.MemberId.HasValue && TryNearbyFormation(target, living, out var adjusted)) target = adjusted;
+                var routeOrigin = Reference;
+                // Mobile enemies can invalidate the virtual anchor between clicks. Recover
+                // from a living soldier's valid position rather than reject every future order.
+                if (!request.MemberId.HasValue && (!Stand(routeOrigin, Radius) || !Segment(routeOrigin, routeOrigin, Radius)))
+                {
+                    var anchor = living.Where(u => Stand(u.Position, Radius) && Segment(u.Position, u.Position, Radius))
+                        .OrderBy(u => (u.Position - Reference).sqrMagnitude).FirstOrDefault();
+                    if (anchor == null) return false;
+                    routeOrigin = anchor.Position;
+                }
+                // A full-width guide avoids squeezing all nine soldiers into the same
+                // inside corner. Keep exact independent paths as a fallback for partial
+                // formations, reinforcements, and mid-reform commands.
+                List<Vector3> formationGuide = null;
+                if (FollowRoadInFormation && !Compact && !request.MemberId.HasValue &&
+                    living.All(u => (u.Position - (routeOrigin + u.FormationOffset)).sqrMagnitude < .0025f))
+                    formationGuide = FindPath(routeOrigin, target, Spacing + Radius);
+                var centerPath = formationGuide ?? FindPath(routeOrigin, target, Radius);
                 if (!request.MemberId.HasValue && centerPath == null) return false;
                 if (Compact && !request.MemberId.HasValue) centerPath = SampleCompactRoute(centerPath);
                 var heading = lastHeading;
@@ -215,7 +266,7 @@ namespace Team5.Rebuild.Simulation
                 var goals = living.Select(u => target + (request.MemberId.HasValue ? Vector3.zero : u.FormationOffset)).ToArray();
                 var queueDestination = false;
                 // A narrow destination can hold a queue instead of an impossible full formation.
-                if (goals.Any(g => !Stand(g, Radius)))
+                if (!request.MemberId.HasValue && goals.Any(g => !Stand(g, Radius) || !Segment(target, g, Radius)))
                 {
                     var direction = heading;
                     living = living.OrderByDescending(u => Vector3.Dot(u.Position, direction)).ThenBy(u => u.Id).ToArray();
@@ -231,16 +282,23 @@ namespace Team5.Rebuild.Simulation
                         var reserved = travels.TryGetValue(other.Id, out var otherTravel) ? otherTravel.Goal : other.Position;
                         if (Vector3.Distance(goals[i], reserved) < Radius + other.CollisionRadius + .005f) return false;
                     }
-                    var path = FindPath(living[i].Position, goals[i], Radius);
+                    List<Vector3> path = null;
+                    if (formationGuide != null && !queueDestination)
+                    {
+                        var lane = new List<Vector3> { living[i].Position };
+                        for (var j = 1; j < formationGuide.Count; j++) lane.Add(formationGuide[j] + living[i].FormationOffset);
+                        if (Enumerable.Range(1, lane.Count - 1).All(j => Segment(lane[j - 1], lane[j], Radius))) path = lane;
+                    }
+                    if (path == null) path = FindPath(living[i].Position, goals[i], Radius);
                     if (path == null) return false;
-                    var travel = new Travel { Goal = goals[i], Path = path, Next = 1, Source = request.Source,
+                    var travel = new Travel { Goal = goals[i], Path = path, Next = 1, Source = request.Source, SquadCommand = !request.MemberId.HasValue,
                         WaitFor = !Compact && queueDestination && i > 0 ? (int?)living[i - 1].Id : null, QueueForward = heading };
                     if (Compact && !request.MemberId.HasValue && !BuildSharedRoute(living[i], travel, centerPath, queueDestination)) return false;
                     pending.Add(living[i].Id, travel);
                 }
                 foreach (var item in pending) travels[item.Key] = item.Value;
                 if (!request.MemberId.HasValue)
-                { destination = target; referencePath = centerPath; lastHeading = heading; reforming = pendingReform = false; }
+                { Reference = routeOrigin; destination = target; referencePath = centerPath; lastHeading = heading; reforming = pendingReform = false; }
                 return true;
             }
             private bool BuildSharedRoute(UnitState unit, Travel travel, List<Vector3> guide, bool queue)
@@ -265,6 +323,13 @@ namespace Team5.Rebuild.Simulation
                         if (join == null) return false;
                         foreach (var point in join.Skip(1)) { path.Add(point); stages.Add(i - 1); }
                         if (!Segment(path[path.Count - 1], target, Radius)) target = guide[i];
+                        if (!Segment(path[path.Count - 1], target, Radius))
+                        {
+                            var bridge = FindPath(path[path.Count - 1], target, Radius);
+                            if (bridge == null) return false;
+                            foreach (var point in bridge.Skip(1)) { path.Add(point); stages.Add(i); }
+                            continue;
+                        }
                     }
                     path.Add(target); stages.Add(i);
                 }
@@ -289,6 +354,34 @@ namespace Team5.Rebuild.Simulation
                         result.Add(Vector3.Lerp(path[i - 1], path[i], (float)step / steps));
                 }
                 return result;
+            }
+            private bool TryProjectRoadClick(MovementRequest request, UnitState[] living)
+            {
+                // Quarter-cell grid matches FindPath. Also sample the click clamped to each
+                // cell so a near-edge click need not jump all the way to a cell center.
+                var candidates = new HashSet<Vector3>();
+                var layer = SmallCellOccupancy.PositionToCell(Reference).y;
+                foreach (var cell in sim.walkable)
+                {
+                    if (cell.y != layer) continue;
+                    var center = new Vector3(cell.x, Reference.y, cell.z);
+                    for (var x = -2; x <= 2; x++) for (var z = -2; z <= 2; z++)
+                        candidates.Add(center + new Vector3(x * .25f, 0f, z * .25f));
+                    candidates.Add(new Vector3(Mathf.Clamp(request.Target.x, cell.x - .5f, cell.x + .5f),
+                        Reference.y, Mathf.Clamp(request.Target.z, cell.z - .5f, cell.z + .5f)));
+                }
+                var attempts = 0;
+                foreach (var candidate in candidates.OrderBy(p => (p - request.Target).sqrMagnitude)
+                    .ThenBy(p => (p - Reference).sqrMagnitude).ThenBy(p => p.x).ThenBy(p => p.z))
+                {
+                    if (!Stand(candidate, Radius) || !Segment(candidate, candidate, Radius) ||
+                        living.Any(u => !Stand(candidate + u.FormationOffset, Radius) ||
+                            !Segment(candidate, candidate + u.FormationOffset, Radius))) continue;
+                    // Request is transactional: a failed plan does not alter the old order.
+                    if (Request(new MovementRequest(candidate, source: request.Source), preserveDestination: true)) return true;
+                    if (++attempts >= 24) break; // Bound expensive A* retries near disconnected geometry.
+                }
+                return false;
             }
             private bool TryNearbyFormation(Vector3 target, UnitState[] living, out Vector3 adjusted)
             {
@@ -363,7 +456,7 @@ namespace Team5.Rebuild.Simulation
                         if (travel.Blocked > .4f)
                         {
                             var retry = FindPath(unit.Position, travel.Goal, Radius, unit.Id);
-                            if (retry != null) { travel.Path = retry; travel.Next = 1; travel.Yielding = false; }
+                            if (retry != null) { travel.Path = retry; travel.Next = 1; travel.SharedStages = null; travel.Yielding = false; }
                             travel.Blocked = 0;
                         }
                     }
@@ -393,13 +486,13 @@ namespace Team5.Rebuild.Simulation
                             if (travel.Blocked > .4f)
                             {
                                 var detour = FindPath(unit.Position, travel.Goal, Radius, unit.Id);
-                                if (detour != null) { travel.Path = detour; travel.Next = 1; travel.Yielding = false; }
+                                if (detour != null) { travel.Path = detour; travel.Next = 1; travel.SharedStages = null; travel.Yielding = false; }
                                 else if (!travel.Yielding && sim.units.Any(other => other.IsAlive && other.Id > unit.Id &&
                                     DistanceToSegment(other.Position, unit.Position, next) < (Radius + other.CollisionRadius + .005f) * (Radius + other.CollisionRadius + .005f)))
                                 {
                                     // Stable ID priority breaks head-on exchanges: one member temporarily steps aside.
                                     var yieldPath = NearestYieldPath(unit, travel.Goal);
-                                    if (yieldPath != null) { travel.Path = yieldPath; travel.Next = 1; travel.Yielding = true; }
+                                    if (yieldPath != null) { travel.Path = yieldPath; travel.Next = 1; travel.SharedStages = null; travel.Yielding = true; }
                                 }
                                 travel.Blocked = 0;
                             }
@@ -418,9 +511,11 @@ namespace Team5.Rebuild.Simulation
                     var next = Vector3.MoveTowards(Reference, referencePath[1], sim.definition.Unit.Speed * dt);
                     Reference = next;
                     if ((next - referencePath[1]).sqrMagnitude < .000001f) referencePath.RemoveAt(0);
+                    if (referencePath.Count > 0) referencePath[0] = Reference;
                 }
                 foreach (var unit in living) unit.SquadReference = Reference;
-                if (activeReform && !Moving)
+                if (activeReform && !travels.Any(t => sim.units.Any(u => u.Id == t.Key && u.IsAlive &&
+                    (t.Value.Next < t.Value.Path.Count || (u.Position - t.Value.Goal).sqrMagnitude > .000001f))))
                 {
                     reforming = false;
                     if (continueAfterReform) Request(new MovementRequest(destination));

@@ -59,6 +59,19 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             var root = (RectTransform)screen.transform;
             screenRoot = root;
             BuildPanels(startGameButton.GetComponentInParent<Canvas>().rootCanvas.transform);
+            // Keep all wave controls in the same coordinate space as the squad board.
+            var startRect = (RectTransform)startGameButton.transform;
+            startRect.SetParent(root, false);
+            PlaceWaveControl(startRect, new Vector2(465, -248), new Vector2(276, 58));
+            foreach (var label in startGameButton.GetComponentsInChildren<TMP_Text>(true))
+            {
+                LegacyUiKit.Stretch(label.rectTransform);
+                label.alignment = TextAlignmentOptions.Center;
+                label.margin = new Vector4(10, 0, 10, 4);
+                label.enableAutoSizing = true;
+                label.fontSizeMin = 18; label.fontSizeMax = 32;
+                label.raycastTarget = false;
+            }
 
             // Paint Squad currency chip: dark pill, big coin over its left end, white number.
             var chip = LegacyUiKit.CreatePill(root, "Gold Chip", Vector2.zero, new Vector2(196, 44), new Color(LegacyUiKit.Ink.r, LegacyUiKit.Ink.g, LegacyUiKit.Ink.b, 0.85f));
@@ -75,9 +88,10 @@ namespace Team5.Rebuild.Presentation.LegacyUI
 
             levelLabel = LegacyUiKit.CreateText(root, "Level Label", "", Vector2.zero, new Vector2(360, 60),
                 36, Color.white, FontStyles.Bold);
-            levelLabel.alignment = TextAlignmentOptions.Bottom;
+            levelLabel.alignment = TextAlignmentOptions.Center;
             levelLabel.rectTransform.anchorMin = levelLabel.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
-            levelLabel.rectTransform.pivot = new Vector2(0.5f, 0);
+            PlaceWaveControl(levelLabel.rectTransform, new Vector2(465, -126), new Vector2(276, 42));
+            levelLabel.fontSize = 30; levelLabel.enableAutoSizing = true; levelLabel.fontSizeMin = 18; levelLabel.fontSizeMax = 30;
             LegacyUiKit.CreateHeartIcon(levelLabel.transform, Vector2.zero);
             levelHeart = (RectTransform)levelLabel.transform.Find("Heart Icon");
             levelHeart.anchorMin = levelHeart.anchorMax = levelHeart.pivot = new Vector2(0.5f, 0.5f);
@@ -91,7 +105,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             previewLabel.fontSizeMax = 24;
             var previewRect = (RectTransform)previewButton.transform;
             previewRect.anchorMin = previewRect.anchorMax = new Vector2(0.5f, 0.5f);
-            previewRect.pivot = new Vector2(0.5f, 0);
+            PlaceWaveControl(previewRect, new Vector2(465, -184), new Vector2(276, 48));
             previewButton.onClick.AddListener(OpenNextLevelPreview);
             RefreshLevelLabel();
 
@@ -124,7 +138,6 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             Preparation.Changed += Refresh;
             startGameButton.onClick.AddListener(StartWave);
             Refresh();
-            CaptainGuide.Attach(this, root);
             StartWaveNotice.Attach(this, root);
             StorageFullTutorial.Attach(this, root);
             if (IsFirstCampaignPreparation && !Preparation.FirstSummonPromptCompleted)
@@ -192,7 +205,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             if (IsFirstCampaignPreparation && !Preparation.FirstSummonPromptCompleted) return;
             preparationGuidesAttached = true;
             CaptainGuide.Attach(this, screenRoot);
-            StartWaveNotice.Attach(this, screenRoot);
+            // The empty-squad notice is already attached during Start.
         }
 
         private void ShowSummonGuide()
@@ -276,28 +289,20 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             if (goldLabel != null) goldLabel.text = BattleSceneFlow.HasUnlimitedGold ? "UNLIMITED" : $"{BattleSceneFlow.GoldBalance:N0}";
         }
 
+        private static void PlaceWaveControl(RectTransform rect, Vector2 position, Vector2 size)
+        {
+            rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(.5f, .5f);
+            rect.localScale = Vector3.one;
+            rect.anchoredPosition = position;
+            rect.sizeDelta = size;
+        }
+
         private void RefreshLevelLabel()
         {
             if (levelLabel == null) return;
             var lives = $"{BattleSceneFlow.CurrentLevelLivesRemaining}/{BattleSession.DefaultLivesPerLevel}";
             var levelName = BattleSceneFlow.IsTestRun ? "TEST LEVEL" : $"LEVEL {Mathf.Max(1, BattleSceneFlow.NextBattleLevelNumber)}";
             levelLabel.text = $"{levelName}  <space=30>{lives}";
-            var buttonRect = (RectTransform)startGameButton.transform;
-            var top = buttonRect.TransformPoint(new Vector3(buttonRect.rect.center.x, buttonRect.rect.yMax, 0));
-            var point = levelLabel.rectTransform.parent.InverseTransformPoint(top);
-            var labelBottom = point.y + 12;
-            if (previewButton != null)
-            {
-                var parent = levelLabel.rectTransform.parent;
-                var left = parent.InverseTransformPoint(buttonRect.TransformPoint(new Vector3(buttonRect.rect.xMin, buttonRect.rect.center.y, 0)));
-                var right = parent.InverseTransformPoint(buttonRect.TransformPoint(new Vector3(buttonRect.rect.xMax, buttonRect.rect.center.y, 0)));
-                var bottom = parent.InverseTransformPoint(buttonRect.TransformPoint(new Vector3(buttonRect.rect.center.x, buttonRect.rect.yMin, 0)));
-                var rect = (RectTransform)previewButton.transform;
-                rect.sizeDelta = new Vector2(Vector3.Distance(left, right) * 0.85f, Vector3.Distance(point, bottom) * 0.75f);
-                rect.anchoredPosition = new Vector2(point.x, point.y + 12);
-                labelBottom = rect.anchoredPosition.y + rect.sizeDelta.y + 12;
-            }
-            levelLabel.rectTransform.anchoredPosition = new Vector2(point.x, labelBottom);
             if (levelHeart != null)
             {
                 levelLabel.ForceMeshUpdate();
@@ -521,7 +526,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
 
         // Two cream boards like the Paint Squad Army screen: unit storage on the left, the squad on the right.
         // They live on the scene canvas (same 1280x720 width-matched space as the squad screen), right above its
-        // backdrop, so the authored Start Wave button still draws over the storage board's corner.
+        // backdrop; wave controls are in the foreground squad canvas.
         private static void BuildPanels(Transform sceneCanvas)
         {
             if (sceneCanvas.Find("Storage Board") != null) return;

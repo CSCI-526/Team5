@@ -21,6 +21,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         private BattleSimulation simulation;
         private Coroutine routine;
         private RectTransform canvasRoot, arrow;
+        private readonly Vector3[] buttonCorners = new Vector3[4];
         private TMP_Text title, description;
         private Button nextButton;
         private bool next;
@@ -62,7 +63,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             Build();
             var cells = session.Route.Cells;
             worldTarget = cells[Mathf.Min(cells.Count - 1, 5)].TopCenter;
-            Show(1, "CLICK TO MOVE", "Click the road ahead.", true);
+            Show(1, "CLICK TO MOVE", "Click the road ahead. Press Space or click Pause to pause/resume.", true);
             var moved = false;
             while (Running && !moved && !next)
             {
@@ -74,26 +75,32 @@ namespace Team5.Rebuild.Presentation.LegacyUI
 
             worldTarget = session.Towers.Count > 0 ? session.Towers[0].transform.position :
                 cells[Mathf.Min(cells.Count - 1, 8)].TopCenter;
-            Show(2, "DODGE ENEMIES", "Steer around towers and traps.", true);
+            Show(2, "DODGE ENEMIES", "Steer around towers and traps. Skills use the numbered keys shown on their icons.", true);
             yield return WaitForNextOrSeconds(3.5f);
             if (!Running) { Finish(); yield break; }
 
-            var panel = FindFirstObjectByType<LegendarySkillPanel>();
-            var button = panel != null ? panel.ButtonForRole(UnitRole.Captain) : null;
+            // Skills are built in the HUD Update, not necessarily before the tutorial.
+            Button button = null;
+            var findUntil = Time.unscaledTime + 2f;
+            while (Running && button == null)
+            {
+                button = FindCaptainButton();
+                if (button != null || !HasCaptain() || Time.unscaledTime >= findUntil) break;
+                yield return null;
+            }
             if (button != null)
             {
                 uiTarget = (RectTransform)button.transform;
-                Show(3, "CAPTAIN: CALL BACKUP", "Tap the gold skill for reinforcements; full squads strike towers.", false);
+                var panel = button.GetComponentInParent<LegendarySkillPanel>();
+                var key = panel != null ? panel.HotkeyForRole(UnitRole.Captain) : "";
+                var instruction = key.Length > 0 ? $"Press {key} or click the Captain skill to call reinforcements." :
+                    "Click the Captain skill to call reinforcements.";
+                Show(3, "CAPTAIN: CALL BACKUP", instruction + " Full squads strike towers.", false);
                 var used = false;
                 activeSkillListener = (role, member, position) =>
                 { if (role == UnitRole.Captain) used = true; };
                 simulation.LegendarySkillUsed += activeSkillListener;
-                var skillTimer = 0f;
-                while (Running && !used && !next && skillTimer < 6f)
-                {
-                    skillTimer += Time.unscaledDeltaTime;
-                    yield return null;
-                }
+                while (Running && !used && !next && HasCaptain()) yield return null;
                 simulation.LegendarySkillUsed -= activeSkillListener;
                 activeSkillListener = null;
                 if (!Running) { Finish(); yield break; }
@@ -101,7 +108,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             next = false;
 
             worldTarget = cells[cells.Count - 1].TopCenter;
-            Show(4, "REACH THE GOAL", "Click the goal to finish. Six deployment cards; roles field different unit counts.", true);
+            Show(4, "REACH THE GOAL", "Keep the squad inside EXIT for 2 seconds. You can keep moving inside.", true);
             yield return WaitForNextOrSeconds(3f);
             if (Running) TutorialAnalytics.Complete();
             Finish();
@@ -135,6 +142,10 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             description = LegacyUiKit.CreateText(banner.transform, "Help", "", new Vector2(0, -19),
                 new Vector2(620, 34), 16, Color.white);
             description.raycastTarget = false;
+            description.textWrappingMode = TextWrappingModes.Normal;
+            description.enableAutoSizing = true;
+            description.fontSizeMin = 12f;
+            description.fontSizeMax = 16f;
             nextButton = LegacyUiKit.CreateButton(canvasRoot, "Next Hint", new Vector2(300, -121),
                 new Vector2(118, 38), LegacyUiKit.Green, 8f);
             var rect = (RectTransform)nextButton.transform;
@@ -143,11 +154,14 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                 new Vector2(112, 30), 14, Color.white, FontStyles.Bold);
             nextButton.onClick.AddListener(Continue);
             arrow = LegacyUiKit.CreateRect(canvasRoot, "Animated Tutorial Pointer", Vector2.zero, new Vector2(76, 76));
-            var shape = LegacyUiKit.CreateImage(arrow, "White Arrow", Vector2.zero,
-                new Vector2(68, 68), Color.white);
+            // Triangle sprite points RIGHT by default. Add a shaft and dark outline.
+            LegacyUiKit.CreateImage(arrow, "Shaft outline", new Vector2(-18, 0), new Vector2(44, 22), Color.black, 4);
+            var outline = LegacyUiKit.CreateImage(arrow, "Head outline", new Vector2(12, 0), new Vector2(52, 52), Color.black);
+            outline.sprite = NextMapShapes.Triangle;
+            LegacyUiKit.CreateImage(arrow, "Shaft", new Vector2(-18, 0), new Vector2(40, 14), LegacyUiKit.Gold, 3);
+            var shape = LegacyUiKit.CreateImage(arrow, "Head", new Vector2(12, 0), new Vector2(42, 42), LegacyUiKit.Gold);
             shape.sprite = NextMapShapes.Triangle;
-            shape.raycastTarget = false;
-            arrow.localRotation = Quaternion.Euler(0, 0, -90);
+            arrow.SetAsLastSibling();
         }
 
         private void Show(int step, string heading, string line, bool world)
@@ -160,19 +174,69 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             TutorialAnalytics.Step(step, 4, heading);
         }
 
+        private bool HasCaptain()
+        {
+            if (simulation == null) return false;
+            foreach (var unit in simulation.Units)
+                if (unit.IsAlive && unit.Role == UnitRole.Captain) return true;
+            return false;
+        }
+
+        private Button FindCaptainButton()
+        {
+            foreach (var panel in FindObjectsByType<LegendarySkillPanel>(FindObjectsSortMode.None))
+            {
+                if (panel.gameObject.scene != gameObject.scene) continue;
+                var button = panel.ButtonForRole(UnitRole.Captain);
+                if (button != null && button.gameObject.activeInHierarchy) return button;
+            }
+            return null;
+        }
+
         private void LateUpdate()
         {
             if (canvasRoot == null || !canvasRoot.gameObject.activeSelf || arrow == null) return;
-            var camera = Camera.main;
-            if (camera == null) return;
-            var point = pointToWorld ? camera.WorldToScreenPoint(worldTarget) :
-                uiTarget != null ? RectTransformUtility.WorldToScreenPoint(null, uiTarget.position) : Vector3.zero;
-            if (point.z < 0 && pointToWorld) { arrow.gameObject.SetActive(false); return; }
-            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRoot,
-                new Vector2(point.x, point.y), null, out var local)) return;
+            Vector2 screen;
+            Vector2 direction;
+            if (pointToWorld)
+            {
+                var camera = Camera.main;
+                if (camera == null) { arrow.gameObject.SetActive(false); return; }
+                var p = camera.WorldToScreenPoint(worldTarget);
+                if (p.z <= 0) { arrow.gameObject.SetActive(false); return; }
+                screen = new Vector2(p.x, p.y);
+                direction = Vector2.down;
+            }
+            else
+            {
+                if (uiTarget == null || !uiTarget.gameObject.activeInHierarchy)
+                {
+                    var button = FindCaptainButton();
+                    if (button == null) { arrow.gameObject.SetActive(false); return; }
+                    uiTarget = (RectTransform)button.transform;
+                }
+                var canvas = uiTarget.GetComponentInParent<Canvas>();
+                if (canvas == null || !canvas.isActiveAndEnabled) { arrow.gameObject.SetActive(false); return; }
+                var rootCanvas = canvas.rootCanvas;
+                var targetCamera = rootCanvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : rootCanvas.worldCamera;
+                // Point at the RIGHT EDGE of the left-side HUD button, not its top-left pivot.
+                uiTarget.GetWorldCorners(buttonCorners);
+                screen = RectTransformUtility.WorldToScreenPoint(targetCamera, (buttonCorners[2] + buttonCorners[3]) * .5f);
+                direction = Vector2.left;
+                var tutorialCanvas = canvasRoot.GetComponent<Canvas>();
+                if (tutorialCanvas != null) tutorialCanvas.sortingOrder = Mathf.Max(920, rootCanvas.sortingOrder + 1);
+            }
+            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRoot, screen, null, out var local))
+            { arrow.gameObject.SetActive(false); return; }
+            var bounds = canvasRoot.rect;
+            if (!bounds.Contains(local)) { arrow.gameObject.SetActive(false); return; }
+            var offset = 58f + Mathf.Sin(Time.unscaledTime * 6f) * 8f;
+            var pos = local - direction * offset;
+            // Keep the pointer on screen; reverse the approach if the default side does not fit.
+            if (!bounds.Contains(pos)) { direction = -direction; pos = local - direction * offset; }
             arrow.gameObject.SetActive(true);
-            arrow.anchoredPosition = local + new Vector2(-60, 40 + Mathf.Sin(Time.unscaledTime * 6f) * 10f);
-            arrow.localScale = Vector3.one * (1f + Mathf.Sin(Time.unscaledTime * 5f) * .08f);
+            arrow.anchoredPosition = pos;
+            arrow.localRotation = Quaternion.Euler(0, 0, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg);
         }
 
         public void Continue() => next = true;

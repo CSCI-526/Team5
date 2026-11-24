@@ -7,7 +7,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
     public sealed class MinionLobber
     {
         private const float ArcHeight = 2.2f;
-        private const float BombSize = 0.24f;
+        private const float BombSize = 0.36f;
         private const float ShadowSize = 0.34f;
         private const float SplatSeconds = 1.1f;
         private const float SplatSize = 2.3f;
@@ -72,19 +72,31 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         public void Tick(BattleSimulation simulation, float time, float deltaTime)
         {
             MarkedThisFrame = false;
-            if (simulation == null) return;
+            if (simulation == null || simulation.Outcome != BattleOutcome.Running || !post.IsAlive)
+            {
+                Reset();
+                return;
+            }
             var now = simulation.ElapsedTime;
-            var simulated = lastTime < 0d ? 0f : (float)(now - lastTime);
+            var simulated = lastTime < 0d ? 0f : Mathf.Max(0f, (float)(now - lastTime));
             lastTime = now;
-            var running = simulation.Outcome == BattleOutcome.Running;
-            if (marking) Fly(simulation, now, time, running);
+            if (simulation.IsPaused) return;
+            var wasMarking = marking;
             if (splatLeft > 0f)
             {
-                splatLeft = Mathf.Max(0f, splatLeft - deltaTime);
+                splatLeft = Mathf.Max(0f, splatLeft - simulated);
                 splat.gameObject.SetActive(splatLeft > 0f);
                 MinionMaterials.SetColor(splatMaterial, Tint(MinionPalette.Glass, 0.8f * splatLeft / SplatSeconds));
             }
-            if (!running || simulation.IsPaused || marking || !post.IsAlive || post.IsFrozen) return;
+            if (marking) Fly(simulation, now, (float)now, true);
+            if (simulation.Outcome != BattleOutcome.Running) { Reset(); return; }
+            if (post.IsFrozen) return;
+            // BombInterval is launch-to-launch; flight time is part of it.
+            if (wasMarking)
+            {
+                cooldown = Mathf.Max(0f, cooldown - simulated);
+                return;
+            }
             targets.Clear();
             var origin = post.Position;
             foreach (var unit in simulation.Units)
@@ -93,6 +105,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             if (targets.Count == 0)
             {
                 engaged = false;
+                cooldown = Mathf.Max(0f, cooldown - simulated);
                 return;
             }
             if (!engaged)
@@ -103,14 +116,17 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             cooldown -= simulated;
             if (cooldown > 0f) return;
             if (MinionBombRules.PickTarget(targets, origin, MinionRules.BombReach, MinionRules.BombRadius, out var target) <= 0) return;
-            center = new Vector3(target.x, origin.y, target.z);
+            // PickTarget returns a ground position from living squad members.
+            // Using the mortar's height buries the warning on raised terrain.
+            center = target;
+            post.Face(center);
             launch = post.MuzzlePosition;
             landAt = now + MinionRules.BombWarning;
             cooldown = MinionRules.BombInterval;
             marking = true;
             MarkedThisFrame = true;
             post.Kick();
-            Fly(simulation, now, time, true);
+            Fly(simulation, now, (float)now, true);
         }
 
         private void Fly(BattleSimulation simulation, double now, float time, bool running)
@@ -128,7 +144,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             shadow.gameObject.SetActive(true);
             var size = MinionRules.BombRadius * 2.06f;
             ring.position = center + Vector3.up * GroundLift;
-            ring.localScale = Vector3.one * size * (1f + Mathf.Sin(time * 14f) * 0.03f);
+            ring.localScale = Vector3.one * size;
             fill.position = center + Vector3.up * (GroundLift * 0.5f);
             fill.localScale = Vector3.one * (size * Mathf.Max(0.05f, progress));
             MinionMaterials.SetColor(ringMaterial, Tint(MinionPalette.Danger, 0.75f + Mathf.Sin(time * 14f) * 0.25f));
@@ -137,7 +153,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             bomb.position = Vector3.Lerp(launch, center, progress) + Vector3.up * (4f * ArcHeight * progress * (1f - progress));
             shadow.position = ground + Vector3.up * (GroundLift * 1.5f);
             if (now < landAt || simulation.IsPaused) return;
-            simulation.TryApplyEnvironmentalDamage(center, MinionRules.BombRadius, damage);
+            simulation.TryApplyEnvironmentalDamage(center, MinionRules.BombRadius, damage, post.Tower.RuntimeState.Id);
             marking = false;
             HideMark();
             splat.position = center + Vector3.up * (GroundLift * 2f);

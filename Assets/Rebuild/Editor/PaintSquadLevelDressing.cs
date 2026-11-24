@@ -159,7 +159,7 @@ namespace Team5.Rebuild.Editor
             foreach (var tile in tiles)
             {
                 var distance = Mathf.Max(minX - tile.x, tile.x - maxX, minZ - tile.z, tile.z - maxZ);
-                var (table, chance) = distance <= 1 ? (Edge, .3) : distance == 2 ? (Near, .45) : (Far, .72);
+                var (table, chance) = distance <= 1 ? (Edge, 0.0) : distance == 2 ? (Near, .12) : (Far, .28);
                 // Draw every random value up front so one rejection does not shift the rest of the layout.
                 var roll = random.NextDouble();
                 var pick = Pick(table, random.NextDouble());

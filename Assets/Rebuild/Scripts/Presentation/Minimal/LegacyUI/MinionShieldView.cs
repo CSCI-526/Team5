@@ -68,7 +68,12 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         public void Tick(BattleSimulation simulation, float time, float deltaTime)
         {
             var towerAlive = simulation != null && towerId >= 1 && towerId <= simulation.Towers.Count && simulation.Towers[towerId - 1].IsAlive;
-            var shielded = towerAlive && simulation.IsTowerShielded(towerId);
+            if (!towerAlive || simulation.Outcome != BattleOutcome.Running)
+            {
+                Reset();
+                return;
+            }
+            var shielded = simulation.IsTowerShielded(towerId);
             if (wasShielded && !shielded && towerAlive) pop = PopSeconds;
             wasShielded = shielded;
             flash = Mathf.Max(0f, flash - deltaTime);

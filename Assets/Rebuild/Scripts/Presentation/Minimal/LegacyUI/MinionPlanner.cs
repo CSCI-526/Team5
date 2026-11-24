@@ -58,9 +58,11 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             var up = Vector3.Dot(side, -travel) >= 0f ? side : -side;
             var down = -up;
             var back = -toward;
+            var path = new NextMapRoute(route);
             var pattern = kind == MinionKind.Bearer
                 ? new[] { toward, toward + up, toward + down, up, down, back + up, back + down, back }
-                : new[] { back, back + down, back + up, down, up, back * 2f, back * 2f + down, back * 2f + up };
+                : new[] { back, back + down, back + up, down, up, back * 2f, back * 2f + down, back * 2f + up, toward, toward + up, toward + down,
+                    toward * 2f, toward * 2f + up, toward * 2f + down, toward * 3f };
             var origin = new Vector2Int(Mathf.RoundToInt(tower.Position.x), Mathf.RoundToInt(tower.Position.z));
             for (var pass = 0; pass < 2 && result.Count < count; pass++)
                 foreach (var step in pattern)
@@ -68,10 +70,30 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                     if (result.Count >= count) break;
                     var cell = origin + new Vector2Int(Mathf.RoundToInt(step.x), Mathf.RoundToInt(step.z));
                     if (taken.Contains(cell) || !sites.CanHost(cell) || (pass == 0 && !sites.IsClean(cell)) || Seals(cell, sites, taken)) continue;
+                    var top = sites.Top(cell);
+                    // A mortar behind a long-range tower can otherwise be too far away to
+                    // ever acquire a squad. Use distance to the route segments, not just nodes.
+                    var distance = DistanceToRoute(top, path);
+                    if (kind == MinionKind.Lobber && distance > MinionRules.BombReach - MinionRules.BombRadius) continue;
+                    // A shield should be reachable by ordinary attackers near the road edge.
+                    if (kind == MinionKind.Bearer && distance > 3.4f) continue;
                     taken.Add(cell);
-                    result.Add(sites.Top(cell));
+                    result.Add(top);
                 }
             return result;
+        }
+
+        private static float DistanceToRoute(Vector3 point, NextMapRoute route)
+        {
+            var best = float.PositiveInfinity;
+            for (var i = 1; i < route.Count; i++)
+            {
+                var a = Flat(route[i - 1]);
+                var delta = Flat(route[i]) - a;
+                var t = delta.sqrMagnitude < .000001f ? 0f : Mathf.Clamp01(Vector3.Dot(Flat(point) - a, delta) / delta.sqrMagnitude);
+                best = Mathf.Min(best, (Flat(point) - a - delta * t).magnitude);
+            }
+            return best;
         }
 
         private static bool Seals(Vector2Int cell, MinionSites sites, HashSet<Vector2Int> taken)

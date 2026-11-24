@@ -30,9 +30,9 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             new[] { MinionKind.Bearer, MinionKind.Lobber, MinionKind.Bearer, MinionKind.Lobber }
         };
         private static readonly float[] bearerHp = { 0f, 0f, 6f, 7f, 8f, 8f, 9f, 10f };
-        private static readonly float[] bearerDamage = { 0f, 0f, 0.3f, 0.34f, 0.4f, 0.44f, 0.48f, 0.52f };
+        private static readonly float[] bearerDamage = { 0f, 0f, 0.35f, 0.40f, 0.46f, 0.50f, 0.55f, 0.60f };
         private static readonly float[] lobberHp = { 0f, 0f, 5f, 5f, 6f, 6f, 7f, 8f };
-        private static readonly float[] bombDamage = { 0f, 0f, 0.5f, 0.5f, 0.6f, 0.65f, 0.7f, 0.8f };
+        private static readonly float[] bombDamage = { 0f, 0f, 0.5f, 0.70f, 0.85f, 0.95f, 1.05f, 1.15f };
 
         public static bool HasMinions(int level) => kindsByLevel[Row(level)].Length > 0;
 

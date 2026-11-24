@@ -4,6 +4,7 @@ using Team5.Rebuild.Simulation;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.UI;
 using UnityEngine.UI;
 
@@ -26,6 +27,13 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         private LegacyHealthBars healthBars;
         private Button pauseButton;
         private TMP_Text pauseLabel;
+        private Image pauseKeycap;
+        private RectTransform pauseTooltip;
+        private TMP_Text pauseTooltipLabel;
+        private int lastPauseFrame = -1;
+        internal bool HotkeyHudActive => isActiveAndEnabled && canvas != null && canvas.isActiveAndEnabled &&
+            session != null && session.Simulation != null && !session.RecoveryRequired &&
+            !BattleSceneFlow.IsPreviewScene(gameObject.scene);
         private readonly Button[] squadButtons = new Button[3];
         private LegacyUnitIconUI squadIcon;
         private BattleUnitInspection inspection;
@@ -98,6 +106,11 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         private void Update()
         {
             Refresh();
+            if (HotkeyHudActive && BattleHotkeys.CanReadKeyboard && pauseButton != null &&
+                pauseButton.gameObject.activeInHierarchy && pauseButton.IsInteractable() &&
+                Keyboard.current.spaceKey.wasPressedThisFrame)
+                TogglePause();
+            UpdatePauseTooltip();
             if (session != null && session.RecoveryRequired && recoveryPanel == null)
                 recoveryPanel = LegacyLevelOneRecovery.Open(session);
         }
@@ -108,7 +121,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             livesLabel.text = LegacyUiKit.LifeCounterText(session.AttemptsRemaining, session.AttemptsPerLevel);
             if (editButton != null) editButton.interactable = CanEditFormation;
             speedSlider.interactable = bound != null && bound.Outcome == BattleOutcome.Running && !HasOpenEditor && !session.IsUnitInspectionActive && (!TutorialOwnsPause || TutorialAllowsSpeed);
-            pauseButton.interactable = bound != null && bound.Outcome == BattleOutcome.Running && !HasOpenEditor && !TutorialOwnsPause;
+            pauseButton.interactable = bound != null && bound.Outcome == BattleOutcome.Running && !HasOpenEditor && !TutorialOwnsPause && Time.timeScale > 0f;
             pauseLabel.text = bound != null && bound.IsPaused ? "Resume" : "Pause";
             squadButtons[0].interactable = false;
             squadButtons[0].gameObject.SetActive(false);
@@ -158,19 +171,45 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             if (pauseButton == null)
             {
                 pauseButton = LegacyUiKit.CreateButton(speedSlider.transform, "Pause Battle", Vector2.zero,
-                    new Vector2(80, 22), LegacyUiKit.ButtonSlate, 8);
+                    new Vector2(102, 24), LegacyUiKit.ButtonSlate, 8);
                 var rect = (RectTransform)pauseButton.transform;
                 rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 1);
                 rect.anchoredPosition = new Vector2(0, 30);
-                pauseLabel = LegacyUiKit.CreateText(rect, "Label", "Pause", new Vector2(0, 1),
-                    new Vector2(76, 20), 13, Color.white, FontStyles.Bold, 1);
+                pauseLabel = LegacyUiKit.CreateText(rect, "Label", "Pause", Vector2.zero,
+                    new Vector2(58, 20), 13, Color.white, FontStyles.Bold, 1);
+                pauseLabel.rectTransform.anchorMin = pauseLabel.rectTransform.anchorMax = new Vector2(.5f, .5f);
+                pauseLabel.rectTransform.pivot = new Vector2(.5f, .5f);
+                pauseLabel.rectTransform.anchoredPosition = new Vector2(11f, 0f);
                 pauseButton.onClick.AddListener(TogglePause);
+                pauseKeycap = BattleHotkeys.CreateKeycap(rect, BattleHotkeys.PauseLabel,
+                    new Vector2(0f, .5f), new Vector2(0f, .5f), new Vector2(4f, 0f), new Vector2(34f, 18f), 9.5f);
+                var tip = LegacyUiKit.CreateImage(rect, "Pause shortcut tooltip", Vector2.zero,
+                    new Vector2(174f, 27f), new Color(.07f, .12f, .19f, .96f), 5f);
+                pauseTooltip = tip.rectTransform;
+                pauseTooltip.anchorMin = pauseTooltip.anchorMax = new Vector2(.5f, 0f);
+                pauseTooltip.pivot = new Vector2(.5f, 1f);
+                pauseTooltip.anchoredPosition = new Vector2(0f, -4f);
+                pauseTooltipLabel = LegacyUiKit.CreateText(pauseTooltip, "Shortcut", "Pause / Resume [Space]",
+                    Vector2.zero, new Vector2(170f, 25f), 12f, Color.white);
+                pauseTooltip.gameObject.SetActive(false);
             }
             pauseButton.gameObject.SetActive(true);
         }
+        private void UpdatePauseTooltip()
+        {
+            if (pauseTooltip == null) return;
+            bool hovered = HotkeyHudActive && Mouse.current != null && pauseButton != null &&
+                (BattleHotkeys.PointerOn((RectTransform)pauseButton.transform, Mouse.current.position.ReadValue()) ||
+                 (pauseKeycap != null && BattleHotkeys.PointerOn(pauseKeycap.rectTransform, Mouse.current.position.ReadValue())));
+            pauseTooltip.gameObject.SetActive(hovered);
+            if (hovered) pauseTooltipLabel.text = bound != null && bound.IsPaused ? "Resume [Space]" : "Pause [Space]";
+        }
         public void TogglePause()
         {
-            if (bound == null || bound.Outcome != BattleOutcome.Running || HasOpenEditor || TutorialOwnsPause) return;
+            // A UI submit and a shortcut can arrive in the same frame; toggle only once.
+            if (!HotkeyHudActive || bound == null || bound.Outcome != BattleOutcome.Running ||
+                HasOpenEditor || TutorialOwnsPause || Time.timeScale <= 0f || lastPauseFrame == Time.frameCount) return;
+            lastPauseFrame = Time.frameCount;
             bound.SetPaused(!bound.IsPaused);
             GameAnalytics.TrackBattle("pause_toggle", ("paused", bound.IsPaused));
             Refresh();

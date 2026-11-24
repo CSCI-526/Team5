@@ -16,6 +16,39 @@ namespace Team5.Rebuild.Simulation
         private double time;
         private bool stepping;
         private double healTimer;
+        private float goalHoldElapsed;
+        private bool campaignTankPressure;
+        // Opt in only for campaign levels after the tutorial; preserved by checkpoints.
+        public void EnableCampaignTankPressure()
+        {
+            if (stepping || SpawnedCount != 0) throw new InvalidOperationException("Configure tower pressure before spawning.");
+            campaignTankPressure = true;
+        }
+        public const float GoalHoldSeconds = 2f;
+        public Vector3 GoalPosition => definition.Waypoints[definition.Waypoints.Count - 1];
+        // Accommodate the full 3x3 formation, including the wider campaign spacing.
+        public float StartZoneRadius => continuous == null ? 1.1f : continuous.GoalZoneRadius;
+        public float GoalZoneRadius => StartZoneRadius + .25f;
+        public float GoalHoldProgress => Outcome == BattleOutcome.Defeat ? 0f : Mathf.Clamp01(goalHoldElapsed / GoalHoldSeconds);
+        public bool IsSquadReadyToCapture
+        {
+            get
+            {
+                if (continuous == null || Objective != BattleObjective.ReachGoal || Outcome != BattleOutcome.Running ||
+                    PendingSpawnCount != 0 || AliveCount == 0) return false;
+                // Actual living soldier positions, not the virtual movement anchor. Moving or
+                // reforming inside the zone is allowed; no soldier may remain outside it.
+                var goal = GoalPosition;
+                var count = 0;
+                foreach (var unit in units)
+                {
+                    if (!unit.IsAlive) continue;
+                    if (HorizontalDistanceSquared(unit.Position, goal) > GoalZoneRadius * GoalZoneRadius) return false;
+                    count++;
+                }
+                return count > 0;
+            }
+        }
         private int projectileSequence;
         private int extraMemberSequence;
         private List<Vector3> manualRoute;
@@ -119,8 +152,9 @@ namespace Team5.Rebuild.Simulation
             copy.spawnedMembers.UnionWith(spawnedMembers);
             copy.manualRoute = manualRoute == null ? null : new List<Vector3>(manualRoute);
             if (continuous != null) copy.continuous = continuous.Copy(copy);
-            copy.time = time; copy.healTimer = healTimer; copy.projectileSequence = projectileSequence;
+            copy.time = time; copy.healTimer = healTimer; copy.goalHoldElapsed = goalHoldElapsed; copy.projectileSequence = projectileSequence;
             copy.extraMemberSequence = extraMemberSequence;
+            copy.campaignTankPressure = campaignTankPressure;
             copy.Outcome = Outcome; copy.IsPaused = IsPaused;
             copy.SpawnedCount = SpawnedCount; copy.KilledCount = KilledCount; copy.ReachedGoalCount = ReachedGoalCount;
             copy.TowersDestroyedCount = TowersDestroyedCount; copy.TowerBountyGoldEarned = TowerBountyGoldEarned;
@@ -178,7 +212,7 @@ namespace Team5.Rebuild.Simulation
                 case UnitRole.Captain:
                     // A RANDOM ordinary role at the campaign's currently unlocked summoning tier.
                     // Roll only after checking capacity; failed casts must not advance RNG or spend cooldown.
-                    if (HasFreeReinforcementSlot() && TrySpawnExtra(RollCaptainReinforcement(), caster.Position)) affected++;
+                    if (TrySummonCaptainReinforcement(caster.Position)) affected++;
                     else
                     {
                         TowerState nearest = null;
@@ -271,6 +305,7 @@ namespace Team5.Rebuild.Simulation
             stepping = true;
             try
             {
+                var wasCapturing = IsSquadReadyToCapture;
                 Spawn();
                 TickLegendaryEffects(deltaTime);
                 if (continuous != null) continuous.Step(deltaTime);
@@ -294,7 +329,7 @@ namespace Team5.Rebuild.Simulation
                     }
                 }
                 time += deltaTime;
-                CheckContinuousGoal();
+                CheckContinuousGoal(deltaTime, wasCapturing);
                 if (Outcome != BattleOutcome.Running) return;
                 if (Objective == BattleObjective.ReachGoal)
                 {
@@ -354,6 +389,16 @@ namespace Team5.Rebuild.Simulation
             return occupied.Count < LegendarySkillRules.CaptainBattlefieldCapacity;
         }
 
+        private bool TrySummonCaptainReinforcement(Vector3 near)
+        {
+            if (!HasFreeReinforcementSlot()) return false;
+            // A geometrically blocked summon must not consume a random roll.
+            var randomState = UnityEngine.Random.state;
+            if (TrySpawnExtra(RollCaptainReinforcement(), near)) return true;
+            UnityEngine.Random.state = randomState;
+            return false;
+        }
+
         private static readonly UnitRole[] CaptainPool =
         { UnitRole.Attack, UnitRole.Tank, UnitRole.Heal, UnitRole.Sniper, UnitRole.Vanguard, UnitRole.Demolisher };
 
@@ -381,30 +426,46 @@ namespace Team5.Rebuild.Simulation
             foreach (var slot in prefer)
             {
                 if (reserved.Contains(slot) || continuous != null && !continuous.CanSpawnInSlot(slot)) continue;
-                var position = continuous != null ? continuous.Reference + SquadCombatRules.Offset(slot) *
-                    continuous.FormationSpacing : near - (units.Count > 0 ? units[0].FormationOffset : Vector3.zero) + SquadCombatRules.Offset(slot);
-                // For tight open maps, let continuous movement repair the initial shape later.
-                var unit = new UnitState(++extraMemberSequence, definition, position, 1,
-                    SquadCombatRules.Slot(slot), SquadCombatRules.Offset(slot));
-                units.Add(unit); SpawnedCount++;
-                if (continuous != null) continuous.Spawn(unit);
+                var leader = units.Find(u => u.IsAlive);
+                var progress = leader != null ? leader.RouteProgress : 0f;
+                var offset = SquadCombatRules.Offset(slot);
+                var position = continuous != null ? continuous.Reference + offset * continuous.FormationSpacing :
+                    (leader != null ? leader.AnchorPosition : near) + offset;
+                if (continuous == null && !CanStand(position)) continue;
+                var unit = new UnitState(extraMemberSequence + 1, definition, position, 1,
+                    SquadCombatRules.Slot(slot), offset);
+                unit.RouteProgress = progress;
+                unit.NextWaypoint = leader != null ? leader.NextWaypoint : NextWaypoint(progress);
+                units.Add(unit);
+                if (continuous != null && !continuous.JoinReinforcement(unit))
+                {
+                    units.RemoveAt(units.Count - 1);
+                    continue;
+                }
+                extraMemberSequence++;
+                SpawnedCount++;
                 UnitSpawned?.Invoke(new UnitSpawnedEvent(unit));
                 return true;
             }
             return false;
         }
 
-        public bool TryApplyEnvironmentalDamage(Vector3 location, float radius, float damage)
+        public bool TryApplyEnvironmentalDamage(Vector3 location, float radius, float damage) =>
+            TryApplyEnvironmentalDamage(location, radius, damage, -1);
+
+        public bool TryApplyEnvironmentalDamage(Vector3 location, float radius, float damage, int sourceId)
         {
-            if (stepping || IsPaused || Outcome != BattleOutcome.Running || radius <= 0 || damage <= 0) return false;
+            if (stepping || IsPaused || Outcome != BattleOutcome.Running || !BattleNumbers.Finite(location) ||
+                !BattleNumbers.Finite(radius) || !BattleNumbers.Finite(damage) || radius <= 0 || damage <= 0) return false;
             var hit = false;
             foreach (var unit in units)
             {
                 if (!unit.IsAlive || HorizontalDistanceSquared(unit.Position, location) > radius * radius) continue;
-                DamageUnit(-1, unit, damage);
+                DamageUnit(sourceId, unit, damage);
                 hit = true;
             }
-            if (PendingSpawnCount == 0 && AliveCount == 0) End(BattleOutcome.Defeat);
+            if (PendingSpawnCount == 0 && AliveCount == 0)
+                End(Objective == BattleObjective.ReachGoal ? BattleOutcome.Defeat : BattleOutcome.Victory);
             return hit;
         }
 
@@ -413,12 +474,14 @@ namespace Team5.Rebuild.Simulation
             if (!stepping && Outcome == BattleOutcome.Running) End(BattleOutcome.Defeat);
         }
 
-        private void CheckContinuousGoal()
+        private void CheckContinuousGoal(float deltaTime, bool wasCapturing)
         {
-            if (continuous == null || Objective != BattleObjective.ReachGoal ||
-                Outcome != BattleOutcome.Running || PendingSpawnCount > 0 || continuous.Moving) return;
-            var goal = definition.Waypoints[definition.Waypoints.Count - 1];
-            if (HorizontalDistanceSquared(continuous.Reference, goal) > 1.1f * 1.1f) return;
+            if (!IsSquadReadyToCapture) { goalHoldElapsed = 0f; return; }
+            // Do not count the tick that first brought the squad into the zone.
+            if (!wasCapturing) { goalHoldElapsed = 0f; return; }
+            goalHoldElapsed = Mathf.Min(GoalHoldSeconds, goalHoldElapsed + deltaTime);
+            if (goalHoldElapsed + .00001f < GoalHoldSeconds) return;
+            goalHoldElapsed = GoalHoldSeconds;
             foreach (var unit in units)
             {
                 if (!unit.IsAlive) continue;
@@ -517,7 +580,7 @@ namespace Team5.Rebuild.Simulation
 
         private void Attack(TowerState tower, float deltaTime)
         {
-            if (!tower.IsAlive || (tower.Definition.IsWall && !tower.Definition.IsMinion)) { tower.TargetId = null; return; }
+            if (!tower.IsAlive || tower.Definition.Damage <= 0 || (tower.Definition.IsWall && !tower.Definition.IsMinion)) { tower.TargetId = null; return; }
             if (tower.FrozenRemaining > 0) { tower.TargetId = null; return; }
             tower.CooldownRemaining = Math.Max(0, tower.CooldownRemaining - deltaTime);
             tower.TargetId = null;
@@ -537,7 +600,7 @@ namespace Team5.Rebuild.Simulation
                     TowerAttacked?.Invoke(new TowerAttackEvent(tower, unit));
                     if (Objective == BattleObjective.DefendGoal)
                     {
-                        DamageUnit(tower.Id, unit, tower.Definition.Damage);
+                        DamageUnit(tower.Id, unit, tower.Definition.Damage, towerShot: true);
                     }
                     else
                     {
@@ -578,7 +641,7 @@ namespace Team5.Rebuild.Simulation
             if (target == null) return;
             tower.TargetId = target.Id; tower.CooldownRemaining = tower.Definition.AttackInterval;
             TowerAttacked?.Invoke(new TowerAttackEvent(tower, target));
-            if (Objective == BattleObjective.DefendGoal) DamageUnit(tower.Id, target, tower.Definition.Damage);
+            if (Objective == BattleObjective.DefendGoal) DamageUnit(tower.Id, target, tower.Definition.Damage, towerShot: true);
             else projectiles.Add(new ProjectileState
             {
                 Id = ++projectileSequence,
@@ -672,14 +735,14 @@ namespace Team5.Rebuild.Simulation
                 {
                     shot.IsActive = false;
                     if (tower != null) DamageTower(shot.SourceId, tower, shot.Damage, shot.DamageType);
-                    else if (member != null) DamageUnit(shot.SourceId, member, shot.Damage);
+                    else if (member != null) DamageUnit(shot.SourceId, member, shot.Damage, towerShot: true);
                 }
                 shot.Age += deltaTime;
                 if (shot.Age >= 5 || (shot.Straight && shot.Travel >= shot.Range)) shot.IsActive = false;
             }
         }
 
-        private void DamageUnit(int sourceId, UnitState unit, float rawDamage)
+        private void DamageUnit(int sourceId, UnitState unit, float rawDamage, bool towerShot = false)
         {
             if (!unit.IsAlive) return;
             if (unit.BarrierRemaining > 0 && unit.BarrierHits > 0)
@@ -689,7 +752,11 @@ namespace Team5.Rebuild.Simulation
                 TowerHitBlocked?.Invoke(sourceId, unit.Id);
                 return;
             }
-            var applied = Math.Min(unit.Hp, rawDamage * (1 - unit.Definition.Defense));
+            var damage = rawDamage * (1 - unit.Definition.Defense);
+            if (campaignTankPressure && towerShot && unit.Role == UnitRole.Tank &&
+                towers.Exists(t => t.Id == sourceId && !t.Definition.IsWall && !t.Definition.IsMinion))
+                damage = TacticalStageRules.TankHitDamage(rawDamage, unit.MaxHp, unit.Definition.Defense);
+            var applied = Math.Min(unit.Hp, damage);
             unit.Hp = Math.Max(0, unit.Hp - applied);
             if (unit.Hp == 0) { unit.LifeState = UnitLifeState.Dead; KilledCount++; }
             UnitDamaged?.Invoke(new DamageEvent(sourceId, unit, applied));

@@ -42,6 +42,18 @@ namespace Team5.Rebuild.Session
         [SerializeField, Min(.02f)] private float continuousSoldierRadius = .2f;
         [SerializeField, Min(.02f)] private float continuousVisualFootprint = .38f;
         public bool ContinuousSquadMovement => continuousSquadMovement;
+        // Applies to the seven campaign-style click-to-move stages, not legacy drag prototypes.
+        [SerializeField] private bool restrictToTacticalRoad = true;
+        public bool UsesTacticalRoad => restrictToTacticalRoad && squadCombat && continuousSquadMovement && displayedLevelNumber >= 1 && displayedLevelNumber <= 7;
+        public bool IsMovementSurface(BattleCell cell) => cell != null && (cell.IsRouteSurface ||
+            (!UsesTacticalRoad && (manualSquadMovement || continuousSquadMovement) && displayedLevelNumber >= 3 && cell.Kind == CellKind.Ground));
+        public TowerDefinition CaptureTowerDefinition(BattleTower tower, int id, IReadOnlyList<Vector3> routePoints)
+        {
+            var captured = tower.CaptureDefinition(id);
+            // Campaign catalog now contains final combat stats. Only tune firing geometry;
+            // do not multiply authored HP/damage a second time.
+            return UsesTacticalRoad && displayedLevelNumber >= 2 ? TacticalStageRules.Tune(captured, routePoints, displayedLevelNumber, applyStatScaling: false) : captured;
+        }
         public float ContinuousFormationSpacing => continuousFormationSpacing;
         public float ContinuousSoldierRadius => continuousSoldierRadius;
         public float ContinuousVisualFootprint => continuousVisualFootprint;
@@ -249,16 +261,17 @@ namespace Team5.Rebuild.Session
             if (errors.Count > 0) throw new InvalidOperationException(string.Join("\n", errors));
             var towerDefinitions = new List<TowerDefinition>();
             var sceneTowers = Towers;
-            for (var i = 0; i < sceneTowers.Count; i++) towerDefinitions.Add(sceneTowers[i].CaptureDefinition(i + 1));
+            var routePoints = route.CaptureTopCenters();
+            for (var i = 0; i < sceneTowers.Count; i++) towerDefinitions.Add(CaptureTowerDefinition(sceneTowers[i], i + 1, routePoints));
             if (squadCombat)
             {
                 var spawns = CaptureSquadMembers();
                 var passable = new List<Vector3Int>();
                 foreach (var cell in grid.SceneCells)
-                    if ((cell.IsRouteSurface || (manualSquadMovement || continuousSquadMovement) && displayedLevelNumber >= 3 && cell.Kind == CellKind.Ground) && grid.HasClearTop(cell)) passable.Add(cell.Occupancy);
+                    if (IsMovementSurface(cell) && grid.HasClearTop(cell)) passable.Add(cell.Occupancy);
                 var tier = BattleSceneFlow.CardShop != null ? BattleSceneFlow.CardShop.GetLevelRange().minLevel :
                     Mathf.Max(1, displayedLevelNumber - 1);
-                return new BattleDefinition(route.CaptureTopCenters(), towerDefinitions, spawns, passable, tier);
+                return new BattleDefinition(routePoints, towerDefinitions, spawns, passable, tier);
             }
             return new BattleDefinition(route.CaptureTopCenters(), towerDefinitions,
                 new UnitDefinition(unitHp, unitSpeed), unitCount, spawnInterval, goalLives, formationSize);
@@ -281,7 +294,8 @@ namespace Team5.Rebuild.Session
             }
             activeBattleRealSeconds = 0f;
             var next = new BattleSimulation(CaptureDefinition());
-            if (continuousSquadMovement) next.EnableContinuousMovement(continuousFormationSpacing, continuousSoldierRadius, compactSquadMovement);
+            if (continuousSquadMovement && displayedLevelNumber >= 2) next.EnableCampaignTankPressure();
+            if (continuousSquadMovement) next.EnableContinuousMovement(continuousFormationSpacing, continuousSoldierRadius, compactSquadMovement, UsesTacticalRoad);
             else if (manualSquadMovement) next.EnableManualMovement();
             tutorialCheckpoint = null;
             RecoveryRequired = false;
@@ -297,7 +311,12 @@ namespace Team5.Rebuild.Session
                 if (ReferenceEquals(Simulation, next) && result.Outcome == BattleOutcome.Defeat) failedAttempts++;
             };
             runtimeTowers.AddRange(Towers);
-            for (var i = 0; i < runtimeTowers.Count; i++) runtimeTowers[i].BindRuntimeState(Simulation.Towers[i]);
+            var routePoints = UsesTacticalRoad ? route.CaptureTopCenters() : null;
+            for (var i = 0; i < runtimeTowers.Count; i++)
+            {
+                runtimeTowers[i].BindRuntimeState(Simulation.Towers[i]);
+                if (UsesTacticalRoad) runtimeTowers[i].AlignVisual(Simulation.Towers[i].Definition, routePoints);
+            }
             if (logEvents)
             {
                 Simulation.UnitSpawned += value => Debug.Log($"UnitSpawned #{value.UnitId} at {value.Position}", this);

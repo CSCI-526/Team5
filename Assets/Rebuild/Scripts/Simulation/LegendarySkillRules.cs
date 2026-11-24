@@ -46,7 +46,7 @@ namespace Team5.Rebuild.Simulation
         public static float RallyMultiplier(int level) => 1.35f + Mathf.Min(.25f, Mathf.Max(0, level - 1) * .025f);
         public static string Description(UnitRole role, int level) => role switch
         {
-            UnitRole.Captain => $"Call in a random Attack/Tank/Healer/Sniper/Vanguard/Demolisher at your current Summon Tier (up to {CaptainBattlefieldCapacity} active). If full, strike a nearby tower for {CaptainStrikeDamage:0} damage. Cooldown {CaptainCooldown:0}s.",
+            UnitRole.Captain => $"Call in a random Attack/Tank/Healer/Sniper/Vanguard/Demolisher at your current Summon Tier (up to {CaptainBattlefieldCapacity} active). If full or there is no safe reinforcement position, strike a nearby tower for {CaptainStrikeDamage:0} damage. Cooldown {CaptainCooldown:0}s.",
             UnitRole.Frostweaver => $"Click a tower area to freeze all towers within {FreezeRadius:0.0} units for {FreezeTime(level):0.0}s. Cooldown {FreezeCooldown:0}s.",
             UnitRole.Warcaller => $"Empower nearby non-legendary attackers within {RallyRadius:0.0} units: {RallyMultiplier(level):0.00}x tower damage for {RallyDuration:0}s. Cooldown {RallyCooldown:0}s.",
             UnitRole.Aegis => $"All nearby allies within {BarrierRadius:0.0} units block their next {BarrierCharges} tower hits over {BarrierDuration:0}s. Cooldown {BarrierCooldown:0}s.",

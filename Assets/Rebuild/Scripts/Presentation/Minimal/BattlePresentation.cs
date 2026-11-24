@@ -33,13 +33,14 @@ namespace Team5.Rebuild.Presentation
         private BattleUnitInspection inspection;
         private WallOcclusionView wallOcclusion;
         private RectTransform levelBadgeLayer;
+        private TacticalRoadView tacticalRoad;
         public BattleSession Session => session;
         public UnitView UnitPrefab => unitPrefab;
         public int ViewCount => views.Count;
         public bool ShowTowerRanges
         {
             get => showTowerRanges;
-            set { showTowerRanges = value; foreach (var range in ranges) if (range != null) range.SetVisible(value); }
+            set { showTowerRanges = value; foreach (var range in ranges) if (range != null) range.SetVisible(value && (simulation == null || simulation.Outcome == BattleOutcome.Running)); }
         }
         public bool TryGetView(int unitId, out UnitView view) => views.TryGetValue(unitId, out view);
         // The selected character set's catalog when this scene uses a selectable catalog, else the serialized one.
@@ -61,7 +62,7 @@ namespace Team5.Rebuild.Presentation
         }
         private void OnValidate()
         {
-            foreach (var range in ranges) if (range != null) range.SetVisible(showTowerRanges);
+            foreach (var range in ranges) if (range != null) range.SetVisible(showTowerRanges && (simulation == null || simulation.Outcome == BattleOutcome.Running));
         }
 
         private void OnEnable()
@@ -81,6 +82,14 @@ namespace Team5.Rebuild.Presentation
                 var movementView = GetComponent<ContinuousMovementView>();
                 if (movementView == null) movementView = gameObject.AddComponent<ContinuousMovementView>();
                 movementView.Bind(this); movementView.enabled = true;
+                if (session.UsesTacticalRoad)
+                {
+                    if (tacticalRoad == null) tacticalRoad = TacticalRoadView.Create(session, transform, gameObject.layer);
+                    if (tacticalRoad != null) tacticalRoad.gameObject.SetActive(true);
+                }
+                var zones = GetComponent<BattleGoalZoneView>();
+                if (zones == null) zones = gameObject.AddComponent<BattleGoalZoneView>();
+                zones.Bind(session); zones.enabled = true;
             }
             if (session.ManualSquadMovement && !session.ContinuousSquadMovement)
             {
@@ -98,8 +107,11 @@ namespace Team5.Rebuild.Presentation
 
         private void OnDisable()
         {
+            if (tacticalRoad != null) tacticalRoad.gameObject.SetActive(false);
             var movementView = GetComponent<ContinuousMovementView>();
             if (movementView != null) movementView.enabled = false;
+            var zones = GetComponent<BattleGoalZoneView>();
+            if (zones != null) zones.enabled = false;
             var routeInput = GetComponent<SquadRouteInput>();
             if (routeInput != null) routeInput.Cancel();
             if (wallOcclusion != null) wallOcclusion.enabled = false;
@@ -131,9 +143,10 @@ namespace Team5.Rebuild.Presentation
                 var range = new GameObject($"Tower Range {tower.Id}").AddComponent<TowerRangeView>();
                 range.transform.SetParent(transform, false);
                 range.Bind(tower);
-                range.SetVisible(showTowerRanges);
+                range.SetVisible(showTowerRanges && (simulation == null || simulation.Outcome == BattleOutcome.Running));
                 ranges.Add(range);
             }
+            simulation.BattleEnded += OnBattleEnded;
             simulation.UnitSpawned += OnSpawned;
             simulation.UnitMoved += OnMoved;
             simulation.UnitDied += OnUnitEnded;
@@ -143,9 +156,15 @@ namespace Team5.Rebuild.Presentation
             foreach (var unit in simulation.Units) if (unit.IsAlive) CreateView(unit);
         }
 
+        private void OnBattleEnded(BattleEndedEvent result)
+        {
+            foreach (var range in ranges) if (range != null) range.SetVisible(false);
+        }
+
         private void Unbind()
         {
             if (simulation == null) return;
+            simulation.BattleEnded -= OnBattleEnded;
             simulation.UnitSpawned -= OnSpawned;
             simulation.UnitMoved -= OnMoved;
             simulation.UnitDied -= OnUnitEnded;

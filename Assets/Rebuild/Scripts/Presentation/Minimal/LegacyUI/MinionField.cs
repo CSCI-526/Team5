@@ -22,6 +22,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         private readonly List<MinionLobber> lobbers = new List<MinionLobber>();
         private readonly List<MinionGuard> guards = new List<MinionGuard>();
         private readonly HashSet<Vector2Int> blocked = new HashSet<Vector2Int>();
+        private readonly HashSet<Vector2Int> unitBlocked = new HashSet<Vector2Int>();
         private readonly Dictionary<int, MinionPost> postsById = new Dictionary<int, MinionPost>();
         private double lastTime = -1d;
         private MinionMaterials materials;
@@ -79,7 +80,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                 if (tower == null) continue;
                 tower.CollectFootprintErrors(session.Grid, occupied, ignored);
                 if (!tower.HasValidConfiguration) continue;
-                try { definitions.Add(tower.CaptureDefinition(i + 1)); }
+                try { definitions.Add(session.CaptureTowerDefinition(tower, i + 1, route)); }
                 catch (ArgumentException) { }
             }
             var sites = MinionSiteScan.Scan(session);
@@ -161,7 +162,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
 
         private static string LobberJson(int level) =>
             "{\"isWall\":true,\"isMinion\":true,\"maxHp\":" + Number(MinionRules.Hp(MinionKind.Lobber, level)) +
-            ",\"damage\":0.01,\"range\":0,\"attackInterval\":" + Number(MinionRules.LobberInterval) +
+            ",\"damage\":0,\"range\":0,\"attackInterval\":" + Number(MinionRules.LobberInterval) +
             ",\"targetRule\":" + (int)TargetRule.Nearest + ",\"attackArea\":" + (int)AttackArea.Circle + ",\"attackWidth\":0.9}";
 
         private static string Number(float value) => value.ToString(CultureInfo.InvariantCulture);
@@ -177,15 +178,10 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             foreach (var guard in guards) guard.Reset();
             if (next == null) return;
             bound = next;
-            var towers = session.Towers;
             foreach (var post in posts)
             {
-                for (var i = 0; i < towers.Count; i++)
-                    if (towers[i] == post.Tower)
-                    {
-                        postsById[i + 1] = post;
-                        break;
-                    }
+                if (post.Tower != null && post.Tower.RuntimeState != null)
+                    postsById[post.Tower.RuntimeState.Id] = post;
                 if (post.GuardedTowerId > 0 && (post.GuardedTowerId > next.Towers.Count || next.Towers[post.GuardedTowerId - 1].Definition.IsWall))
                     Debug.LogWarning(post.Tower.name + " guards tower " + post.GuardedTowerId + ", which is not a tower in this battle.", this);
             }
@@ -217,7 +213,12 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         {
             if (session == null) return;
             var simulation = session.Simulation;
-            if (simulation == null) return;
+            if (simulation == null)
+            {
+                foreach (var lobber in lobbers) lobber.Reset();
+                foreach (var shield in shields) shield.Reset();
+                return;
+            }
             var time = Time.time;
             var delta = Time.deltaTime;
             var now = simulation.ElapsedTime;
@@ -240,6 +241,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         {
             if (guards.Count == 0) return;
             blocked.Clear();
+            unitBlocked.Clear();
             var sum = Vector3.zero;
             var alive = 0;
             foreach (var unit in simulation.Units)
@@ -247,13 +249,17 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                 if (!unit.IsAlive) continue;
                 sum += unit.Position;
                 alive++;
-                blocked.Add(new Vector2Int(Mathf.RoundToInt(unit.Position.x), Mathf.RoundToInt(unit.Position.z)));
+                var radius = unit.CollisionRadius + .005f;
+                for (var x = Mathf.FloorToInt(unit.Position.x - radius + .5f); x <= Mathf.FloorToInt(unit.Position.x + radius + .5f); x++)
+                    for (var z = Mathf.FloorToInt(unit.Position.z - radius + .5f); z <= Mathf.FloorToInt(unit.Position.z + radius + .5f); z++)
+                        unitBlocked.Add(new Vector2Int(x, z));
             }
             if (alive == 0) return;
+            blocked.UnionWith(unitBlocked);
             foreach (var post in posts)
                 if (post.IsAlive) blocked.Add(post.Cell);
             var squad = sum / alive;
-            foreach (var guard in guards) guard.Tick(squad, blocked);
+            foreach (var guard in guards) guard.Tick(squad, blocked, unitBlocked);
         }
 
         private bool NearBearer(BattleSimulation simulation)
@@ -266,6 +272,13 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                     if (unit.IsAlive && MinionBombRules.FlatDistanceSquared(unit.Position, position) <= noticeDistance * noticeDistance) return true;
             }
             return false;
+        }
+
+        private void OnDisable()
+        {
+            foreach (var lobber in lobbers) lobber.Reset();
+            foreach (var shield in shields) shield.Reset();
+            lastTime = -1d;
         }
 
         private void OnDestroy()

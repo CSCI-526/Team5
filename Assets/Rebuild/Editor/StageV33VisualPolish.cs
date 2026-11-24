@@ -28,7 +28,7 @@ namespace Team5.Rebuild.Editor
         private const float Margin = 1.5f;
         private static readonly Color WorldColor = new Color(.205f, .365f, .294f, 1f);
         private static readonly Color GrassColor = new Color(.373f, .553f, .443f, 1f);
-        private static readonly Color RouteColor = new Color(.395f, .566f, .460f, 1f);
+        private static readonly Color RouteColor = new Color(.68f, .62f, .46f, 1f);
         private static readonly Color HedgeColor = new Color(.260f, .422f, .335f, 1f);
         private static readonly Color RimColor = new Color(.250f, .407f, .329f, 1f);
         private static readonly Color TowerBaseColor = new Color(.319f, .473f, .428f, 1f);
@@ -188,7 +188,7 @@ namespace Team5.Rebuild.Editor
                 {
                     // Don't recolor UI/goal sprites; terrain tint only.
                     if (sprite.sprite == null) continue;
-                    sprite.color = cell.Kind == CellKind.Obstacle ? HedgeColor : GrassColor;
+                    sprite.color = cell.Kind == CellKind.Road ? RouteColor : cell.Kind == CellKind.Obstacle ? HedgeColor : GrassColor;
                     if (PrefabUtility.IsPartOfPrefabInstance(sprite))
                         PrefabUtility.RecordPrefabInstancePropertyModifications(sprite);
                 }

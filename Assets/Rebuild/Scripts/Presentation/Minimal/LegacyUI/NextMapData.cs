@@ -81,8 +81,10 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             foreach (var tower in source)
             {
                 if (tower == null || !tower.gameObject.activeInHierarchy || !tower.HasValidConfiguration) continue;
+                var definition = session != null ? session.CaptureTowerDefinition(tower, towers.Count + 1, routePoints) : tower.CaptureDefinition(towers.Count + 1);
+                if (Application.isPlaying && session != null && session.UsesTacticalRoad) tower.AlignVisual(definition, routePoints);
                 var hasModel = RendererBounds(tower, out var model);
-                towers.Add(new NextMapTower(tower.CaptureDefinition(towers.Count + 1), model, hasModel));
+                towers.Add(new NextMapTower(definition, model, hasModel));
             }
             var minions = new List<MinionPlacement>();
             if (session != null && MinionRules.HasMinions(session.DisplayedLevelNumber))

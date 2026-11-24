@@ -58,15 +58,19 @@ namespace Team5.Rebuild.Presentation
         {
             var definition = tower != null ? tower.Definition : previewDefinition;
             if (definition == null || fill == null || border == null) return;
-            var active = isActiveAndEnabled && visible && !definition.IsWall && (tower == null || tower.IsAlive);
+            var active = isActiveAndEnabled && visible && !definition.IsWall && definition.Range > 0 && definition.Damage > 0 && (tower == null || tower.IsAlive);
             fill.enabled = border.enabled = active;
             if (!active) return;
 
             var color = SquadCombatRules.IsLaser(definition.Area)
                 ? new Color(1f, .16f, .14f)
                 : definition.IsAoe ? new Color(1f, .46f, .16f) : new Color(.27f, .6f, 1f);
-            fillMaterial.SetColor("_BaseColor", new Color(color.r, color.g, color.b, .10f));
-            borderMaterial.SetColor("_BaseColor", new Color(color.r, color.g, color.b, .72f));
+            var fillColor = new Color(color.r, color.g, color.b, .10f);
+            var borderColor = new Color(color.r, color.g, color.b, .72f);
+            if (fillMaterial.HasProperty("_BaseColor")) fillMaterial.SetColor("_BaseColor", fillColor);
+            if (fillMaterial.HasProperty("_Color")) fillMaterial.SetColor("_Color", fillColor);
+            if (borderMaterial.HasProperty("_BaseColor")) borderMaterial.SetColor("_BaseColor", borderColor);
+            if (borderMaterial.HasProperty("_Color")) borderMaterial.SetColor("_Color", borderColor);
 
             var position = tower != null ? tower.Position : definition.Position;
             transform.SetPositionAndRotation(position + Vector3.up * .035f, Quaternion.identity);
