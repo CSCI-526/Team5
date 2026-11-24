@@ -5,10 +5,10 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 1
+  - enabled: 0
     path: Assets/Rebuild/Scenes/StartGame.unity
     guid: c1894157df1a46a1884e59f110f05b4e
-  - enabled: 1
+  - enabled: 0
     path: Assets/Rebuild/Scenes/Level1GridBattle.unity
     guid: f9191287e5f2479297f1137e74255004
   - enabled: 0
@@ -23,22 +23,22 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Rebuild/Scenes/SquadBattlePrototype.unity
     guid: 0b663d3ad53f4b31a8295db7d1e571b9
-  - enabled: 1
+  - enabled: 0
     path: Assets/Rebuild/Scenes/EndGame.unity
     guid: 422fc75c5c6847e999bcc58df03ea53d
-  - enabled: 1
+  - enabled: 0
     path: Assets/Rebuild/Scenes/UpgradeScene.unity
     guid: 8d8bd0066d444618bb69ea3d3dbc1ab1
-  - enabled: 1
+  - enabled: 0
     path: Assets/Rebuild/Scenes/Level2GridBattle.unity
     guid: c92cd40635c14815b15894407ed3a7a8
-  - enabled: 1
+  - enabled: 0
     path: Assets/Rebuild/Scenes/LevelSettlement.unity
     guid: 5c2ccc670ab4469e909c4c4df44aedef
-  - enabled: 1
+  - enabled: 0
     path: Assets/Rebuild/Scenes/Level3GridBattle.unity
     guid: 8d554f50c5ec4cad881ef7dc718bda03
-  - enabled: 1
+  - enabled: 0
     path: Assets/Rebuild/Scenes/Level4GridBattle.unity
     guid: c22e824be0c94f82a1bf92371a3813bf
   - enabled: 0
@@ -50,13 +50,13 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Rebuild/Scenes/TestLevel.unity
     guid: 601ab0a0ccd749a88d27d4d6deb89495
-  - enabled: 1
+  - enabled: 0
     path: Assets/Rebuild/Scenes/Level5GridBattle.unity
     guid: 8810b666ca44be04f8d6606dd60416c2
-  - enabled: 1
+  - enabled: 0
     path: Assets/Rebuild/Scenes/Level6GridBattle.unity
     guid: e2a17559313695e43988aeb7a9b4b442
-  - enabled: 1
+  - enabled: 0
     path: Assets/Rebuild/Scenes/Level7GridBattle.unity
     guid: 03caca6311775d741b915e6d13095586
   - enabled: 1
