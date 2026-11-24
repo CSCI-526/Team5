@@ -50,9 +50,9 @@ ScriptedImporter:
     flipbookColumns: 0
     ignorePngGamma: 0
     cookieMode: 0
-    filterMode: 1
+    filterMode: 2
     aniso: 1
-    mipBias: 0
+    mipBias: -0.65
     wrapU: 0
     wrapV: 0
     wrapW: 0

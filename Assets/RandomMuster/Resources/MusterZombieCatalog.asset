@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 822eea330a477a7489b1b5e3b12cd650, type: 3}
+  m_Name: MusterZombieCatalog
+  m_EditorClassIdentifier: Team5.BasicTowerTrial.Presentation::Team5.BasicTowerTrial.Presentation.MusterZombieCatalog
+  entries:
+  - role: 11
+    model: {fileID: 6582400509336918404, guid: 9c79196348b5889458aab1907a72ee2e, type: 3}
+    portrait: {fileID: 21300000, guid: b4a7df28aaeab5c45b9d8a6a686b8a20, type: 2}
+    specialEffect: ""
+    upgradedSpecialEffect: "<b>Passive (in hand):</b> +1 per other Regular Zombie slot next siege.\n<b>Deploy:</b> +1 per other Regular Zombie slot."
+  - role: 12
+    model: {fileID: 8942582055615139836, guid: 007daba9d2eae024f9ff567d47f6f0f4, type: 3}
+    portrait: {fileID: 21300000, guid: c5cad81db18b1ea4b98b043b9637683c, type: 2}
+    specialEffect: ""
+  - role: 13
+    model: {fileID: 7538799829644577595, guid: 8c56d5f0abeb21b428e3b2beb3435b30, type: 3}
+    portrait: {fileID: 21300000, guid: 349e68dcee733034c8a1e77b3812338d, type: 2}
+    specialEffect: "Heals nearby allies."
+    upgradedSpecialEffect: "Heals up to 5 allies, including self."
+  - role: 14
+    model: {fileID: 2023335331967591898, guid: 13d32f694fde901488c26ef7d7d0cda5, type: 3}
+    portrait: {fileID: 21300000, guid: 264ef966a6b7c5344b82d4bfbd9eef14, type: 2}
+    specialEffect: ""

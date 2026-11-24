@@ -158,6 +158,8 @@ namespace Team5.BasicTowerTrial.Presentation
             simulation.UnitReachedGoal += OnUnitEnded;
             simulation.FormationChanged += OnFormationChanged;
             simulation.HealerPulsed += OnHealerPulsed;
+            simulation.UnitHealed += OnUnitHealed;
+            simulation.ZombieMeleeStarted += OnZombieMelee;
             foreach (var unit in simulation.Units) if (unit.IsAlive) CreateView(unit);
         }
 
@@ -178,6 +180,8 @@ namespace Team5.BasicTowerTrial.Presentation
             simulation.UnitReachedGoal -= OnUnitEnded;
             simulation.FormationChanged -= OnFormationChanged;
             simulation.HealerPulsed -= OnHealerPulsed;
+            simulation.UnitHealed -= OnUnitHealed;
+            simulation.ZombieMeleeStarted -= OnZombieMelee;
             simulation = null;
         }
 
@@ -185,6 +189,18 @@ namespace Team5.BasicTowerTrial.Presentation
         {
             if (views.TryGetValue(healerId, out var view) && view != null)
                 view.TriggerHealBurst();
+        }
+
+        private void OnUnitHealed(HealEvent value)
+        {
+            if (views.TryGetValue(value.HealerId, out var caster) && caster.State.Role == UnitRole.ShamanZombie &&
+                views.TryGetValue(value.MemberId, out var target))
+                ShamanHealFeedback.Show(target.transform);
+        }
+
+        private void OnZombieMelee(int id, Vector3 position)
+        {
+            if (views.TryGetValue(id, out var view)) view.PlayZombieMelee(position);
         }
 
         private void OnSpawned(UnitSpawnedEvent value)
@@ -196,6 +212,16 @@ namespace Team5.BasicTowerTrial.Presentation
         private void CreateView(UnitState unit)
         {
             if (views.ContainsKey(unit.Id)) return;
+            if (MusterZombieCatalog.TryGet(unit.Role, out var model, out _) && model != null)
+            {
+                var host = new GameObject($"Unit View {unit.Id}");
+                host.transform.SetParent(transform, false);
+                var zombieView = host.AddComponent<UnitView>();
+                zombieView.Bind(unit);
+                zombieView.BindZombie(Instantiate(model, host.transform), session);
+                views.Add(unit.Id, zombieView);
+                return;
+            }
             var prefab = roleVisuals != null && roleVisuals.TryGet(unit.Role, out var rolePrefab) ? rolePrefab : unitPrefab;
             if (useTestUnitVisual && unit.MemberId == testVisualMemberId && testUnitPrefab != null) prefab = testUnitPrefab;
             if (useTestUnitVisual)

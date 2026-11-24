@@ -11,6 +11,9 @@ namespace Team5.BasicTowerTrial.Simulation
         public UnitRole Role => Definition.Role;
         public int SlotId => FormationSlot.y * 3 + FormationSlot.x;
         public float AttackCooldown { get; internal set; }
+        internal float ShamanCooldown = MusterZombieRules.HealCooldown;
+        internal float ShamanWindup;
+        internal int[] ShamanTargets;
         public float SkillCooldownRemaining { get; internal set; }
         public float DamageBuffRemaining { get; internal set; }
         public float DamageBuffMultiplier { get; internal set; } = 1f;

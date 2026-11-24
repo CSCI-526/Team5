@@ -15,7 +15,7 @@ namespace Team5.BasicTowerTrial.Presentation
         public static void UseRecruitment(TavernRecruitment state)
         {
             recruitment=state;
-            Run=new SiegeTavernRun{Round=state.Turn,Lives=state.Lives};
+            Run=new SiegeTavernRun{Round=state.Turn,Lives=state.CaptainHealth};
         }
         [SerializeField] private bool shopping;
         [SerializeField] private BattleSession session;

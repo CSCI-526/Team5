@@ -1,5 +1,6 @@
 using Team5.BasicTowerTrial.Simulation;
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 
 namespace Team5.BasicTowerTrial.Presentation.LegacyUI
@@ -100,6 +101,7 @@ namespace Team5.BasicTowerTrial.Presentation.LegacyUI
         private RectTransform rect;
         private float pixelsPerUnit;
         private UnitRole shown = UnitRole.Test;
+        private bool shownAsUpgraded;
 
         public RectTransform Rect => rect;
 
@@ -112,15 +114,26 @@ namespace Team5.BasicTowerTrial.Presentation.LegacyUI
             return icon;
         }
 
-        public void SetType(UnitRole type)
+        public void SetType(UnitRole type, bool upgraded = false)
         {
-            if (type == shown) return;
+            if (type == shown && upgraded == shownAsUpgraded) return;
             shown = type;
+            shownAsUpgraded = upgraded;
 
             for (var i = transform.childCount - 1; i >= 0; i--)
-                Destroy(transform.GetChild(i).gameObject);
+            {
+                var child = transform.GetChild(i).gameObject;
+                child.SetActive(false);
+                Destroy(child);
+            }
 
             if (type == UnitRole.Test) return;
+
+            if (MusterZombieCatalog.TryGet(type, out _, out var portrait) && portrait != null)
+            {
+                DrawZombieIcon(type, portrait, upgraded);
+                return;
+            }
 
             var look = LegacyUnitLooks.For(type);
             var k = pixelsPerUnit;
@@ -153,6 +166,38 @@ namespace Team5.BasicTowerTrial.Presentation.LegacyUI
                     LegacyUiKit.CreateImage(transform, "Mark Across", Vector2.zero, new Vector2(SoldierLook.CrossLength, SoldierLook.CrossWidth) * k, look.MarkColor);
                     LegacyUiKit.CreateImage(transform, "Mark Upright", Vector2.zero, new Vector2(SoldierLook.CrossWidth, SoldierLook.CrossLength) * k, look.MarkColor);
                     break;
+            }
+        }
+
+        private void DrawZombieIcon(UnitRole role, Sprite figure, bool upgraded)
+        {
+            var size = pixelsPerUnit * .52f;
+            var field = role switch
+            {
+                UnitRole.BruteZombie => new Color32(113, 105, 65, 255),
+                UnitRole.ShamanZombie => new Color32(107, 81, 82, 255),
+                UnitRole.TankZombie => new Color32(90, 105, 97, 255),
+                _ => new Color32(100, 118, 71, 255)
+            };
+
+            AddLayer("Frame shadow", new Vector2(size * .025f, -size * .04f), size, new Color(0f, 0f, 0f, .45f));
+            AddLayer("Frame outline", Vector2.zero, size,
+                upgraded ? new Color32(69, 22, 105, 255) : new Color32(60, 43, 26, 255));
+            AddLayer(upgraded ? "Purple frame" : "Gold frame", Vector2.zero, size * .96f,
+                upgraded ? new Color32(218, 115, 255, 255) : new Color32(216, 185, 122, 255));
+            AddLayer("Inner bevel", Vector2.zero, size * .88f,
+                upgraded ? new Color32(114, 41, 162, 255) : new Color32(96, 72, 43, 255));
+            AddLayer("Background", Vector2.zero, size * .84f, field);
+
+            var image = AddLayer("Zombie figure", Vector2.zero, size * .81f, Color.white);
+            image.sprite = figure;
+            image.preserveAspect = true;
+
+            Image AddLayer(string name, Vector2 offset, float edge, Color color)
+            {
+                var layer = LegacyUiKit.CreateImage(transform, name, offset, Vector2.one * edge, color);
+                layer.raycastTarget = false;
+                return layer;
             }
         }
     }

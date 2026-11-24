@@ -14,107 +14,125 @@ namespace Team5.BasicTowerTrial.Presentation
             public UnitRole Role;
             public bool Golden;
         }
-        public static readonly UnitRole[] Roles = { UnitRole.Attack, UnitRole.Tank, UnitRole.Heal,
-            UnitRole.Vanguard, UnitRole.Sniper, UnitRole.Demolisher, UnitRole.Frostweaver,
-            UnitRole.Warcaller, UnitRole.Aegis };
-        public static int RoleTier(UnitRole role) => role == UnitRole.Attack || role == UnitRole.Tank ? 1 :
-            role == UnitRole.Heal ? 2 : role == UnitRole.Vanguard ? 3 : role == UnitRole.Sniper ? 4 :
-            role == UnitRole.Demolisher || role == UnitRole.Frostweaver ? 5 : 6;
+        public static readonly UnitRole[] Roles =
+            { UnitRole.Zombie, UnitRole.BruteZombie, UnitRole.ShamanZombie, UnitRole.TankZombie };
+        public static int RoleTier(UnitRole role) => MusterZombieRules.Tier(role);
         public readonly List<Follower> Followers = new List<Follower>();
         public readonly List<UnitRole?> Offers = new List<UnitRole?>();
-        public readonly List<UnitRole> Discover = new List<UnitRole>();
-        private readonly Queue<int> rewards = new Queue<int>();
         private readonly Random random;
         private int sequence = 2000;
         public int Turn { get; private set; } = 1;
+        public const int MaxRounds = 8;
         public int Tier { get; private set; } = 1;
+        public const int MaxTier = 2;
+        public const int MaxOfferCount = 4;
+        public const int GoldLimit = 99;
         public int Gold { get; private set; } = 3;
-        public int Lives { get; private set; } = 3;
+#if UNITY_EDITOR
+        internal void SetGoldForTesting(int amount) => Gold = Math.Clamp(amount, 0, GoldLimit);
+#endif
+        public int CaptainHealth { get; private set; } = 30;
         public int LastAddedId { get; private set; }
         public bool Frozen { get; private set; }
-        public bool Finished => Lives == 0 || Turn > 8;
-        public bool Ready => !Finished && Discover.Count == 0 && Followers.Any(f => f.Slot >= 0);
-        public int OfferCount => 3 + (Tier - 1) / 2;
-        public int UpgradeCost => Tier >= 6 ? 0 : Math.Max(0, 4 + Tier - (Turn - 1));
+        private bool expeditionCompleted;
+        private int musterGold;
+        public bool Finished => expeditionCompleted || CaptainHealth == 0 || Turn > MaxRounds;
+
+        internal void RecordMusterProgress(int cells) => musterGold = Math.Max(musterGold, cells / 2);
+
+        internal void CompleteExpedition()
+        {
+            Gold = Math.Min(GoldLimit, Gold + musterGold);
+            musterGold = 0;
+            expeditionCompleted = true;
+        }
+        public bool Ready => !Finished && Followers.Any(f => f.Slot >= 0);
+        public int OfferCount => Tier == 1 ? 3 : MaxOfferCount;
+        public bool CanUpgrade => !Finished && Tier < MaxTier && Gold >= UpgradeCost;
+        public int UpgradeCost => Tier >= MaxTier ? 0 : Math.Max(0, 4 + Tier - (Turn - 1));
+        public const int HandLimit = 10;
         public int BenchCount => Followers.Count(f => f.Slot < 0);
         public int DeployedCount => Followers.Count(f => f.Slot >= 0);
-        public string Message { get; private set; } = "Recruit units, collect triples and prepare your formation.";
+        public string Message { get; private set; } = "Recruit units to your hand.";
 
         public TavernRecruitment(int seed = -1)
         {
             random = seed < 0 ? new Random() : new Random(seed);
             Followers.Add(new Follower { Id = ++sequence, Role = UnitRole.Captain, Slot = 4 });
-            Followers.Add(new Follower { Id = ++sequence, Role = UnitRole.Attack, Slot = 7 });
             Roll(false);
         }
-        private UnitRole RandomRole(int maxTier)
+        private const int RecruitRollRange = 100;
+
+        internal static UnitRole RecruitRole(int tier, int roll)
         {
-            var pool = Roles.Where(r => RoleTier(r) <= maxTier &&
-                (!SquadCombatRules.IsLegendaryRole(r) || !Followers.Any(f => f.Role == r))).ToArray();
-            return pool[random.Next(pool.Length)];
+            if (tier < 2) return roll < 75 ? UnitRole.Zombie : UnitRole.BruteZombie;
+            if (roll < 55) return UnitRole.Zombie;
+            if (roll < 83) return UnitRole.BruteZombie;
+            if (roll < 96) return UnitRole.ShamanZombie;
+            return UnitRole.TankZombie;
         }
+
+        private UnitRole RandomRole() => RecruitRole(Tier, random.Next(RecruitRollRange));
         public bool Roll(bool paid = true)
         {
-            if (Finished || Discover.Count > 0 || paid && Gold < 1) return false;
+            if (Finished || paid && Gold < 1) return false;
             if (paid) Gold--;
-            Offers.Clear();for (var i = 0; i < OfferCount; i++) Offers.Add(RandomRole(Tier));
+            Offers.Clear();for (var i = 0; i < OfferCount; i++) Offers.Add(RandomRole());
             Frozen = false;return true;
         }
         public bool ToggleFreeze()
         {
-            if (Finished || Discover.Count > 0) return false;
+            if (Finished) return false;
             Frozen = !Frozen;return true;
         }
         public bool Upgrade()
         {
-            if (Finished || Discover.Count > 0 || Tier >= 6 || Gold < UpgradeCost) return false;
-            Gold -= UpgradeCost;Tier++;
-            // Existing offers stay in place; the larger shop arrives with the next refresh.
-            Message = "Tavern upgraded. Refresh to recruit higher-tier units.";return true;
+            if (!CanUpgrade) return false;
+            Gold -= UpgradeCost;
+            Tier++;
+            while (Offers.Count < OfferCount) Offers.Add(RandomRole());
+            Message = "Tavern upgraded. A new recruit is available.";
+            return true;
         }
-        private bool CanReceive(UnitRole role) => BenchCount < 7 ||
-            !SquadCombatRules.IsLegendaryRole(role) && Followers.Count(f => f.Role == role && !f.Golden) >= 2;
-        public bool CanBuy(int index) => !Finished && Discover.Count == 0 && Gold >= 3 && index >= 0 && index < Offers.Count &&
-            Offers[index].HasValue && CanReceive(Offers[index].Value) &&
-            (!SquadCombatRules.IsLegendaryRole(Offers[index].Value) || !Followers.Any(f => f.Role == Offers[index].Value));
+        internal static int RecruitCost(UnitRole role) => role switch
+        {
+            UnitRole.Zombie => 2,
+            UnitRole.ShamanZombie => 5,
+            UnitRole.TankZombie => 10,
+            _ => 3
+        };
+
+        public bool CanBuy(int index) => !Finished && index >= 0 && index < Offers.Count &&
+            Offers[index] is UnitRole role && RoleTier(role) <= Tier && Gold >= RecruitCost(role) && BenchCount < HandLimit;
         public bool Buy(int index)
         {
             if (!CanBuy(index)) return false;
-            var role = Offers[index].Value;Gold -= 3;Offers[index] = null;Receive(role);return true;
+            var role = Offers[index].Value;Gold -= RecruitCost(role);Offers[index] = null;Receive(role);return true;
         }
         private void Receive(UnitRole role)
         {
-            var follower = new Follower { Id = ++sequence, Role = role };Followers.Add(follower);LastAddedId = follower.Id;
-            var matching = Followers.Where(f => f.Role == role && !f.Golden).OrderBy(f => f.Slot < 0 ? 1 : 0).ThenBy(f => f.Id).Take(3).ToArray();
-            if (matching.Length == 3 && !SquadCombatRules.IsLegendaryRole(role))
-            {
-                var keep = matching[0];keep.Golden = true;
-                foreach (var other in matching.Skip(1)) Followers.Remove(other);
-                LastAddedId = keep.Id;rewards.Enqueue(Math.Min(6, Tier + 1));
-                Message = "TRIPLE! A golden unit and a free discovery reward.";
-                OpenDiscovery();
-            }
-            else Message = "Unit recruited to your bench. Place it in the formation.";
-        }
-        private void OpenDiscovery()
-        {
-            if (Discover.Count > 0 || rewards.Count == 0) return;
-            var target = rewards.Dequeue();
-            var choices = Roles.Where(r => RoleTier(r) == target && (!SquadCombatRules.IsLegendaryRole(r) || !Followers.Any(f => f.Role == r))).ToList();
-            if (choices.Count == 0) choices = Roles.Where(r => RoleTier(r) <= target && !SquadCombatRules.IsLegendaryRole(r)).ToList();
-            // Small existing catalog: offer distinct roles rather than three duplicate portraits.
-            foreach (var role in choices.Concat(Roles.Where(r => RoleTier(r) < target && !SquadCombatRules.IsLegendaryRole(r))).Distinct().OrderBy(r => RoleTier(r) == target ? 0 : 1).ThenBy(_ => random.Next()).Take(3)) Discover.Add(role);
-        }
-        public bool ChooseDiscovery(int index)
-        {
-            if (index < 0 || index >= Discover.Count || !CanReceive(Discover[index])) return false;
-            var role = Discover[index];Discover.Clear();Receive(role);OpenDiscovery();return true;
+            var follower = new Follower { Id = ++sequence, Role = role };
+            Followers.Add(follower);
+            LastAddedId = follower.Id;
+            Message = "Unit recruited to your hand.";
+            if (SquadCombatRules.IsLegendaryRole(role)) return;
+
+            var copies = Followers.Where(unit => unit.Role == role && !unit.Golden)
+                .OrderBy(unit => unit.Slot < 0).ThenBy(unit => unit.Id).Take(3).ToArray();
+            if (copies.Length != 3) return;
+            var upgraded = copies[0];
+            upgraded.Golden = true;
+            Followers.Remove(copies[1]);
+            Followers.Remove(copies[2]);
+            LastAddedId = upgraded.Id;
+            Message = "Three copies combined into a stronger unit.";
         }
         public bool Place(int id, int slot)
         {
             if (Finished || slot < 0 || slot > 8) return false;
             var unit = Followers.Find(f => f.Id == id);if (unit == null) return false;
             var other = Followers.Find(f => f.Slot == slot);
+            if (unit.Slot < 0 && other?.Role == UnitRole.Captain) return false;
             if (unit.Slot < 0 && (other == null ? DeployedCount >= 6 : false)) return false;
             if (other != null) other.Slot = unit.Slot;
             unit.Slot = slot;return true;
@@ -122,34 +140,53 @@ namespace Team5.BasicTowerTrial.Presentation
         public bool Bench(int id)
         {
             var unit = Followers.Find(f => f.Id == id);
-            if (Finished || unit == null || unit.Slot < 0 || BenchCount >= 7 || DeployedCount <= 1) return false;
+            if (Finished || unit == null || unit.Role == UnitRole.Captain || unit.Slot < 0 ||
+                BenchCount >= HandLimit || DeployedCount <= 1) return false;
             unit.Slot = -1;return true;
         }
         public bool Sell(int id)
         {
             var unit = Followers.Find(f => f.Id == id);
             if (Finished || unit == null || unit.Role == UnitRole.Captain || unit.Slot >= 0 && DeployedCount <= 1) return false;
-            Followers.Remove(unit);Gold = Math.Min(10, Gold + 1);Message = "Sold for 1 gold.";return true;
+            Followers.Remove(unit);Gold = Math.Min(GoldLimit, Gold + 1);Message = "Sold for 1 gold.";return true;
         }
         public UnitDefinition Stats(Follower unit)
         {
+            if (MusterZombieRules.IsZombie(unit.Role)) return MusterZombieRules.Create(unit.Role, unit.Golden);
             var stats = SquadCombatRules.Create(unit.Role);
             if (!unit.Golden) return stats;
             return new UnitDefinition(stats.MaxHp * 2, stats.Speed, stats.Role, stats.Damage * 2,
                 stats.Range, stats.AttackInterval, stats.Defense, stats.HealPerSecond * 2,
-                stats.Rarity, 2, stats.TowerDamageMultiplier, stats.DamageType);
+                stats.Rarity, 2, stats.TowerDamageMultiplier, stats.DamageType, stats.MagicResistance, stats.IsFlying);
         }
         public List<MemberSpawnDefinition> Deployment() => Followers.Where(f => f.Slot >= 0)
             .Select(f => new MemberSpawnDefinition(f.Id, f.Slot, Stats(f))).ToList();
-        public void Resolve(bool victory)
+        public void Resolve(bool victory) => ResolveRound(victory ? 0 : 1,
+            victory ? "Defense breached! Prepare for the next assault." : "Assault lost. Captain lost 1 HP.");
+
+        public static int MusterDamage(int towers, int arrivals) => Math.Max(0, towers - arrivals);
+
+        public void ResolveMuster(int towers, int arrivals)
+        {
+            var damage = MusterDamage(towers, arrivals);
+            ResolveRound(damage, $"Last assault: {arrivals}/{towers} reached. Damage taken: {damage}.", musterGold);
+            musterGold = 0;
+        }
+
+        private void ResolveRound(int damage, string message, int bonusGold = 0)
         {
             if (Finished) return;
-            if (!victory) Lives--;Turn++;
-            Message = victory ? "Defense breached! Prepare for the next assault." : "Assault lost. Your units recover; one life lost.";
-            if (Finished) return;
-            Gold = Math.Min(10, Turn + 2); // New turn allowance, not accumulated interest.
+            CaptainHealth = Math.Max(0, CaptainHealth - damage);
+            Turn++;
+            Message = message;
+            if (Finished)
+            {
+                Gold = Math.Min(GoldLimit, Gold + bonusGold);
+                return;
+            }
+            Gold = Math.Min(GoldLimit, Turn + 2 + bonusGold);
             if (!Frozen) Roll(false);
-            else { while (Offers.Count < OfferCount) Offers.Add(null);for (var i = 0; i < Offers.Count; i++) if (!Offers[i].HasValue) Offers[i] = RandomRole(Tier); }
+            else { while (Offers.Count < OfferCount) Offers.Add(null);for (var i = 0; i < Offers.Count; i++) if (!Offers[i].HasValue) Offers[i] = RandomRole(); }
             Frozen = false;
         }
     }

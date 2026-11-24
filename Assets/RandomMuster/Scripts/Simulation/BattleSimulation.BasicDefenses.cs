@@ -95,7 +95,7 @@ namespace Team5.BasicTowerTrial.Simulation
             var height = kind == BasicDefenseKind.Archer ? 2.4f : 1.4f;
             var duration = kind == BasicDefenseKind.Artillery ? .85f : .36f;
             var origin = tower.Position + Vector3.up * height;
-            var landing = SampleAnchor(target.RouteProgress + (interceptedSquads.Contains(target.SquadId) ? 0 : target.Speed * duration))
+            var landing = SampleAnchor(target.RouteProgress + (IsMovementIntercepted(target) ? 0 : target.Speed * duration))
                 + target.FormationOffset;
             defenseShots.Add(new DefenseShot
             {
@@ -150,6 +150,10 @@ namespace Team5.BasicTowerTrial.Simulation
             }
         }
 
+        private bool IsMovementIntercepted(UnitState unit) => fixedWaves == null
+            ? interceptedSquads.Contains(unit.SquadId)
+            : interceptedMembers.Contains(unit.Id);
+
         private void TickBarracks(float deltaTime)
         {
             if (barracksGuards.Count == 0) return;
@@ -197,11 +201,20 @@ namespace Team5.BasicTowerTrial.Simulation
                 // Attack-capable members of the intercepted squad can clear their own blocker.
                 foreach (var ally in units)
                 {
-                    if (!ally.IsAlive || ally.SquadId != target.SquadId || !SquadCombatRules.CanAttackTowers(ally.Role) ||
-                        HorizontalDistanceSquared(ally.Position, guard.Position) > ally.Definition.Range * ally.Definition.Range ||
-                        ally.AttackCooldown > deltaTime) continue;
-                    ally.AttackCooldown = ally.Definition.AttackInterval + deltaTime;
-                    guard.Hp -= ally.Definition.Damage * .7f;
+                    if (!ally.IsAlive || HorizontalDistanceSquared(ally.Position, guard.Position) >
+                        ally.Definition.Range * ally.Definition.Range) continue;
+                    if (MusterZombieRules.IsZombie(ally.Role))
+                    {
+                        if (ally != target || ally.AttackCooldown > .000001f) continue;
+                        guard.Hp -= ZombieMelee(ally, guard.Position);
+                    }
+                    else
+                    {
+                        if (ally.SquadId != target.SquadId || !SquadCombatRules.CanAttackTowers(ally.Role) ||
+                            ally.AttackCooldown > deltaTime) continue;
+                        ally.AttackCooldown = ally.Definition.AttackInterval + deltaTime;
+                        guard.Hp -= ally.Definition.Damage * .7f;
+                    }
                     if (guard.Hp <= 0)
                     {
                         guard.Visible = false;

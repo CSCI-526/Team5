@@ -1,7 +1,7 @@
 using Team5.BasicTowerTrial.Simulation;
+using Team5.BasicTowerTrial.Session;
 using Team5.BasicTowerTrial.Presentation.LegacyUI;
 using UnityEngine;
-using UnityEngine.Rendering;
 using TMPro;
 
 namespace Team5.BasicTowerTrial.Presentation
@@ -9,7 +9,6 @@ namespace Team5.BasicTowerTrial.Presentation
     public sealed class UnitView : MonoBehaviour
     {
         public const float LookScale = 2f;
-        private const int HealRingSegments = 48;
         private const float HealNeighborRadius = 1.45f; // Covers all 8 neighboring slots in the 3x3 squad
         private const float LevelBadgeWidth = 32f;
         private const float LevelBadgeToUnitWidth = 0.6f;
@@ -94,13 +93,18 @@ namespace Team5.BasicTowerTrial.Presentation
                 levelBadge.anchoredPosition = local;
         }
 
-        // Animated healing range components
-        private LineRenderer healPerimeterRing;
-        private LineRenderer healWaveRing;
-        private Material healPerimeterMat;
-        private Material healWaveMat;
+        private HealingRangeEffect healEffect;
         private float healWavePhase;
         private float healBurstBoost;
+        private Animator zombieAnimator;
+        private Transform zombieBillboard;
+        private BattleSession zombieSession;
+        private SpriteRenderer tripleGlow;
+        private Sprite tripleGlowSprite;
+        private float zombieHealRemaining;
+        private static readonly int Moving = Animator.StringToHash("Moving");
+        private static readonly int Attack = Animator.StringToHash("Attack");
+        private static readonly int Heal = Animator.StringToHash("Heal");
 
         public int UnitId => state?.Id ?? 0;
         public UnitState State => state;
@@ -111,7 +115,7 @@ namespace Team5.BasicTowerTrial.Presentation
             var found = false;
             foreach (var renderer in GetComponentsInChildren<Renderer>())
             {
-                if (!renderer.enabled || !renderer.gameObject.activeInHierarchy || renderer is LineRenderer) continue;
+                if (!renderer.enabled || !renderer.gameObject.activeInHierarchy || renderer is LineRenderer || renderer == tripleGlow) continue;
                 if (!found) { bounds = renderer.bounds; found = true; }
                 else bounds.Encapsulate(renderer.bounds);
             }
@@ -136,100 +140,125 @@ namespace Team5.BasicTowerTrial.Presentation
 
         public void TriggerHealBurst()
         {
+            if (zombieAnimator != null && state.Role == UnitRole.ShamanZombie)
+            {
+                zombieHealRemaining = MusterZombieRules.HealAnimationTime;
+                zombieAnimator.ResetTrigger(Attack);
+                zombieAnimator.SetTrigger(Heal);
+                return;
+            }
             healWavePhase = 0f;
             healBurstBoost = 1f;
         }
 
-        public void SetFormationDisplaySpacing(float spacing)
+        public void SetFormationDisplaySpacing(float spacing) => healEffect?.SetScale(spacing);
+
+        internal void BindZombie(GameObject model, BattleSession session)
         {
-            if (healPerimeterRing != null) healPerimeterRing.transform.localScale = Vector3.one * spacing;
-            if (healWaveRing != null) healWaveRing.transform.localScale = Vector3.one * spacing;
+            zombieAnimator = model.GetComponent<Animator>();
+            zombieBillboard = model.transform.Find("Billboard");
+            zombieSession = session;
+            if (state.Definition.Level > 1 && zombieBillboard != null) CreateTripleGlow();
+            if (state.Role != UnitRole.ShamanZombie) return;
+            healEffect = new HealingRangeEffect(transform, new Color(1f, .15f, .16f), new Color(1f, .31f, .29f));
+            healEffect.SetVisible(false);
+        }
+
+        private void CreateTripleGlow()
+        {
+            var sprites = zombieBillboard.GetComponentsInChildren<SpriteRenderer>();
+            if (sprites.Length == 0) return;
+
+            var bounds = sprites[0].bounds;
+            var backOrder = sprites[0].sortingOrder;
+            foreach (var sprite in sprites)
+            {
+                bounds.Encapsulate(sprite.bounds);
+                backOrder = Mathf.Min(backOrder, sprite.sortingOrder);
+            }
+
+            const int size = 48;
+            var pixels = new Color32[size * size];
+            for (var y = 0; y < size; y++)
+            for (var x = 0; x < size; x++)
+            {
+                var offset = new Vector2((x + .5f) / size, (y + .5f) / size) * 2f - Vector2.one;
+                var fade = 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(.20f, 1f, offset.magnitude));
+                pixels[y * size + x] = new Color32(255, 255, 255, (byte)Mathf.RoundToInt(fade * 255f));
+            }
+            var texture = new Texture2D(size, size, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
+            texture.SetPixels32(pixels);
+            texture.Apply(false, true);
+
+            tripleGlow = new GameObject("Triple Zombie Glow").AddComponent<SpriteRenderer>();
+            tripleGlow.transform.SetParent(zombieBillboard, false);
+            tripleGlow.transform.localPosition = zombieBillboard.InverseTransformPoint(bounds.center);
+            var scale = zombieBillboard.lossyScale;
+            tripleGlow.transform.localScale = new Vector3(bounds.size.x / Mathf.Abs(scale.x) * 1.85f,
+                bounds.size.y / Mathf.Abs(scale.y) * 1.5f, 1f);
+            tripleGlowSprite = Sprite.Create(texture, new Rect(0, 0, size, size), new Vector2(.5f, .5f), size, 0, SpriteMeshType.FullRect);
+            tripleGlow.sprite = tripleGlowSprite;
+            tripleGlow.sortingLayerID = sprites[0].sortingLayerID;
+            tripleGlow.sortingOrder = backOrder - 1;
+            tripleGlow.color = new Color(.74f, .22f, 1f, .85f);
+        }
+
+        internal void PlayZombieMelee(Vector3 target)
+        {
+            if (zombieAnimator == null) return;
+            FaceZombie(target - transform.position);
+            zombieAnimator.SetTrigger(Attack);
+        }
+
+        private void FaceZombie(Vector3 delta)
+        {
+            var camera = Camera.main;
+            if (camera == null || zombieBillboard == null) return;
+            var horizontal = Vector3.Dot(delta, camera.transform.right);
+            if (Mathf.Abs(horizontal) > .0001f)
+                zombieBillboard.localScale = new Vector3(horizontal < 0f ? -1f : 1f, 1f, 1f);
+        }
+
+        private void UpdateZombie()
+        {
+            if (tripleGlow != null)
+            {
+                var tint = tripleGlow.color;
+                tint.a = .80f + .12f * Mathf.Sin((float)zombieSession.Simulation.ElapsedTime * 4f + UnitId);
+                tripleGlow.color = tint;
+            }
+            if (zombieAnimator == null) return;
+            var speed = zombieSession.Simulation.IsPaused ? 0f : zombieSession.EffectivePlaybackSpeed;
+            zombieAnimator.speed = speed;
+            var delta = currentPosition - previousPosition;
+            zombieAnimator.SetBool(Moving, delta.sqrMagnitude > .000001f);
+            FaceZombie(delta);
+            if (healEffect == null) return;
+            zombieHealRemaining = Mathf.Max(0f, zombieHealRemaining - Time.deltaTime * speed);
+            healEffect.SetVisible(zombieHealRemaining > 0f);
+            if (zombieHealRemaining <= 0f) return;
+            var phase = 1f - zombieHealRemaining / MusterZombieRules.HealAnimationTime;
+            healEffect.Draw(MusterZombieRules.HealRadius, phase, 1f - phase);
         }
 
         private void ConfigureHealingRangeAnimation(bool isHealer)
         {
-            if (!isHealer)
+            if (isHealer && healEffect == null)
             {
-                if (healPerimeterRing != null) healPerimeterRing.gameObject.SetActive(false);
-                if (healWaveRing != null) healWaveRing.gameObject.SetActive(false);
-                return;
+                healEffect = new HealingRangeEffect(transform,
+                    new Color(.25f, .95f, .50f), new Color(.35f, 1f, .60f));
+                healEffect.Draw(HealNeighborRadius, 0f, 0f);
             }
-
-            if (healPerimeterRing == null)
-            {
-                healPerimeterMat = CreateRingMaterial(new Color(0.25f, 0.95f, 0.50f, 0.45f));
-                healWaveMat = CreateRingMaterial(new Color(0.35f, 1.00f, 0.60f, 0.75f));
-
-                healPerimeterRing = CreateRing("Heal Range Perimeter", healPerimeterMat, 0.035f);
-                healWaveRing = CreateRing("Heal Range Ripple", healWaveMat, 0.055f);
-                SetCirclePositions(healPerimeterRing, HealNeighborRadius);
-            }
-
-            healPerimeterRing.gameObject.SetActive(true);
-            healWaveRing.gameObject.SetActive(true);
-        }
-
-        private LineRenderer CreateRing(string ringName, Material mat, float width)
-        {
-            var go = new GameObject(ringName);
-            go.transform.SetParent(transform, false);
-            go.transform.localPosition = new Vector3(0f, 0.045f, 0f);
-            var lr = go.AddComponent<LineRenderer>();
-            lr.useWorldSpace = false;
-            lr.loop = true;
-            lr.positionCount = HealRingSegments;
-            lr.widthMultiplier = width;
-            lr.sharedMaterial = mat;
-            lr.shadowCastingMode = ShadowCastingMode.Off;
-            lr.receiveShadows = false;
-            return lr;
-        }
-
-        private static void SetCirclePositions(LineRenderer lr, float radius)
-        {
-            var step = 2f * Mathf.PI / HealRingSegments;
-            for (var i = 0; i < HealRingSegments; i++)
-            {
-                var angle = i * step;
-                lr.SetPosition(i, new Vector3(Mathf.Cos(angle) * radius, 0f, Mathf.Sin(angle) * radius));
-            }
-        }
-
-        private static Material CreateRingMaterial(Color color)
-        {
-            var shader = Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Sprites/Default");
-            var mat = new Material(shader) { renderQueue = 3000 };
-            mat.SetColor("_BaseColor", color);
-            mat.color = color;
-            mat.SetFloat("_Surface", 1);
-            mat.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
-            mat.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
-            mat.SetFloat("_ZWrite", 0);
-            mat.SetFloat("_Cull", (float)CullMode.Off);
-            mat.SetOverrideTag("RenderType", "Transparent");
-            mat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
-            return mat;
+            healEffect?.SetVisible(isHealer);
         }
 
         private void UpdateHealingRangeAnimation()
         {
-            if (state == null || !state.IsAlive || state.Role != UnitRole.Heal || healWaveRing == null) return;
+            if (state == null || !state.IsAlive || state.Role != UnitRole.Heal || healEffect == null) return;
 
             healBurstBoost = Mathf.MoveTowards(healBurstBoost, 0f, Time.deltaTime * 1.5f);
             healWavePhase = (healWavePhase + Time.deltaTime / SquadCombatRules.HealInterval) % 1f;
-
-            var radius = Mathf.Lerp(0.25f, HealNeighborRadius, healWavePhase);
-            SetCirclePositions(healWaveRing, radius);
-
-            var waveAlpha = Mathf.Lerp(0.75f + 0.25f * healBurstBoost, 0.0f, healWavePhase * healWavePhase);
-            var waveColor = new Color(0.35f, 1.00f, 0.60f, waveAlpha);
-            healWaveMat.SetColor("_BaseColor", waveColor);
-            healWaveMat.color = waveColor;
-
-            var borderPulse = 0.30f + 0.15f * Mathf.Sin(Time.time * 3.5f) + 0.25f * healBurstBoost;
-            var borderColor = new Color(0.25f, 0.95f, 0.50f, Mathf.Clamp01(borderPulse));
-            healPerimeterMat.SetColor("_BaseColor", borderColor);
-            healPerimeterMat.color = borderColor;
+            healEffect.Draw(HealNeighborRadius, healWavePhase, healBurstBoost);
         }
 
         public void ApplyAppearance(UnitRole role)
@@ -314,6 +343,7 @@ namespace Team5.BasicTowerTrial.Presentation
                 AdvancePlatformReposition(Time.unscaledDeltaTime * platform.PlaybackSpeed);
             Present(sampleInterval > 0 ? (float)((Time.timeAsDouble - sampleTime) / sampleInterval) : 1);
             UpdateHealingRangeAnimation();
+            UpdateZombie();
             UpdateLevelBadge();
         }
 
@@ -325,8 +355,12 @@ namespace Team5.BasicTowerTrial.Presentation
         private void OnDestroy()
         {
             if (levelBadge != null) Destroy(levelBadge.gameObject);
-            if (healPerimeterMat != null) Destroy(healPerimeterMat);
-            if (healWaveMat != null) Destroy(healWaveMat);
+            if (tripleGlowSprite != null)
+            {
+                Destroy(tripleGlowSprite.texture);
+                Destroy(tripleGlowSprite);
+            }
+            healEffect?.DestroyMaterials();
         }
     }
 }

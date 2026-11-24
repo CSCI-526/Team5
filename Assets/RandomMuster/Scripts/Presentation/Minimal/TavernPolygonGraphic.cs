@@ -54,6 +54,28 @@ namespace Team5.BasicTowerTrial.Presentation
                 }
                 if(!clipped)break;
             }
+            // Blend the contour over one screen pixel, including at rotated edges.
+            var scale = new Vector2(rect.width, rect.height) * .5f;
+            var fringe = 1f / Mathf.Max(.01f, canvas == null ? 1f : canvas.scaleFactor);
+            var transparent = new Color(color.r, color.g, color.b, 0);
+            for (var i = 0; i < points.Length; i++)
+            {
+                var previous = (i + points.Length - 1) % points.Length;
+                var next = (i + 1) % points.Length;
+                var incoming = Vector2.Scale(points[i] - points[previous], scale).normalized;
+                var outgoing = Vector2.Scale(points[next] - points[i], scale).normalized;
+                var firstNormal = new Vector2(incoming.y, -incoming.x);
+                var secondNormal = new Vector2(outgoing.y, -outgoing.x);
+                var miter = (firstNormal + secondNormal).normalized;
+                var offset = miter * (fringe / Mathf.Max(.35f, Vector2.Dot(miter, secondNormal)));
+                mesh.AddVert(rect.center + Vector2.Scale(points[i], scale) + offset, transparent, Vector2.zero);
+            }
+            for (var i = 0; i < points.Length; i++)
+            {
+                var next = (i + 1) % points.Length;
+                mesh.AddTriangle(i, i + points.Length, next);
+                mesh.AddTriangle(next, i + points.Length, next + points.Length);
+            }
         }
     }
 }

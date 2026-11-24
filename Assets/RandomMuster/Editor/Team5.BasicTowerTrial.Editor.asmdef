@@ -1,0 +1,14 @@
+{
+  "name": "Team5.BasicTowerTrial.Editor",
+  "includePlatforms": [
+    "Editor"
+  ],
+  "references": [
+    "Team5.BasicTowerTrial.Simulation",
+    "Team5.BasicTowerTrial.Session",
+    "Team5.BasicTowerTrial.World",
+    "Team5.BasicTowerTrial.Presentation",
+    "Unity.TextMeshPro",
+    "Unity.ugui"
+  ]
+}

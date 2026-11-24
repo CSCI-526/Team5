@@ -59,6 +59,18 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Rebuild/Scenes/Level7GridBattle.unity
     guid: 03caca6311775d741b915e6d13095586
+  - enabled: 1
+    path: Assets/RandomMuster/Scenes/RandomMusterStart.unity
+    guid: b8600e4c409c46d6842944f0f40bac5d
+  - enabled: 1
+    path: Assets/RandomMuster/Scenes/BattlegroundsUpgrade.unity
+    guid: 75c8d670be754c799138af62e98088c3
+  - enabled: 1
+    path: Assets/RandomMuster/Scenes/RandomMuster.unity
+    guid: eb8ef25bb4b34af8a6d9b4cf09925960
+  - enabled: 1
+    path: Assets/RandomMuster/Scenes/RandomMusterEnd.unity
+    guid: b9d3efd2f9444ef7a7bf3a85050b8be4
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0

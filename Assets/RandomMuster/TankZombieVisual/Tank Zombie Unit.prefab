@@ -1,0 +1,88 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &1330029442794768432
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 2023335331967591898, guid: 13d32f694fde901488c26ef7d7d0cda5, type: 3}
+      propertyPath: m_Name
+      value: Tank Zombie Unit
+      objectReference: {fileID: 0}
+    - target: {fileID: 8540069682730646970, guid: 13d32f694fde901488c26ef7d7d0cda5, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8540069682730646970, guid: 13d32f694fde901488c26ef7d7d0cda5, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8540069682730646970, guid: 13d32f694fde901488c26ef7d7d0cda5, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8540069682730646970, guid: 13d32f694fde901488c26ef7d7d0cda5, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8540069682730646970, guid: 13d32f694fde901488c26ef7d7d0cda5, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8540069682730646970, guid: 13d32f694fde901488c26ef7d7d0cda5, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8540069682730646970, guid: 13d32f694fde901488c26ef7d7d0cda5, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8540069682730646970, guid: 13d32f694fde901488c26ef7d7d0cda5, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8540069682730646970, guid: 13d32f694fde901488c26ef7d7d0cda5, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8540069682730646970, guid: 13d32f694fde901488c26ef7d7d0cda5, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 2023335331967591898, guid: 13d32f694fde901488c26ef7d7d0cda5, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8078361003420400016}
+  m_SourcePrefab: {fileID: 100100000, guid: 13d32f694fde901488c26ef7d7d0cda5, type: 3}
+--- !u!1 &1036217659323788778 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2023335331967591898, guid: 13d32f694fde901488c26ef7d7d0cda5, type: 3}
+  m_PrefabInstance: {fileID: 1330029442794768432}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &8078361003420400016
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1036217659323788778}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c29f0aed10a3394693e73ab2d9cb3e1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RandomMuster.ZombieUnit
+  <MaxHealth>k__BackingField: 800
+  <MoveSpeed>k__BackingField: 0.7
+  <MinimumDamage>k__BackingField: 40
+  <MaximumDamage>k__BackingField: 60
+  <AttackInterval>k__BackingField: 1
+  <Armor>k__BackingField: 0
+  <MagicResistance>k__BackingField: 0
+  <KillGold>k__BackingField: 50
+  <GoalLifeCost>k__BackingField: 3

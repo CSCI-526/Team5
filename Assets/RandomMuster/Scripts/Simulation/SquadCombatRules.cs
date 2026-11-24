@@ -4,15 +4,20 @@ using UnityEngine;
 
 namespace Team5.BasicTowerTrial.Simulation
 {
-    public enum UnitRole { Test, Attack, Tank, Heal, Captain, Sniper, Vanguard, Demolisher, Frostweaver, Warcaller, Aegis }
+    public enum UnitRole
+    {
+        Test, Attack, Tank, Heal, Captain, Sniper, Vanguard, Demolisher, Frostweaver, Warcaller, Aegis,
+        Zombie, BruteZombie, ShamanZombie, TankZombie
+    }
     public enum UnitRarity { Common = 0, Rare = 1, Epic = 2, Legendary = 3 }
     public enum BattleObjective { DefendGoal, ReachGoal }
     public enum AttackArea { Square = 0, PositiveX = 1, NegativeX = 2, PositiveZ = 3, NegativeZ = 4 }
-    public enum ProjectileTargetKind { Tower, FormationSlot }
+    public enum ProjectileTargetKind { Tower, FormationSlot, FormationMember }
 
     public readonly struct RoleBaseStats
     {
         public readonly float MaxHp, Damage, Range, AttackInterval, Defense, HealPerSecond, TowerDamageMultiplier;
+        public readonly float MoveSpeed;
         public RoleBaseStats(
             float maxHp,
             float damage = 0f,
@@ -20,7 +25,8 @@ namespace Team5.BasicTowerTrial.Simulation
             float interval = 1f,
             float defense = 0f,
             float heal = 0f,
-            float towerDamageMultiplier = 1f)
+            float towerDamageMultiplier = 1f,
+            float moveSpeed = SquadCombatRules.Speed)
         {
             MaxHp = maxHp;
             Damage = damage;
@@ -29,6 +35,7 @@ namespace Team5.BasicTowerTrial.Simulation
             Defense = defense;
             HealPerSecond = heal;
             TowerDamageMultiplier = towerDamageMultiplier;
+            MoveSpeed = moveSpeed;
         }
     }
 
@@ -45,10 +52,10 @@ namespace Team5.BasicTowerTrial.Simulation
         // Modular role table including new offensive/hybrid units and tower-breaker multipliers
         private static readonly Dictionary<UnitRole, RoleBaseStats> RoleTable = new Dictionary<UnitRole, RoleBaseStats>
         {
-            { UnitRole.Attack,     new RoleBaseStats(maxHp: 4.5f, damage: 1.4f, range: 2.8f, interval: 0.9f, towerDamageMultiplier: 1.5f) },
-            { UnitRole.Tank,       new RoleBaseStats(maxHp: 11.0f, defense: 0.20f) },
+            { UnitRole.Attack,     new RoleBaseStats(maxHp: 4.5f, damage: 1.4f, range: 2.8f, interval: 0.9f, towerDamageMultiplier: 1.5f, moveSpeed: .6f) },
+            { UnitRole.Tank,       new RoleBaseStats(maxHp: 11.0f, defense: 0.20f, moveSpeed: .4f) },
             { UnitRole.Heal,       new RoleBaseStats(maxHp: 3.5f, heal: 0.35f) },
-            { UnitRole.Captain,    new RoleBaseStats(maxHp: 11.0f, defense: 0.10f, range: 2.5f, interval: 1.05f) },
+            { UnitRole.Captain,    new RoleBaseStats(maxHp: 12.0f, defense: 0.10f, range: 2.5f, interval: 1.05f) },
             { UnitRole.Sniper,     new RoleBaseStats(maxHp: 3.2f, damage: 1.6f, range: 4.5f, interval: 2.5f, towerDamageMultiplier: 1.85f) },
             { UnitRole.Vanguard,   new RoleBaseStats(maxHp: 7.0f, damage: 1.1f, range: 2.5f, interval: 1.05f, defense: 0.05f, towerDamageMultiplier: 1.35f) },
             { UnitRole.Demolisher, new RoleBaseStats(maxHp: 5.0f, damage: 1.8f, range: 2.5f, interval: 1.15f, defense: 0.10f, towerDamageMultiplier: 2.25f) },
@@ -100,8 +107,8 @@ namespace Team5.BasicTowerTrial.Simulation
                 throw new ArgumentException("Legendary rarity is reserved for the four unique support characters.", nameof(rarity));
 
             var mult = ScaleMultiplier(rarity, level);
-            var hp = Mathf.Round(baseStats.MaxHp * mult * 10f) / 10f;
-            var dmg = Mathf.Round(baseStats.Damage * mult * 10f) / 10f;
+            var hp = Mathf.Max(1, Mathf.FloorToInt(baseStats.MaxHp * mult * .5f + .5f));
+            var dmg = Mathf.FloorToInt(baseStats.Damage * mult * .5f + .5f);
             var heal = baseStats.HealPerSecond > 0f ? Mathf.Round(baseStats.HealPerSecond * mult * 10f) / 10f : 0.2f;
             var def = baseStats.Defense > 0f
                 ? Mathf.Min(
@@ -122,7 +129,7 @@ namespace Team5.BasicTowerTrial.Simulation
 
             return new UnitDefinition(
                 maxHp: hp,
-                speed: Speed,
+                speed: baseStats.MoveSpeed,
                 role: role,
                 damage: dmg,
                 range: baseStats.Range,

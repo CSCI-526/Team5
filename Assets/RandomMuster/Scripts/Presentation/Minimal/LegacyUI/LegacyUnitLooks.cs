@@ -89,6 +89,10 @@ namespace Team5.BasicTowerTrial.Presentation.LegacyUI
 
         public static string Name(UnitRole type) => type switch
         {
+            UnitRole.Zombie => "REGULAR ZOMBIE",
+            UnitRole.BruteZombie => "BRUTE ZOMBIE",
+            UnitRole.ShamanZombie => "RED ZOMBIE",
+            UnitRole.TankZombie => "TANK ZOMBIE",
             UnitRole.Attack => "ATTACK",
             UnitRole.Tank => "TANK",
             UnitRole.Heal => "HEAL",

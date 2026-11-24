@@ -15,36 +15,41 @@ namespace Team5.BasicTowerTrial.Presentation
     public sealed class FormationReserveBattle : MonoBehaviour
     {
         public const string ScenePath = "Assets/RandomMuster/Scenes/RandomMuster.unity";
+        internal const string StartScenePath = "Assets/RandomMuster/Scenes/RandomMusterStart.unity";
+        private const string EndScenePath = "Assets/RandomMuster/Scenes/RandomMusterEnd.unity";
         private static TavernRecruitment pendingTavern;
-        private static readonly UnitRole[] RecruitPool = { UnitRole.Attack, UnitRole.Tank, UnitRole.Heal,
-            UnitRole.Sniper, UnitRole.Vanguard, UnitRole.Demolisher };
         private static readonly Color Gold = new Color(1, .79f, .36f);
         private static readonly Color Surface = new Color(.08f, .12f, .18f, .97f);
         [SerializeField] private BattleSession session;
+        [SerializeField] private string nextMusterScenePath;
         [SerializeField] private Slider levelOneSpeedSlider;
 
         private readonly List<UnitDefinition> reserves = new List<UnitDefinition>();
+        private UnitDefinition[] summonPool;
+        private int regularZombieHandPassives;
         private readonly UnitDefinition[] readySquad = new UnitDefinition[9];
+        private readonly int[] deployExtraZombies = new int[9];
+        private readonly TMP_Text[] slotAmounts = new TMP_Text[9];
         private readonly Button[] cells = new Button[9];
         private readonly LegacyUnitIconUI[] icons = new LegacyUnitIconUI[9];
-        private readonly UnitRole[] shownRoles = new UnitRole[9];
         private readonly List<Button> reserveButtons = new List<Button>();
         private BattleSimulation simulation;
-        private Vector3[] waypoints;
-        private Vector3 frontDirection;
         private TavernRecruitment tavern;
+        private int musterTowerCount;
         private RectTransform root;
         private TMP_Text status, pauseText;
-        private TMP_Text departureCountdown;
-        private Button launch, roll, pause, exit;
+        private TMP_Text departureCount, departureCountdown;
+        private Button launch, roll, pause;
         private Slider speedSlider;
         private Button draggedReserve;
         private RectTransform draggedIcon;
         private int selected = -1, lockedSlot = -1;
         private const int Refresh = -2;
         private const int LockItem = -3;
+        [SerializeField] private bool showLockButton;
         private const int DepartureCountdownStart = 8;
-        [SerializeField, Min(0)] private int departureLimit;
+        private static readonly Color RefreshAvailableColor = new Color(.18f, .55f, .29f);
+        private double departureReadyTime;
         private const int UnitsPerSquad = 3;
         private bool choosing, leaving, departed;
         private bool departureCoolingDown;
@@ -63,12 +68,15 @@ namespace Team5.BasicTowerTrial.Presentation
         {
             tavern = pendingTavern;
             pendingTavern = null;
-            foreach (var role in TavernRecruitment.Roles.Prepend(UnitRole.Captain))
+            if (tavern == null)
             {
-                var owned = tavern?.Followers.Where(follower => follower.Role == role)
-                    .OrderByDescending(follower => follower.Golden).FirstOrDefault();
-                reserves.Add(owned == null ? SquadCombatRules.Create(role) : tavern.Stats(owned));
+                BattlegroundsUpgradeScene.NewGame();
+                tavern = BattlegroundsUpgradeScene.State;
             }
+            reserves.AddRange(tavern.Followers.Where(follower => follower.Slot < 0 && MusterZombieRules.IsZombie(follower.Role))
+                .Select(tavern.Stats));
+            regularZombieHandPassives = reserves.Count(unit => unit.Role == UnitRole.Zombie && unit.Level > 1);
+            summonPool = BuildSummonPool(tavern.Tier, reserves);
 
             RefreshReadySquad(false);
             var initialRoster = readySquad.Select((unit, slot) => new { unit, slot })
@@ -79,8 +87,9 @@ namespace Team5.BasicTowerTrial.Presentation
             simulation = session.Simulation;
             if (simulation == null) return;
             simulation.SetPaused(true);
-            simulation.EnableFixedWaveDeployment(departureLimit > 0 ? departureLimit : (int?)null);
-            waypoints = session.Route.CaptureTopCenters();
+            musterTowerCount = simulation.Towers.Count(tower =>
+                tower.IsAlive && !tower.Definition.IsWall && !tower.Definition.IsMinion);
+            simulation.EnableFixedWaveDeployment(tavern.Tier * 2, Mathf.Max(1, musterTowerCount));
             var inspection = session.transform.root.GetComponentInChildren<BattleUnitInspection>();
             if (inspection != null) inspection.IsInputSuppressed = true;
             if (EventSystem.current == null)
@@ -93,7 +102,19 @@ namespace Team5.BasicTowerTrial.Presentation
             Update();
         }
 
-        private static UnitRole RandomRole() => RecruitPool[Random.Range(0, RecruitPool.Length)];
+        private static UnitDefinition[] BuildSummonPool(int tier, IReadOnlyList<UnitDefinition> hand)
+        {
+            var brute = hand.Count(unit => unit.Role == UnitRole.BruteZombie) * (tier < 2 ? 15 : 18);
+            var shaman = tier < 2 ? 0 : hand.Count(unit => unit.Role == UnitRole.ShamanZombie) * 13;
+            var tank = tier < 2 ? 0 : hand.Count(unit => unit.Role == UnitRole.TankZombie) * 4;
+            // If special weights exceed 100, draw among them in proportion to their weights.
+            var regular = Mathf.Max(0, 100 - brute - shaman - tank);
+            return Enumerable.Repeat(MusterZombieRules.Create(UnitRole.Zombie), regular)
+                .Concat(Enumerable.Repeat(MusterZombieRules.Create(UnitRole.BruteZombie), brute))
+                .Concat(Enumerable.Repeat(MusterZombieRules.Create(UnitRole.ShamanZombie), shaman))
+                .Concat(Enumerable.Repeat(MusterZombieRules.Create(UnitRole.TankZombie), tank))
+                .ToArray();
+        }
 
         private static void Shuffle(int[] values)
         {
@@ -123,17 +144,32 @@ namespace Team5.BasicTowerTrial.Presentation
             panel.anchorMin = panel.anchorMax = panel.pivot = Vector2.zero;
             panel.anchoredPosition = new Vector2(10, 8);
             launch = MakeButton(panel, "Launch", "DEPART", 120, 229, 210, 32, Depart);
+            departureCount = LegacyUiKit.CreateText(launch.transform, "Departures remaining", "",
+                new Vector2(-78, 0), new Vector2(44, 28), 18, Gold, FontStyles.Bold);
             departureCountdown = LegacyUiKit.CreateText(launch.transform, "Departure countdown", "",
                 new Vector2(78, 0), new Vector2(40, 28), 18, Gold, FontStyles.Bold);
             roll = MakeButton(panel, "Refresh", "REFRESH", 64, 192, 98, 30, () => Select(Refresh));
+            roll.targetGraphic.color = RefreshAvailableColor;
+            var camera = Camera.main;
+            var cameraRight = camera != null ? camera.transform.right : Vector3.right;
+            // Keep the 3×3 preview aligned with the battle camera and the fixed wave's world-space slots.
+            var gridRight = Mathf.Abs(cameraRight.x) >= Mathf.Abs(cameraRight.z)
+                ? Vector3.right * Mathf.Sign(cameraRight.x)
+                : Vector3.forward * Mathf.Sign(cameraRight.z);
+            var gridUp = Vector3.Cross(gridRight, Vector3.up);
             for (var slot = 0; slot < 9; slot++)
             {
                 var index = slot;
-                var x = 56 + slot % 3 * 64;
-                var y = 147 - (2 - slot / 3) * 56;
+                var offset = SquadCombatRules.Offset(slot);
+                var x = 120 + 64 * Vector3.Dot(offset, gridRight);
+                var y = 91 + 56 * Vector3.Dot(offset, gridUp);
                 var button = MakeButton(panel, "Slot " + slot, "", x, y, 57, 51, () => PickTarget(index));
                 cells[slot] = button;
                 icons[slot] = LegacyUnitIconUI.Create(button.transform, Vector2.zero, 84);
+                var badge = LegacyUiKit.CreateImage(button.transform, "Count badge", new Vector2(17, -15),
+                    new Vector2(23, 16), Surface, 3);
+                slotAmounts[slot] = LegacyUiKit.CreateText(badge.transform, "Count", "", Vector2.zero,
+                    new Vector2(22, 15), 11, Gold, FontStyles.Bold);
                 AddPointerEvent(button.gameObject, EventTriggerType.Drop, pointer => DropReserve(index, pointer));
             }
 
@@ -150,7 +186,7 @@ namespace Team5.BasicTowerTrial.Presentation
                     var index = reserveButtons.IndexOf(card);
                     if (index >= 0 && index < reserves.Count) Select(index);
                 });
-                LegacyUnitIconUI.Create(card.transform, new Vector2(0, 10), 78).SetType(reserve.Role);
+                LegacyUnitIconUI.Create(card.transform, new Vector2(0, 10), 78).SetType(reserve.Role, reserve.Level > 1);
                 LegacyUiKit.CreateText(card.transform, "Name", LegacyUnitLooks.Name(reserve.Role), new Vector2(0, -20),
                     new Vector2(64, 18), 9, Color.white);
                 reserveButtons.Add(card);
@@ -160,13 +196,13 @@ namespace Team5.BasicTowerTrial.Presentation
             }
             var lockCard = MakeButton(panel, "Lock item", "LOCK", 176, 192, 98, 30, () => Select(LockItem));
             reserveButtons.Add(lockCard);
+            lockCard.gameObject.SetActive(showLockButton);
 
             var actions = LegacyUiKit.CreateRect(root, "Battle controls", Vector2.zero, new Vector2(520, 116));
             actions.anchorMin = actions.anchorMax = actions.pivot = Vector2.right;
             actions.anchoredPosition = new Vector2(-18, 114);
-            status = Center(actions, "Battle status", "", 260, 89, 510, 26, 16, Color.white);
+            status = Center(actions, "Battle status", "", 260, 89, 510, 45, 16, Color.white);
             status.alignment = TextAlignmentOptions.Right;
-            exit = MakeButton(actions, "Continue", tavern == null ? "RETRY" : "BACK TO TAVERN", 420, 50, 160, 40, EndBattle);
         }
 
         private void BuildPlaybackControls()
@@ -191,53 +227,49 @@ namespace Team5.BasicTowerTrial.Presentation
         private void Update()
         {
             if (simulation == null || root == null) return;
-            PositionFormationGrid();
-            var running = simulation.Outcome == BattleOutcome.Running;
-            var available = running;
-            UpdateDepartureButton(available);
-            roll.interactable = available;
+            if (simulation.Outcome != BattleOutcome.Running)
+            {
+                EndBattle();
+                return;
+            }
+            UpdateDepartureButton();
             for (var i = 0; i < reserveButtons.Count; i++)
             {
                 var card = i == reserves.Count ? LockItem : i;
                 reserveButtons[i].targetGraphic.color = choosing && selected == card
                     ? LegacyUiKit.NodeBlueColor : LegacyUiKit.PanelColor;
-                reserveButtons[i].interactable = available;
             }
 
             for (var slot = 0; slot < 9; slot++)
             {
                 var unit = readySquad[slot];
-                var role = unit?.Role ?? UnitRole.Test;
-                if (shownRoles[slot] != role)
-                {
-                    shownRoles[slot] = role;
-                    icons[slot].SetType(role);
-                }
+                icons[slot].SetType(unit?.Role ?? UnitRole.Test, unit?.Level > 1);
                 icons[slot].gameObject.SetActive(unit != null);
+                var extras = GetExtraZombies(slot);
+                slotAmounts[slot].transform.parent.gameObject.SetActive(extras > 0);
+                if (extras > 0) slotAmounts[slot].text = $"×{extras + 1}";
                 cells[slot].interactable = choosing && (selected >= 0 || selected == LockItem) &&
                     (selected == LockItem ? unit != null : CanApplyReserve(slot));
                 cells[slot].targetGraphic.color = slot == lockedSlot ? new Color(.32f, .32f, .18f) :
                     cells[slot].interactable ? LegacyUiKit.NodeBlueColor : LegacyUiKit.PanelColor;
             }
-            speedSlider.interactable = running;
-            pause.interactable = departed && running;
+            pause.interactable = departed;
             pauseText.text = departed && simulation.IsPaused ? "Resume" : "Pause";
-            exit.gameObject.SetActive(!running);
-            status.text = !running ? (simulation.Outcome == BattleOutcome.Victory ? "Exit reached" : "Squad defeated") :
-                simulation.DeparturesRemaining is int remaining ? $"Departures left: {remaining}" :
-                simulation.QueuedFixedWaves > 0 ? $"Queued squads: {simulation.QueuedFixedWaves}" : "";
+            var progress = $"Round {tavern.Turn}/{TavernRecruitment.MaxRounds}   |   Reached: {simulation.ReachedGoalCount}/{Mathf.Max(1, musterTowerCount)}";
+            status.text = $"{progress}\nCaptain HP: {tavern.CaptainHealth}";
         }
 
-        private void UpdateDepartureButton(bool running)
+        private void UpdateDepartureButton()
         {
-            if (departureCoolingDown && running)
+            var remaining = simulation.DeparturesRemaining;
+            departureCount.text = remaining.HasValue ? $"x {remaining.Value}" : "";
+            if (departureCoolingDown)
             {
-                var clearance = simulation.FixedWaveClearanceDistance;
-                if (simulation.QueuedFixedWaves > 0)
-                    departureCountdown.text = DepartureCountdownStart.ToString();
-                else if (clearance > 0)
-                    departureCountdown.text = Mathf.CeilToInt(DepartureCountdownStart * clearance /
-                        BattleSimulation.FixedWaveClearance).ToString();
+                var secondsLeft = departureReadyTime - simulation.ElapsedTime;
+                if (secondsLeft > 0)
+                    departureCountdown.text = ((int)System.Math.Ceiling(secondsLeft)).ToString();
+                else if (simulation.QueuedFixedWaves > 0 || simulation.FixedWaveClearanceDistance > 0)
+                    departureCountdown.text = "0";
                 else
                 {
                     departureCoolingDown = false;
@@ -245,25 +277,11 @@ namespace Team5.BasicTowerTrial.Presentation
                 }
             }
 
-            var showingZero = running && Time.unscaledTime < showZeroUntil;
+            var showingZero = Time.unscaledTime < showZeroUntil;
             if (showingZero) departureCountdown.text = "0";
-            departureCountdown.gameObject.SetActive(running && (departureCoolingDown || showingZero));
-            launch.interactable = running && simulation.DeparturesRemaining != 0 && !departureCoolingDown && !showingZero;
+            departureCountdown.gameObject.SetActive(remaining != 0 && (departureCoolingDown || showingZero));
+            launch.interactable = remaining != 0 && !departureCoolingDown && !showingZero;
             launch.targetGraphic.color = launch.interactable ? new Color(.69f, .49f, .13f) : LegacyUiKit.PanelColor;
-        }
-
-        private void PositionFormationGrid()
-        {
-            var front = (waypoints[1] - waypoints[0]).normalized;
-            if (front == frontDirection) return;
-            frontDirection = front;
-            var right = new Vector3(front.z, 0, -front.x);
-            for (var slot = 0; slot < cells.Length; slot++)
-            {
-                var offset = SquadCombatRules.Offset(slot);
-                Place((RectTransform)cells[slot].transform, 120 + 64 * Vector3.Dot(offset, right),
-                    91 + 56 * Vector3.Dot(offset, front));
-            }
         }
 
         private void Select(int adjustment)
@@ -287,7 +305,7 @@ namespace Team5.BasicTowerTrial.Presentation
 
         private bool CanApplyReserve(int slot) =>
             simulation.Outcome == BattleOutcome.Running &&
-            slot != lockedSlot && readySquad[slot]?.Role != UnitRole.Captain &&
+            slot != lockedSlot &&
             (readySquad[slot] != null || readySquad.Count(unit => unit != null) < SquadPreparation.MaxDeployed);
 
         private static void AddPointerEvent(GameObject target, EventTriggerType type,
@@ -309,7 +327,8 @@ namespace Team5.BasicTowerTrial.Presentation
             selected = index;
             choosing = true;
             var icon = LegacyUnitIconUI.Create(root, Vector2.zero, 108);
-            icon.SetType(reserves[index].Role);
+            var reserve = reserves[index];
+            icon.SetType(reserve.Role, reserve.Level > 1);
             draggedIcon = icon.Rect;
             MoveReserveDrag(pointer);
         }
@@ -341,9 +360,11 @@ namespace Team5.BasicTowerTrial.Presentation
         private void Depart()
         {
             if (departureCoolingDown || Time.unscaledTime < showZeroUntil) return;
-            if (!simulation.TryQueueFixedWave(readySquad)) return;
-            departureCoolingDown = true;
-            UpdateDepartureButton(true);
+            var extraZombies = Enumerable.Range(0, readySquad.Length).Select(GetExtraZombies).ToArray();
+            if (!simulation.TryQueueFixedWave(readySquad, extraZombies)) return;
+            departureReadyTime = simulation.ElapsedTime + DepartureCountdownStart;
+            departureCoolingDown = simulation.DeparturesRemaining != 0;
+            UpdateDepartureButton();
             RefreshReadySquad(false);
             FinishAdjustment();
             if (!departed)
@@ -353,21 +374,32 @@ namespace Team5.BasicTowerTrial.Presentation
             }
         }
 
+        private int GetExtraZombies(int slot)
+        {
+            var unit = readySquad[slot];
+            if (unit?.Role != UnitRole.Zombie) return 0;
+            // An upgraded zombie in the formation was moved from this assault's starting hand.
+            var otherHandPassives = regularZombieHandPassives - (unit.Level > 1 ? 1 : 0);
+            return deployExtraZombies[slot] + otherHandPassives;
+        }
+
         private void RefreshReadySquad(bool keepLock)
         {
             var preservedSlot = keepLock ? lockedSlot : -1;
             var preserved = preservedSlot < 0 ? null : readySquad[preservedSlot];
+            var preservedExtras = preservedSlot < 0 ? 0 : deployExtraZombies[preservedSlot];
             var slots = Enumerable.Range(0, readySquad.Length).Where(slot => slot != preservedSlot).ToArray();
             Shuffle(slots);
             System.Array.Clear(readySquad, 0, readySquad.Length);
-            if (preserved != null) readySquad[preservedSlot] = preserved;
-            var index = 0;
-            if (preserved?.Role != UnitRole.Captain)
-                readySquad[slots[index++]] = SquadCombatRules.Create(UnitRole.Captain);
-            if (preserved?.Role != UnitRole.Attack)
-                readySquad[slots[index++]] = SquadCombatRules.Create(UnitRole.Attack);
-            while (index < UnitsPerSquad - (preserved == null ? 0 : 1))
-                readySquad[slots[index++]] = SquadCombatRules.Create(RandomRole());
+            System.Array.Clear(deployExtraZombies, 0, deployExtraZombies.Length);
+            if (preserved != null)
+            {
+                readySquad[preservedSlot] = preserved;
+                deployExtraZombies[preservedSlot] = preservedExtras;
+            }
+            var drawCount = UnitsPerSquad - (preserved == null ? 0 : 1);
+            for (var index = 0; index < drawCount; index++)
+                readySquad[slots[index]] = summonPool[Random.Range(0, summonPool.Length)];
             lockedSlot = -1;
         }
 
@@ -381,7 +413,13 @@ namespace Team5.BasicTowerTrial.Presentation
             }
             else if (selected >= 0 && selected < reserves.Count && target >= 0 && CanApplyReserve(target))
             {
-                readySquad[target] = reserves[selected];
+                var deployed = reserves[selected];
+                readySquad[target] = deployed;
+                deployExtraZombies[target] = 0;
+                if (deployed.Role == UnitRole.Zombie && deployed.Level > 1)
+                    for (var slot = 0; slot < readySquad.Length; slot++)
+                        if (slot != target && readySquad[slot]?.Role == UnitRole.Zombie)
+                            deployExtraZombies[slot]++;
                 var used = reserveButtons[selected];
                 reserves.RemoveAt(selected);
                 used.interactable = false;
@@ -400,10 +438,25 @@ namespace Team5.BasicTowerTrial.Presentation
 
         private void EndBattle()
         {
-            if (leaving) return;
+            if (leaving || simulation.Outcome == BattleOutcome.Running) return;
             leaving = true;
-            if (tavern != null) tavern.Resolve(simulation.Outcome == BattleOutcome.Victory);
-            Open(tavern == null ? gameObject.scene.path : BattlegroundsUpgradeScene.ScenePath);
+            var furthestProgress = simulation.Units.Select(unit => unit.RouteProgress).DefaultIfEmpty().Max();
+            // RouteProgress is in small cells. Allow for float error at a whole-cell boundary.
+            tavern.RecordMusterProgress(Mathf.FloorToInt(furthestProgress + .001f));
+            if (simulation.Outcome == BattleOutcome.Victory)
+            {
+                if (!string.IsNullOrWhiteSpace(nextMusterScenePath))
+                {
+                    pendingTavern = tavern;
+                    Open(nextMusterScenePath);
+                    return;
+                }
+                tavern.CompleteExpedition();
+                Open(EndScenePath);
+                return;
+            }
+            tavern.ResolveMuster(musterTowerCount, simulation.ReachedGoalCount);
+            Open(tavern.Finished ? EndScenePath : BattlegroundsUpgradeScene.ScenePath);
         }
 
         private static TMP_Text Center(RectTransform parent, string name, string text, float x, float y,
@@ -435,7 +488,7 @@ namespace Team5.BasicTowerTrial.Presentation
             rect.anchoredPosition = new Vector2(x, y);
         }
 
-        private static void Open(string path)
+        internal static void Open(string path)
         {
 #if UNITY_EDITOR
             UnityEditor.SceneManagement.EditorSceneManager.LoadSceneInPlayMode(path, new LoadSceneParameters(LoadSceneMode.Single));

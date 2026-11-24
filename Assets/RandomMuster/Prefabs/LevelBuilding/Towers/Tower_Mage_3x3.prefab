@@ -45,13 +45,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: db03d26655e34f84a268de13a62e1adc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Team5.BasicTowerTrial.World::Team5.BasicTowerTrial.World.BattleTower
-  range: 4.2
-  damage: 2.04
+  range: 5
+  damage: 17
   attackInterval: 1.5
   targetRule: 0
   usesMacroFootprint: 1
   basicDefense: 2
-  minimumShotDamage: 1.2
+  minimumShotDamage: 9
   blastRadius: 1.872
   blastEdgeMultiplier: 0.5
   maxHp: 18

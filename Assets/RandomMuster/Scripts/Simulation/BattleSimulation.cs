@@ -69,7 +69,8 @@ namespace Team5.BasicTowerTrial.Simulation
         public BattleObjective Objective => definition.Objective;
         public bool IsPaused { get; private set; }
         public int SpawnedCount { get; private set; }
-        private Queue<UnitDefinition[]> fixedWaves;
+        private Queue<(UnitDefinition[] Slots, int[] Extras)> fixedWaves;
+        private int? fixedWaveArrivalTarget;
         private int waveSequence, queuedMembers;
         public int PendingSpawnCount => fixedWaves == null ? definition.UnitCount - SpawnedCount : queuedMembers;
         public int QueuedFixedWaves => fixedWaves?.Count ?? 0;
@@ -86,24 +87,35 @@ namespace Team5.BasicTowerTrial.Simulation
             }
         }
 
-        public void EnableFixedWaveDeployment(int? departureLimit = null)
+        public void EnableFixedWaveDeployment(int? departureLimit = null, int? arrivalTarget = null)
         {
             if (departureLimit < 0) throw new ArgumentOutOfRangeException(nameof(departureLimit));
+            if (arrivalTarget < 1) throw new ArgumentOutOfRangeException(nameof(arrivalTarget));
             if (stepping || ElapsedTime != 0 || SpawnedCount != 0 || ManualMovement ||
                 definition.FormationSize != 3 || Objective != BattleObjective.ReachGoal || fixedWaves != null)
                 throw new InvalidOperationException("Fixed waves require a fresh 3x3 assault on a fixed route.");
-            fixedWaves = new Queue<UnitDefinition[]>();
+            fixedWaves = new Queue<(UnitDefinition[] Slots, int[] Extras)>();
+            fixedWaveArrivalTarget = arrivalTarget;
             DeparturesRemaining = departureLimit;
         }
 
-        public bool TryQueueFixedWave(IReadOnlyList<UnitDefinition> slots)
+        public bool TryQueueFixedWave(IReadOnlyList<UnitDefinition> slots, IReadOnlyList<int> extraZombies = null)
         {
             if (stepping || fixedWaves == null || Outcome != BattleOutcome.Running ||
                 DeparturesRemaining == 0 || slots?.Count != 9) return false;
             var count = slots.Count(unit => unit != null);
-            if (count < 1 || count > 6 || slots.Any(unit => unit != null &&
-                (unit.Role == UnitRole.Test || Mathf.Abs(unit.Speed - definition.Unit.Speed) > .0001f))) return false;
-            fixedWaves.Enqueue(slots.ToArray());
+            if (count < 1 || count > 6 || slots.Any(unit => unit?.Role == UnitRole.Test)) return false;
+            if (extraZombies != null)
+            {
+                if (extraZombies.Count != slots.Count) return false;
+                for (var slot = 0; slot < slots.Count; slot++)
+                {
+                    var extra = extraZombies[slot];
+                    if (extra < 0 || extra > 0 && slots[slot]?.Role != UnitRole.Zombie) return false;
+                    count += extra;
+                }
+            }
+            fixedWaves.Enqueue((slots.ToArray(), extraZombies?.ToArray()));
             queuedMembers += count;
             if (DeparturesRemaining.HasValue) DeparturesRemaining--;
             return true;
@@ -134,6 +146,7 @@ namespace Team5.BasicTowerTrial.Simulation
         public event Action<TowerDestroyedEvent> TowerDestroyed;
         public event Action<HealEvent> UnitHealed;
         public event Action<int> HealerPulsed;
+        public event Action<int, Vector3> ZombieMeleeStarted;
         public event Action FormationChanged;
         public event Action<UnitRole, int, Vector3> LegendarySkillUsed;
         public event Action<int, int> TowerHitBlocked;
@@ -167,7 +180,8 @@ namespace Team5.BasicTowerTrial.Simulation
             copy.Outcome = Outcome; copy.IsPaused = IsPaused;
             copy.SpawnedCount = SpawnedCount; copy.KilledCount = KilledCount; copy.ReachedGoalCount = ReachedGoalCount;
             copy.InitialDeploymentHeld = InitialDeploymentHeld;
-            if (fixedWaves != null) copy.fixedWaves = new Queue<UnitDefinition[]>(fixedWaves);
+            if (fixedWaves != null) copy.fixedWaves = new Queue<(UnitDefinition[] Slots, int[] Extras)>(fixedWaves);
+            copy.fixedWaveArrivalTarget = fixedWaveArrivalTarget;
             copy.DeparturesRemaining = DeparturesRemaining;
             copy.waveSequence = waveSequence;
             copy.queuedMembers = queuedMembers;
@@ -343,19 +357,24 @@ namespace Team5.BasicTowerTrial.Simulation
             {
                 Spawn();
                 TickLegendaryEffects(deltaTime);
+                TickMusterZombies(deltaTime);
                 TickBarracks(deltaTime);
                 if (continuous != null) continuous.Step(deltaTime);
-                var wallStop = continuous == null ? WallStopProgress() : 0;
+                var wallStop = continuous == null && fixedWaves == null ? WallStopProgress() : float.PositiveInfinity;
                 foreach (var unit in units)
                 {
                     if (!unit.IsAlive) continue;
-                    if (continuous == null) Move(unit, deltaTime,
-                        interceptedSquads.Contains(unit.SquadId) ? Mathf.Min(wallStop, unit.RouteProgress) : wallStop);
+                    if (continuous == null)
+                    {
+                        var unitWallStop = fixedWaves == null ? wallStop : WallStopProgress(unit);
+                        Move(unit, deltaTime, IsMovementIntercepted(unit)
+                            ? Mathf.Min(unitWallStop, unit.RouteProgress) : unitWallStop);
+                    }
                     else UnitMoved?.Invoke(new UnitMovedEvent(unit));
                     if (Outcome != BattleOutcome.Running) return;
                     if (Objective == BattleObjective.DefendGoal && ReachedGoalCount >= definition.GoalLives) break;
                 }
-                if (ReachedGoalCount < definition.GoalLives)
+                if (ReachedGoalCount < (fixedWaveArrivalTarget ?? definition.GoalLives))
                 {
                     foreach (var tower in towers) Attack(tower, deltaTime);
                     if (Objective == BattleObjective.ReachGoal)
@@ -384,19 +403,24 @@ namespace Team5.BasicTowerTrial.Simulation
             if (fixedWaves != null)
             {
                 if (fixedWaves.Count == 0 || FixedWaveClearanceDistance > 0) return;
-                var slots = fixedWaves.Dequeue();
+                var (slots, extras) = fixedWaves.Dequeue();
                 var squadId = ++waveSequence;
                 for (var slot = 0; slot < slots.Length; slot++)
                 {
                     var stats = slots[slot];
                     if (stats == null) continue;
-                    var offset = SquadCombatRules.Offset(slot);
-                    var unit = new UnitState(3101 + SpawnedCount, stats, Waypoints[0] + offset,
-                        squadId, SquadCombatRules.Slot(slot), offset);
-                    units.Add(unit);
-                    SpawnedCount++;
-                    queuedMembers--;
-                    UnitSpawned?.Invoke(new UnitSpawnedEvent(unit));
+                    var slotCenter = SquadCombatRules.Offset(slot);
+                    var count = 1 + (extras?[slot] ?? 0);
+                    for (var member = 0; member < count; member++)
+                    {
+                        var offset = slotCenter + WithinFixedSlot(member, count);
+                        var unit = new UnitState(3101 + SpawnedCount, stats, Waypoints[0] + offset,
+                            squadId, SquadCombatRules.Slot(slot), offset);
+                        units.Add(unit);
+                        SpawnedCount++;
+                        queuedMembers--;
+                        UnitSpawned?.Invoke(new UnitSpawnedEvent(unit));
+                    }
                 }
                 return;
             }
@@ -433,6 +457,17 @@ namespace Team5.BasicTowerTrial.Simulation
             }
         }
 
+        private static Vector3 WithinFixedSlot(int member, int count)
+        {
+            var columns = Mathf.CeilToInt(Mathf.Sqrt(count));
+            var row = member / columns;
+            var rows = (count + columns - 1) / columns;
+            var rowWidth = Math.Min(columns, count - row * columns);
+            var x = rowWidth <= 1 ? 0f : (member % columns / (rowWidth - 1f) - .5f) * .52f;
+            var z = rows <= 1 ? 0f : (row / (rows - 1f) - .5f) * .52f;
+            return new Vector3(x, 0f, z);
+        }
+
         private float SpawnProgress(float speed)
         {
             // Reinforcements join the existing formation even when a wall has stopped it.
@@ -440,22 +475,28 @@ namespace Team5.BasicTowerTrial.Simulation
             return Mathf.Min((float)time * speed, Mathf.Min(RouteLength(), WallStopProgress()));
         }
 
-        private float WallStopProgress()
+        private float WallStopProgress(UnitState individual = null)
         {
+            if (!towers.Any(tower => tower.Definition.IsWall && tower.IsAlive)) return float.PositiveInfinity;
             var stop = float.PositiveInfinity;
             var members = new List<(float progress, Vector3 offset)>();
-            foreach (var unit in units)
-                if (unit.IsAlive) members.Add((unit.RouteProgress, unit.FormationOffset));
-            // Reserve planned reinforcement slots too, so late spawns cannot appear inside a wall.
-            if (definition.Members != null)
+            if (individual != null)
+                members.Add((individual.RouteProgress, individual.FormationOffset));
+            else
             {
-                var anchorProgress = members.Count > 0 ? members[0].progress : 0;
-                foreach (var member in definition.Members)
-                    if (!spawnedMembers.Contains(member.MemberId)) members.Add((anchorProgress, SquadCombatRules.Offset(member.SlotId)));
+                foreach (var unit in units)
+                    if (unit.IsAlive) members.Add((unit.RouteProgress, unit.FormationOffset));
+                // Reserve planned reinforcement slots so late spawns cannot appear inside a wall.
+                if (definition.Members != null)
+                {
+                    var anchorProgress = members.Count > 0 ? members[0].progress : 0;
+                    foreach (var member in definition.Members)
+                        if (!spawnedMembers.Contains(member.MemberId)) members.Add((anchorProgress, SquadCombatRules.Offset(member.SlotId)));
+                }
+                else if (members.Count == 0)
+                    for (var slot = 0; slot < definition.SquadCapacity; slot++)
+                        members.Add((0, definition.FormationSize == 3 ? SquadCombatRules.Offset(slot) : Vector3.zero));
             }
-            if (members.Count == 0 && definition.Members == null)
-                for (var slot = 0; slot < definition.SquadCapacity; slot++)
-                    members.Add((0, definition.FormationSize == 3 ? SquadCombatRules.Offset(slot) : Vector3.zero));
             foreach (var wall in towers)
             {
                 if (!wall.Definition.IsWall || !wall.IsAlive) continue;
@@ -514,9 +555,11 @@ namespace Team5.BasicTowerTrial.Simulation
             UnitMoved?.Invoke(new UnitMovedEvent(unit));
             if (unit.NextWaypoint < Waypoints.Count || ManualMovement) return;
             unit.LifeState = UnitLifeState.ReachedGoal; ReachedGoalCount++;
-            if (Objective == BattleObjective.ReachGoal) Outcome = BattleOutcome.Victory;
+            var wonAssault = Objective == BattleObjective.ReachGoal &&
+                ReachedGoalCount >= (fixedWaveArrivalTarget ?? 1);
+            if (wonAssault) Outcome = BattleOutcome.Victory;
             UnitReachedGoal?.Invoke(new UnitEndedEvent(unit));
-            if (Objective == BattleObjective.ReachGoal) BattleEnded?.Invoke(new BattleEndedEvent(Outcome, KilledCount, ReachedGoalCount));
+            if (wonAssault) BattleEnded?.Invoke(new BattleEndedEvent(Outcome, KilledCount, ReachedGoalCount));
         }
 
         private void Attack(TowerState tower, float deltaTime)
@@ -550,8 +593,8 @@ namespace Team5.BasicTowerTrial.Simulation
                         {
                             Id = ++projectileSequence,
                             SourceId = tower.Id,
-                            TargetKind = ProjectileTargetKind.FormationSlot,
-                            TargetId = unit.SlotId,
+                            TargetKind = fixedWaves != null ? ProjectileTargetKind.FormationMember : ProjectileTargetKind.FormationSlot,
+                            TargetId = fixedWaves != null ? unit.Id : unit.SlotId,
                             SquadId = unit.SquadId,
                             Position = tower.Position,
                             Origin = tower.Position,
@@ -589,8 +632,8 @@ namespace Team5.BasicTowerTrial.Simulation
             {
                 Id = ++projectileSequence,
                 SourceId = tower.Id,
-                TargetKind = ProjectileTargetKind.FormationSlot,
-                TargetId = target.SlotId,
+                TargetKind = fixedWaves != null ? ProjectileTargetKind.FormationMember : ProjectileTargetKind.FormationSlot,
+                TargetId = fixedWaves != null ? target.Id : target.SlotId,
                 SquadId = target.SquadId,
                 Position = tower.Position,
                 Origin = tower.Position,
@@ -655,6 +698,12 @@ namespace Team5.BasicTowerTrial.Simulation
                     tower = towers.Find(value => value.Id == shot.TargetId && value.IsAlive);
                     if (tower == null) { shot.IsActive = false; continue; }
                     aim = AimPosition(tower, shot.Position);
+                }
+                else if (shot.TargetKind == ProjectileTargetKind.FormationMember)
+                {
+                    member = units.Find(unit => unit.IsAlive && unit.Id == shot.TargetId);
+                    if (member == null) { shot.IsActive = false; continue; }
+                    aim = member.Position;
                 }
                 else
                 {

@@ -24,6 +24,7 @@ namespace Team5.BasicTowerTrial.Simulation
         public UnitRarity Rarity { get; }
         public int Level { get; }
         public float Damage { get; }
+        public float MaximumDamage { get; }
         public float Range { get; }
         public float AttackInterval { get; }
         public float Defense { get; }
@@ -46,7 +47,7 @@ namespace Team5.BasicTowerTrial.Simulation
             int level = 1,
             float towerDamageMultiplier = 1f,
             AttackDamageType damageType = AttackDamageType.Normal,
-            float magicResistance = 0, bool isFlying = false)
+            float magicResistance = 0, bool isFlying = false, float? maximumDamage = null)
         {
             if (!BattleNumbers.Finite(maxHp) || maxHp <= 0 || !BattleNumbers.Finite(speed) || speed <= 0)
                 throw new ArgumentOutOfRangeException(nameof(maxHp), "HP and speed must be finite and positive.");
@@ -71,6 +72,9 @@ namespace Team5.BasicTowerTrial.Simulation
             Rarity = rarity;
             Level = Math.Max(1, level);
             Damage = damage;
+            MaximumDamage = maximumDamage ?? damage;
+            if (!BattleNumbers.Finite(MaximumDamage) || MaximumDamage < damage)
+                throw new ArgumentOutOfRangeException(nameof(maximumDamage));
             Range = range;
             AttackInterval = attackInterval;
             Defense = defense;
@@ -171,8 +175,8 @@ namespace Team5.BasicTowerTrial.Simulation
             var ids = new HashSet<int>();
             var slots = new HashSet<int>();
             foreach (var member in captured)
-                if (member == null || !ids.Add(member.MemberId) || !slots.Add(member.SlotId) || Mathf.Abs(member.Unit.Speed - Unit.Speed) > 0.00001f)
-                    throw new ArgumentException("Members require unique IDs/slots and a shared formation speed.");
+                if (member == null || !ids.Add(member.MemberId) || !slots.Add(member.SlotId))
+                    throw new ArgumentException("Members require unique IDs and slots.");
             Members = captured.AsReadOnly();
             WalkableCells = walkableCells == null ? null : new List<Vector3Int>(walkableCells).AsReadOnly();
             if(wallSurfaces!=null)WallSurfaces=new List<WallSurfaceDefinition>(wallSurfaces).AsReadOnly();
