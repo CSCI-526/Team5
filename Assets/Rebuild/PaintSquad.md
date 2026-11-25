@@ -38,16 +38,18 @@ Menu **Team5/Rebuild/Paint Squad/Build role visuals** (`Assets/Rebuild/Editor/Pa
 
 - `PaintSquad<Role>.prefab` for the ten roles, and `PaintSquadAllRoles.asset` (`UnitRoleVisualSet`) with an entry for all 11 `UnitRole` values; `Test` uses the Attack prefab.
 - `Materials/PaintSquad<Role>Helmet|Body|Paint.mat`: copies of `M_U_TeamColor`, `M_U_TeamColorDark` and `M_U_Paint` with the role colour. Body is the primary at 65 percent value, Paint is the primary times 1.25 (the source rig's third team slot).
-- `Meshes/PaintSquadSoldierUnarmed.asset` (the Soldier mesh with the triangles skinned to the Gun bone removed), `PaintSquadCone.asset` and `PaintSquadCrystal.asset` (gear shapes).
+- `Meshes/PaintSquadSoldierUnarmed.asset` and `PaintSquadSoldierHeavyUnarmed.asset` (the Soldier and SoldierHeavy meshes with the triangles skinned to the Gun bone removed), `PaintSquadCone.asset`, `PaintSquadCrystal.asset` and `PaintSquadRiotShield.asset` (gear shapes; the riot shield is a rounded-rectangle slab in a unit box).
 
 **Team5/Rebuild/Paint Squad/Capture role preview** renders all ten roles (front three-quarter and back rows, plus the Catgirl Attack prefab for scale) to `Logs/PaintSquadScreens/task2-roles.png`.
+
+**Team5/Rebuild/Paint Squad/Build Tank shield** (`Editor/TankShieldVisualBuilder.cs`) rebuilds only the Tank prefab and its catalog entry (`PaintSquadRoleVisualBuilder.BuildRoles(UnitRole.Tank)`), re-renders only the Tank portrait, and reopens the scenes that were open. The other roles' prefabs and portraits are left as they are. For the portrait only, the riot shield is moved to the Tank's left and turned 45° toward the camera so the face shows; it uses a temporary copy of the prefab that is deleted afterwards. In battle the shield stays in front.
 
 Role look (colours in `PaintSquadRoleLooks`):
 
 | Role | Helmet | Model | Gear (parent bone) |
 |---|---|---|---|
 | Attack | #DA4029 | Soldier | baked paint rifle |
-| Tank | #F59A1A | SoldierHeavy | heavy body with its baked gun |
+| Tank | #F59A1A | SoldierHeavy, gun removed | riot shield with a dark viewing slot and a cream band, held in front (Spine) |
 | Heal | #8DB52B | Soldier, gun removed | white medic cross on the helmet front (Head) |
 | Captain | #E8B923 | Hero | three metal helmet spikes and a collar (Head) |
 | Sniper | #3F7FD0 | Soldier, gun removed | long rifle with stock, barrel and scope (Gun) |

@@ -39,17 +39,26 @@ namespace Team5.Rebuild.Editor
         public static string BodyMaterialPath(UnitRole role) => $"{MaterialFolder}/PaintSquad{role}Body.mat";
         public static string PaintMaterialPath(UnitRole role) => $"{MaterialFolder}/PaintSquad{role}Paint.mat";
         public const string UnarmedSoldierMeshPath = MeshFolder + "/PaintSquadSoldierUnarmed.asset";
+        public const string UnarmedSoldierHeavyMeshPath = MeshFolder + "/PaintSquadSoldierHeavyUnarmed.asset";
         private const string ConeMeshPath = MeshFolder + "/PaintSquadCone.asset";
         private const string CrystalMeshPath = MeshFolder + "/PaintSquadCrystal.asset";
+        private const string RiotShieldMeshPath = MeshFolder + "/PaintSquadRiotShield.asset";
 
         // Roles whose baked paint gun is removed (no gun, or replaced by role gear held by the Gun bone).
         public static bool RemovesBakedGun(UnitRole role) => role == UnitRole.Heal || role == UnitRole.Sniper ||
-            role == UnitRole.Demolisher || role == UnitRole.Frostweaver || role == UnitRole.Aegis;
+            role == UnitRole.Demolisher || role == UnitRole.Frostweaver || role == UnitRole.Aegis || role == UnitRole.Tank;
+
+        public static string UnarmedMeshPath(PaintSquadBaseModel model) => model switch
+        {
+            PaintSquadBaseModel.Soldier => UnarmedSoldierMeshPath,
+            PaintSquadBaseModel.SoldierHeavy => UnarmedSoldierHeavyMeshPath,
+            _ => null,
+        };
 
         private sealed class Kit
         {
             public Material metal, dark, accent, wood, paint, helmet, body;
-            public Mesh cube, cylinder, sphere, cone, crystal;
+            public Mesh cube, cylinder, sphere, cone, crystal, riotShield;
         }
 
         private sealed class Model
@@ -67,7 +76,9 @@ namespace Team5.Rebuild.Editor
         }
 
         [MenuItem("Team5/Rebuild/Paint Squad/Build role visuals")]
-        public static void Build()
+        public static void Build() => BuildRoles(Roles);
+
+        public static void BuildRoles(params UnitRole[] rebuild)
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode) throw new InvalidOperationException("Exit Play Mode first.");
             EnsureFolder(Folder); EnsureFolder(MaterialFolder); EnsureFolder(MeshFolder);
@@ -80,6 +91,13 @@ namespace Team5.Rebuild.Editor
             var prefabs = new Dictionary<UnitRole, UnitView>();
             foreach (var role in Roles)
             {
+                if (!rebuild.Contains(role))
+                {
+                    var existing = AssetDatabase.LoadAssetAtPath<UnitView>(PrefabPath(role));
+                    if (existing == null) throw new InvalidOperationException($"Missing {PrefabPath(role)}. Run Build role visuals first.");
+                    prefabs[role] = existing;
+                    continue;
+                }
                 var helmet = SaveRoleMaterial(HelmetMaterialPath(role), "M_U_TeamColor", PaintSquadRoleLooks.Primary(role));
                 var body = SaveRoleMaterial(BodyMaterialPath(role), "M_U_TeamColorDark", PaintSquadRoleLooks.Dark(role));
                 // Paint (body plate, gun drum) is the source rig's third team slot: the primary brightened by 1.25.
@@ -114,11 +132,20 @@ namespace Team5.Rebuild.Editor
 
         private static void BuildMeshes()
         {
-            var soldier = AssetDatabase.LoadAssetAtPath<GameObject>(ModelPath(PaintSquadBaseModel.Soldier));
-            var skin = soldier.GetComponentInChildren<SkinnedMeshRenderer>();
+            SaveMesh(Unarmed(PaintSquadBaseModel.Soldier, "PaintSquadSoldierUnarmed"), UnarmedSoldierMeshPath);
+            SaveMesh(Unarmed(PaintSquadBaseModel.SoldierHeavy, "PaintSquadSoldierHeavyUnarmed"), UnarmedSoldierHeavyMeshPath);
+            SaveMesh(Cone(16), ConeMeshPath);
+            SaveMesh(Crystal(), CrystalMeshPath);
+            SaveMesh(RoundedSlab(.62f, .84f, .1f, 6), RiotShieldMeshPath);
+        }
+
+        private static Mesh Unarmed(PaintSquadBaseModel baseModel, string name)
+        {
+            var asset = AssetDatabase.LoadAssetAtPath<GameObject>(ModelPath(baseModel));
+            var skin = asset.GetComponentInChildren<SkinnedMeshRenderer>();
             var source = skin.sharedMesh;
             var unarmed = Object.Instantiate(source);
-            unarmed.name = "PaintSquadSoldierUnarmed";
+            unarmed.name = name;
             var gunBones = new HashSet<int>();
             for (var i = 0; i < skin.bones.Length; i++)
                 if (skin.bones[i].name == "Gun" || skin.bones[i].name == "Muzzle") gunBones.Add(i);
@@ -134,9 +161,60 @@ namespace Team5.Rebuild.Editor
                 unarmed.SetTriangles(kept, sub, false);
             }
             unarmed.RecalculateBounds();
-            SaveMesh(unarmed, UnarmedSoldierMeshPath);
-            SaveMesh(Cone(16), ConeMeshPath);
-            SaveMesh(Crystal(), CrystalMeshPath);
+            return unarmed;
+        }
+
+        private static Mesh RoundedSlab(float width, float height, float radius, int cornerSegments)
+        {
+            var corners = new[]
+            {
+                new Vector2(width / 2 - radius, height / 2 - radius), new Vector2(-width / 2 + radius, height / 2 - radius),
+                new Vector2(-width / 2 + radius, -height / 2 + radius), new Vector2(width / 2 - radius, -height / 2 + radius),
+            };
+            var outline = new List<Vector2>();
+            for (var c = 0; c < 4; c++)
+                for (var i = 0; i <= cornerSegments; i++)
+                {
+                    var a = (c + (float)i / cornerSegments) * Mathf.PI / 2;
+                    var p = corners[c] + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * radius;
+                    outline.Add(new Vector2(p.x / width, p.y / height));
+                }
+            var n = outline.Count;
+            var edges = new Vector2[n];
+            for (var i = 0; i < n; i++)
+            {
+                var d = outline[(i + 1) % n] - outline[i];
+                edges[i] = new Vector2(d.y, -d.x).normalized;
+            }
+            var vertices = new List<Vector3>(); var normals = new List<Vector3>(); var triangles = new List<int>();
+            for (var i = 0; i < n; i++)
+            {
+                var j = (i + 1) % n;
+                Vector3 ni = (edges[(i + n - 1) % n] + edges[i]).normalized;
+                Vector3 nj = (edges[i] + edges[j]).normalized;
+                var b = vertices.Count;
+                vertices.Add(new Vector3(outline[i].x, outline[i].y, -.5f)); normals.Add(ni);
+                vertices.Add(new Vector3(outline[j].x, outline[j].y, -.5f)); normals.Add(nj);
+                vertices.Add(new Vector3(outline[j].x, outline[j].y, .5f)); normals.Add(nj);
+                vertices.Add(new Vector3(outline[i].x, outline[i].y, .5f)); normals.Add(ni);
+                triangles.AddRange(new[] { b, b + 1, b + 2, b, b + 2, b + 3 });
+            }
+            foreach (var z in new[] { .5f, -.5f })
+            {
+                var centre = vertices.Count;
+                var normal = new Vector3(0, 0, Mathf.Sign(z));
+                vertices.Add(new Vector3(0, 0, z)); normals.Add(normal);
+                for (var i = 0; i < n; i++) { vertices.Add(new Vector3(outline[i].x, outline[i].y, z)); normals.Add(normal); }
+                for (var i = 0; i < n; i++)
+                {
+                    var a = centre + 1 + i; var b = centre + 1 + (i + 1) % n;
+                    triangles.AddRange(z > 0 ? new[] { centre, a, b } : new[] { centre, b, a });
+                }
+            }
+            var mesh = new Mesh { name = "PaintSquadRiotShield" };
+            mesh.SetVertices(vertices); mesh.SetNormals(normals); mesh.SetTriangles(triangles, 0);
+            mesh.RecalculateBounds();
+            return mesh;
         }
 
         private static Mesh Cone(int segments)
@@ -209,6 +287,7 @@ namespace Team5.Rebuild.Editor
                 sphere = Resources.GetBuiltinResource<Mesh>("Sphere.fbx"),
                 cone = AssetDatabase.LoadAssetAtPath<Mesh>(ConeMeshPath),
                 crystal = AssetDatabase.LoadAssetAtPath<Mesh>(CrystalMeshPath),
+                riotShield = AssetDatabase.LoadAssetAtPath<Mesh>(RiotShieldMeshPath),
             };
         }
 
@@ -245,7 +324,7 @@ namespace Team5.Rebuild.Editor
                 .SelectMany(i => mesh.GetTriangles(i)).Distinct().Where(v => BoneName(model, v) == "Head").ToArray();
             if (kit == null) return model;
             if (RemovesBakedGun(role))
-                model.skin.sharedMesh = AssetDatabase.LoadAssetAtPath<Mesh>(UnarmedSoldierMeshPath);
+                model.skin.sharedMesh = AssetDatabase.LoadAssetAtPath<Mesh>(UnarmedMeshPath(baseModel));
             var materials = model.skin.sharedMaterials;
             for (var i = 0; i < materials.Length; i++)
             {
@@ -376,6 +455,19 @@ namespace Team5.Rebuild.Editor
                     model.muzzle = null;
                     break;
                 }
+                case UnitRole.Tank:
+                {
+                    var facing = Quaternion.LookRotation(new Vector3(0, Mathf.Tan(6 * Mathf.Deg2Rad), 1).normalized);
+                    var forward = facing * Vector3.forward;
+                    var up = facing * Vector3.up;
+                    var at = new Vector3(0, .44f, .36f);
+                    Slab(model, spine, "Riot Shield Rim", kit.metal, at, facing, new Vector3(.64f, .86f, .05f));
+                    Slab(model, spine, "Riot Shield Face", kit.helmet, at + forward * .015f, facing, new Vector3(.56f, .78f, .05f));
+                    Box(model, spine, "Riot Shield Window", kit.dark, at + up * .24f + forward * .04f, facing, new Vector3(.36f, .09f, .03f));
+                    Box(model, spine, "Riot Shield Band", kit.accent, at - up * .12f + forward * .04f, facing, new Vector3(.56f, .07f, .03f));
+                    model.muzzle = null;
+                    break;
+                }
             }
         }
 
@@ -432,6 +524,9 @@ namespace Team5.Rebuild.Editor
 
         private static void Crystal(Model model, Transform bone, string name, Material material, Vector3 at, Quaternion rotation, Vector3 size)
             => Part(model, bone, name, model.kit.crystal, material, at, rotation, size);
+
+        private static void Slab(Model model, Transform bone, string name, Material material, Vector3 at, Quaternion rotation, Vector3 size)
+            => Part(model, bone, name, model.kit.riotShield, material, at, rotation, size);
 
         private static void Cylinder(Model model, Transform bone, string name, Material material, Vector3 from, Vector3 to, float radius)
             => Part(model, bone, name, model.kit.cylinder, material, (from + to) / 2,

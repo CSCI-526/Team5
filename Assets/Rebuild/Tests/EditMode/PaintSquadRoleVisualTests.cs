@@ -104,13 +104,15 @@ namespace Team5.Rebuild.Tests
         [Test]
         public void GearMatchesTheRoleTable()
         {
-            var unarmed = AssetDatabase.LoadAssetAtPath<Mesh>(PaintSquadRoleVisualBuilder.UnarmedSoldierMeshPath);
-            Assert.That(unarmed, Is.Not.Null);
+            Assert.That(AssetDatabase.LoadAssetAtPath<Mesh>(PaintSquadRoleVisualBuilder.UnarmedSoldierMeshPath), Is.Not.Null);
+            Assert.That(AssetDatabase.LoadAssetAtPath<Mesh>(PaintSquadRoleVisualBuilder.UnarmedSoldierHeavyMeshPath), Is.Not.Null);
             foreach (var role in PaintSquadRoleVisualBuilder.Roles)
             {
                 var prefab = PrefabFor(role);
                 var skin = prefab.GetComponentInChildren<SkinnedMeshRenderer>(true);
-                Assert.That(skin.sharedMesh == unarmed, Is.EqualTo(PaintSquadRoleVisualBuilder.RemovesBakedGun(role)), role.ToString());
+                var unarmedPath = PaintSquadRoleVisualBuilder.UnarmedMeshPath(PaintSquadRoleLooks.BaseModel(role));
+                var unarmed = unarmedPath == null ? null : AssetDatabase.LoadAssetAtPath<Mesh>(unarmedPath);
+                Assert.That(unarmed != null && skin.sharedMesh == unarmed, Is.EqualTo(PaintSquadRoleVisualBuilder.RemovesBakedGun(role)), role.ToString());
                 var parts = prefab.GetComponentsInChildren<MeshFilter>(true).Select(f => f.name).ToArray();
                 void Has(string part, string bone)
                 {
@@ -128,6 +130,7 @@ namespace Team5.Rebuild.Tests
                     case UnitRole.Frostweaver: Has("Staff Crystal", "Gun"); break;
                     case UnitRole.Warcaller: Has("Banner Flag", "Spine"); break;
                     case UnitRole.Aegis: Has("Tower Shield Face", "Arm.L"); break;
+                    case UnitRole.Tank: Has("Riot Shield Face", "Spine"); Has("Riot Shield Window", "Spine"); break;
                     default: Assert.That(parts, Is.EqualTo(new[] { "Blob Shadow" }), role.ToString()); break;
                 }
                 var driver = prefab.GetComponent<PaintSquadUnitAnimation>();
@@ -136,11 +139,13 @@ namespace Team5.Rebuild.Tests
             }
         }
 
-        [Test]
-        public void UnarmedSoldierMeshDropsOnlyTheGun()
+        [TestCase("Soldier", PaintSquadRoleVisualBuilder.UnarmedSoldierMeshPath)]
+        [TestCase("SoldierHeavy", PaintSquadRoleVisualBuilder.UnarmedSoldierHeavyMeshPath)]
+        public void UnarmedMeshDropsOnlyTheGun(string model, string unarmedPath)
         {
-            var unarmed = AssetDatabase.LoadAssetAtPath<Mesh>(PaintSquadRoleVisualBuilder.UnarmedSoldierMeshPath);
-            var source = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Rebuild/PaintSquad/Models/Characters/Soldier.fbx")
+            var unarmed = AssetDatabase.LoadAssetAtPath<Mesh>(unarmedPath);
+            Assert.That(unarmed, Is.Not.Null, unarmedPath);
+            var source = AssetDatabase.LoadAssetAtPath<GameObject>($"Assets/Rebuild/PaintSquad/Models/Characters/{model}.fbx")
                 .GetComponentInChildren<SkinnedMeshRenderer>().sharedMesh;
             Assert.That(unarmed.subMeshCount, Is.EqualTo(source.subMeshCount));
             Assert.That(unarmed.bindposes.Length, Is.EqualTo(source.bindposes.Length));
