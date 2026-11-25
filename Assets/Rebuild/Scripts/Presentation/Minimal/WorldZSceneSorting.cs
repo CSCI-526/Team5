@@ -28,7 +28,8 @@ namespace Team5.Rebuild.Presentation
                 foreach (var renderer in root.GetComponentsInChildren<Renderer>(true))
                 {
                     if (known.Contains(renderer) || renderer.GetComponentInParent<Canvas>() != null ||
-                        renderer.GetComponentInParent<SortingGroup>() != null) continue;
+                        renderer.GetComponentInParent<SortingGroup>() != null ||
+                        renderer.GetComponent<TacticalRoadView>() != null) continue;
                     renderer.GetSharedMaterials(materials);
                     var tower = renderer.GetComponentInParent<BattleTower>();
                     var transparent = renderer is LineRenderer || renderer is SpriteRenderer || tower != null;

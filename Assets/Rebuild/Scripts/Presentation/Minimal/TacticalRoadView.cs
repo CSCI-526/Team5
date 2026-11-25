@@ -47,6 +47,8 @@ namespace Team5.Rebuild.Presentation
             mesh.SetVertices(vertices); mesh.SetTriangles(fill, 0); mesh.SetTriangles(edges, 1); mesh.RecalculateBounds();
             gameObject.AddComponent<MeshFilter>().sharedMesh = mesh;
             var renderer = gameObject.AddComponent<MeshRenderer>();
+            // Draw the ground overlay before renderers sorted by world Z at any position.
+            renderer.sortingOrder = short.MinValue;
             roadMaterial = MaterialFor(shader, new Color(.76f, .70f, .56f, .68f), 2996);
             edgeMaterial = MaterialFor(shader, new Color(.91f, .85f, .67f, .90f), 2997);
             renderer.sharedMaterials = new[] { roadMaterial, edgeMaterial };

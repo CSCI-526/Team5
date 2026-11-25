@@ -9,6 +9,7 @@ using Team5.Rebuild.Simulation;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 
@@ -79,6 +80,15 @@ namespace Team5.Rebuild.Tests
             if (set == CharacterSet.PaintSquad)
                 Assert.That(captain.GetComponent<PaintSquadUnitAnimation>().CharacterAnimator.runtimeAnimatorController.name, Is.EqualTo("Hero"),
                     "the Captain must be the Paint Squad Captain (Hero), not the scene's Catgirl override");
+            else
+            {
+                Assert.That(session.GetComponent<WorldZSceneSorting>(), Is.Not.Null);
+                yield return new WaitForSecondsRealtime(.6f);
+                var road = owner.GetComponentInChildren<TacticalRoadView>().GetComponent<MeshRenderer>();
+                Assert.That(road.sortingOrder, Is.LessThan(WorldZSceneSorting.Order(300f)),
+                    "The road must keep a lower sorting order than all world-Z characters after a scene scan.");
+                Assert.That(road.sortingOrder, Is.LessThan(captain.GetComponentInChildren<SortingGroup>().sortingOrder));
+            }
         }
 
         [UnityTest]

@@ -135,10 +135,18 @@ namespace Team5.Rebuild.Editor
             var png = Folder + "/Source/Parts/" + layer.name + ".png";
             var importer = (TextureImporter)AssetImporter.GetAtPath(png);
             importer.textureType = TextureImporterType.Default;
-            importer.alphaIsTransparency = true; importer.mipmapEnabled = false;
-            importer.filterMode = FilterMode.Bilinear; importer.maxTextureSize = 2048;
+            importer.alphaIsTransparency = true;
+            // Sharpen the mip levels used by the small battle sprites and blend between levels.
+            importer.mipmapEnabled = true;
+            importer.mipmapFilter = TextureImporterMipFilter.KaiserFilter;
+            importer.filterMode = FilterMode.Trilinear;
+            importer.maxTextureSize = 2048;
             importer.npotScale = TextureImporterNPOTScale.None;
             importer.textureCompression = TextureImporterCompression.Uncompressed;
+            var settings = new TextureImporterSettings();
+            importer.ReadTextureSettings(settings);
+            settings.mipmapBias = -.65f;
+            importer.SetTextureSettings(settings);
             importer.SaveAndReimport();
             var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(png);
             var b = layer.bounds_px;
