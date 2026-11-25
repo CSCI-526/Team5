@@ -24,12 +24,13 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         private float recoil;
         private float kick;
 
-        public MinionPost(BattleTower tower, MinionKind kind, int guardedTowerId, MinionRig rig)
+        public MinionPost(BattleTower tower, MinionKind kind, int guardedTowerId, MinionRig rig, MinionElement element = MinionElement.None)
         {
             Tower = tower;
             Kind = kind;
             GuardedTowerId = guardedTowerId;
             Rig = rig;
+            Element = element;
             Home = tower != null ? tower.transform.position : Vector3.zero;
             startFacing = rig != null && rig.Look != null ? rig.Look.transform.localRotation : Quaternion.identity;
             facing = startFacing;
@@ -39,6 +40,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         public MinionKind Kind { get; }
         public int GuardedTowerId { get; }
         public MinionRig Rig { get; }
+        public MinionElement Element { get; }
         public Vector3 Home { get; }
         public bool IsAlive => Tower != null && Tower.RuntimeState != null && Tower.RuntimeState.IsAlive;
         public bool IsFrozen => Tower != null && Tower.RuntimeState != null && Tower.RuntimeState.FrozenRemaining > 0f;

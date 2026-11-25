@@ -9,9 +9,11 @@ namespace Team5.Rebuild.Presentation.LegacyUI
 
         public static Color MarkerColor => MinionPalette.Gunmetal;
 
-        public static MinionRig Build(Transform root, MinionKind kind, Vector3 facing, MinionMaterials materials)
+        public static MinionRig Build(Transform root, MinionKind kind, Vector3 facing, MinionMaterials materials, MinionElement element = MinionElement.None)
         {
             if (root == null || materials == null) return null;
+            var elemental = kind == MinionKind.Lobber && element != MinionElement.None;
+            var glow = elemental ? MinionPalette.GlowOf(element) : MinionPalette.Glass;
             var look = new GameObject("Look");
             look.transform.SetParent(root, false);
             var flat = new Vector3(facing.x, 0f, facing.z);
@@ -31,11 +33,15 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             Add(body, MinionPalette.Gunmetal, 0f, cube, new Vector3(-0.21f, 0.3f, 0.02f), level, new Vector3(0.08f, 0.2f, 0.1f));
             Add(body, MinionPalette.Gunmetal, 0f, cube, new Vector3(0.21f, 0.3f, 0.02f), level, new Vector3(0.08f, 0.2f, 0.1f));
             Add(body, MinionPalette.Head, 0f, cube, new Vector3(0f, 0.6f, 0f), level, new Vector3(0.44f, 0.34f, 0.36f));
-            Add(body, MinionPalette.BlueStone, 0f, cube, new Vector3(0f, 0.6f, 0.185f), level, new Vector3(0.36f, 0.22f, 0.02f));
+            Add(body, elemental ? MinionPalette.FaceOf(element) : MinionPalette.BlueStone, 0f, cube, new Vector3(0f, 0.6f, 0.185f), level, new Vector3(0.36f, 0.22f, 0.02f));
             Add(body, MinionPalette.Brass, 0f, ball, new Vector3(-0.235f, 0.6f, 0f), level, Vector3.one * 0.09f);
             Add(body, MinionPalette.Brass, 0f, ball, new Vector3(0.235f, 0.6f, 0f), level, Vector3.one * 0.09f);
-            Add(body, MinionPalette.Trim, 0f, tube, new Vector3(0f, 0.83f, 0f), level, new Vector3(0.03f, 0.12f, 0.03f));
-            Add(body, MinionPalette.Glass, GlassGlow, ball, new Vector3(0f, 0.9f, 0f), level, Vector3.one * 0.065f);
+            if (elemental) Crest(body, element, materials);
+            else
+            {
+                Add(body, MinionPalette.Trim, 0f, tube, new Vector3(0f, 0.83f, 0f), level, new Vector3(0.03f, 0.12f, 0.03f));
+                Add(body, MinionPalette.Glass, GlassGlow, ball, new Vector3(0f, 0.9f, 0f), level, Vector3.one * 0.065f);
+            }
             Transform muzzle;
             if (kind == MinionKind.Bearer)
             {
@@ -50,15 +56,36 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                 var tilt = Quaternion.Euler(-35f, 0f, 0f);
                 var tubeCenter = new Vector3(0.06f, 0.6f, -0.17f);
                 var tubeTop = tubeCenter + tilt * Vector3.up * 0.15f;
-                Add(body, MinionPalette.Glass, GlassGlow, ball, new Vector3(0f, 0.6f, 0.2f), level, Vector3.one * 0.11f);
+                Add(body, glow, GlassGlow, ball, new Vector3(0f, 0.6f, 0.2f), level, Vector3.one * 0.11f);
                 Add(kit, MinionPalette.Gunmetal, 0f, tube, tubeCenter, tilt, new Vector3(0.14f, 0.3f, 0.14f));
                 Add(kit, MinionPalette.Brass, 0f, tube, tubeTop, tilt, new Vector3(0.17f, 0.04f, 0.17f));
-                Add(kit, MinionPalette.Glass, GlassGlow, ball, new Vector3(-0.17f, 0.3f, 0.17f), level, Vector3.one * 0.16f);
+                Add(kit, glow, GlassGlow, ball, new Vector3(-0.17f, 0.3f, 0.17f), level, Vector3.one * 0.16f);
                 muzzle = Child(gear, "Muzzle", tubeTop);
             }
             Group(bot, body, materials);
             Group(gear, kit, materials);
             return new MinionRig(look, bot, gear, muzzle);
+        }
+
+        private static void Crest(Dictionary<Color, List<CombineInstance>> body, MinionElement element, MinionMaterials materials)
+        {
+            var level = Quaternion.identity;
+            if (element == MinionElement.Fire)
+            {
+                Add(body, MinionPalette.Ember, GlassGlow, materials.Ball, new Vector3(0f, 0.835f, 0f), level, Vector3.one * 0.15f);
+                Add(body, MinionPalette.Ember, GlassGlow, materials.Cone, new Vector3(0f, 0.935f, 0f), level, new Vector3(0.15f, 0.21f, 0.15f));
+                Add(body, MinionPalette.FlameCore, 1f, materials.Ball, new Vector3(0f, 0.84f, 0.045f), level, Vector3.one * 0.08f);
+                Add(body, MinionPalette.FlameCore, 1f, materials.Cone, new Vector3(0f, 0.905f, 0.045f), level, new Vector3(0.08f, 0.12f, 0.08f));
+                for (var side = -1; side <= 1; side += 2)
+                {
+                    Add(body, MinionPalette.FireDeep, 0.7f, materials.Ball, new Vector3(0.085f * side, 0.8f, 0f), level, Vector3.one * 0.08f);
+                    Add(body, MinionPalette.FireDeep, 0.7f, materials.Cone, new Vector3(0.1f * side, 0.855f, 0f), Quaternion.Euler(0f, 0f, -22f * side), new Vector3(0.08f, 0.11f, 0.08f));
+                }
+                return;
+            }
+            Add(body, MinionPalette.Frost, 0.55f, materials.Gem, new Vector3(0f, 0.91f, 0f), level, new Vector3(0.12f, 0.27f, 0.12f));
+            for (var side = -1; side <= 1; side += 2)
+                Add(body, MinionPalette.IceDeep, 0.4f, materials.Gem, new Vector3(0.08f * side, 0.845f, 0f), Quaternion.Euler(0f, 0f, -25f * side), new Vector3(0.07f, 0.16f, 0.07f));
         }
 
         private static Transform Child(Transform parent, string name, Vector3 position)

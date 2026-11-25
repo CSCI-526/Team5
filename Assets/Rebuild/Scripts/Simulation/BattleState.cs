@@ -16,6 +16,11 @@ namespace Team5.Rebuild.Simulation
         public float DamageBuffMultiplier { get; internal set; } = 1f;
         public float BarrierRemaining { get; internal set; }
         public int BarrierHits { get; internal set; }
+        public float FrozenRemaining { get; internal set; }
+        public int BurnTicksLeft { get; internal set; }
+        internal float BurnTickTimer;
+        internal float BurnTickDamage;
+        internal int BurnSourceId;
         public float MaxHp { get; }
         public float Hp { get; internal set; }
         public float Speed { get; }

@@ -125,18 +125,20 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             }
             occupied.UnionWith(trial);
             var facing = bearer ? home - placement.TowerPosition : placement.TowerPosition - home;
-            var rig = MinionLook.Build(minion.transform, placement.Kind, facing, materials);
-            return new MinionPost(tower, placement.Kind, bearer ? placement.TowerId : 0, rig);
+            var rig = MinionLook.Build(minion.transform, placement.Kind, facing, materials, placement.Element);
+            return new MinionPost(tower, placement.Kind, bearer ? placement.TowerId : 0, rig, placement.Element);
         }
 
         private void BuildViews(IReadOnlyList<BattleTower> towers, int level, MinionSites sites)
         {
             var bearersByTower = new Dictionary<int, List<MinionPost>>();
+            var elemental = false;
             foreach (var post in posts)
             {
                 if (post.Kind == MinionKind.Lobber)
                 {
-                    lobbers.Add(new MinionLobber(transform, post, MinionRules.BombDamage(level), materials));
+                    lobbers.Add(new MinionLobber(transform, post, MinionRules.BombDamage(level), materials, post.Element));
+                    elemental |= post.Element != MinionElement.None;
                     continue;
                 }
                 if (post.GuardedTowerId <= 0) continue;
@@ -151,6 +153,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                 shields.Add(new MinionShieldView(transform, tower, pair.Key, pair.Value, materials));
                 guards.Add(new MinionGuard(tower, pair.Value, sites));
             }
+            if (elemental) gameObject.AddComponent<UnitStatusView>().Bind(session, materials);
         }
 
         private static string BearerJson(int level, int towerId) =>
@@ -230,7 +233,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             foreach (var lobber in lobbers)
             {
                 lobber.Tick(simulation, time, delta);
-                if (lobber.MarkedThisFrame && hint != null) hint.Show(MinionKind.Lobber);
+                if (lobber.MarkedThisFrame && hint != null) hint.Show(MinionKind.Lobber, lobber.Element);
             }
             if (hint == null) return;
             if (NearBearer(simulation)) hint.Show(MinionKind.Bearer);

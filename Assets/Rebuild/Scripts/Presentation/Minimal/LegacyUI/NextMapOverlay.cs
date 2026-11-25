@@ -67,15 +67,17 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             x = LegendLabel(parent, "SENTRY / TRAP", x, bottom);
             Marker(parent, MinionKind.Bearer, new Vector2(x + 11f, bottom), 18f);
             x = LegendLabel(parent, "SHIELD BEARER", x, bottom);
-            Marker(parent, MinionKind.Lobber, new Vector2(x + 11f, bottom), 18f);
-            LegendLabel(parent, "LOBBER", x, bottom);
+            Marker(parent, MinionKind.Lobber, new Vector2(x + 11f, bottom), 18f, MinionElement.Fire);
+            x = LegendLabel(parent, "FIRE LOBBER", x, bottom);
+            Marker(parent, MinionKind.Lobber, new Vector2(x + 11f, bottom), 18f, MinionElement.Ice);
+            LegendLabel(parent, "ICE LOBBER", x, bottom);
         }
 
         private void Minion(MinionPlacement placement, NextMapProjection projection)
         {
             var size = Mathf.Clamp(projection.PixelsPerUnit * 0.62f, 12f, 30f);
             if (placement.Kind == MinionKind.Bearer) GuardRing(placement.TowerPosition, projection);
-            foreach (var cell in placement.Cells) Marker(minions, placement.Kind, projection.ToPanel(cell), size);
+            foreach (var cell in placement.Cells) Marker(minions, placement.Kind, projection.ToPanel(cell), size, placement.Element);
         }
 
         private void GuardRing(Vector3 tower, NextMapProjection projection)
@@ -90,13 +92,23 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             ring.raycastTarget = false;
         }
 
-        private static void Marker(Transform parent, MinionKind kind, Vector2 point, float size)
+        private static void Marker(Transform parent, MinionKind kind, Vector2 point, float size, MinionElement element = MinionElement.None)
         {
             var bearer = kind == MinionKind.Bearer;
-            var rim = LegacyUiKit.CreateCircle(parent, bearer ? "Bearer" : "Lobber", point, size, MinionPalette.Brass);
+            var elemental = !bearer && element != MinionElement.None;
+            var rimColor = !elemental ? MinionPalette.Brass : element == MinionElement.Fire ? MinionPalette.FireRim : MinionPalette.IceRim;
+            var rim = LegacyUiKit.CreateCircle(parent, bearer ? "Bearer" : elemental ? element + " Lobber" : "Lobber", point, size, rimColor);
             rim.raycastTarget = false;
             var face = LegacyUiKit.CreateCircle(rim.transform, "Face", Vector2.zero, size * 0.78f, bearer ? MinionPalette.BlueStone : MinionPalette.Gunmetal);
             face.raycastTarget = false;
+            if (elemental)
+            {
+                var glyph = LegacyUiKit.CreateImage(face.transform, "Icon", Vector2.zero, new Vector2(size * 0.6f, size * 0.6f),
+                    element == MinionElement.Fire ? MinionPalette.FireIcon : MinionPalette.IceIcon);
+                glyph.sprite = MinionIcons.Of(element);
+                glyph.preserveAspect = true;
+                return;
+            }
             var icon = LegacyUiKit.CreateIcon(face.transform, "Icon", bearer ? "shield" : "target", Vector2.zero, size * 0.56f);
             if (icon != null)
             {

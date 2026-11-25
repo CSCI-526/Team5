@@ -53,6 +53,7 @@ namespace Team5.Rebuild.Simulation
         private int extraMemberSequence;
         private List<Vector3> manualRoute;
         public const int ManualRouteStep = 3;
+        public const float BurnTickSeconds = 1f;
         public bool ManualMovement => manualRoute != null;
         private IReadOnlyList<Vector3> Waypoints => manualRoute != null ? (IReadOnlyList<Vector3>)manualRoute : definition.Waypoints;
         public void EnableManualMovement()
@@ -289,6 +290,17 @@ namespace Team5.Rebuild.Simulation
                 if (unit.DamageBuffRemaining <= 0) unit.DamageBuffMultiplier = 1f;
                 unit.BarrierRemaining = Mathf.Max(0, unit.BarrierRemaining - deltaTime);
                 if (unit.BarrierRemaining <= 0) unit.BarrierHits = 0;
+                unit.FrozenRemaining = Mathf.Max(0, unit.FrozenRemaining - deltaTime);
+                if (unit.BurnTicksLeft > 0 && unit.IsAlive)
+                {
+                    unit.BurnTickTimer -= deltaTime;
+                    if (unit.BurnTickTimer <= 0.000001f)
+                    {
+                        unit.BurnTicksLeft--;
+                        unit.BurnTickTimer += BurnTickSeconds;
+                        DamageUnit(unit.BurnSourceId, unit, unit.BurnTickDamage);
+                    }
+                }
             }
         }
 
@@ -463,6 +475,33 @@ namespace Team5.Rebuild.Simulation
                 if (!unit.IsAlive || HorizontalDistanceSquared(unit.Position, location) > radius * radius) continue;
                 DamageUnit(sourceId, unit, damage);
                 hit = true;
+            }
+            if (PendingSpawnCount == 0 && AliveCount == 0)
+                End(Objective == BattleObjective.ReachGoal ? BattleOutcome.Defeat : BattleOutcome.Victory);
+            return hit;
+        }
+
+        public bool TryApplyEnvironmentalDamage(Vector3 location, float radius, float damage, int sourceId,
+            float freezeSeconds, int burnTicks, float burnTickDamage)
+        {
+            if (stepping || IsPaused || Outcome != BattleOutcome.Running || !BattleNumbers.Finite(location) ||
+                !BattleNumbers.Finite(radius) || !BattleNumbers.Finite(damage) || radius <= 0 || damage <= 0 ||
+                !BattleNumbers.Finite(freezeSeconds) || freezeSeconds < 0 || burnTicks < 0 ||
+                !BattleNumbers.Finite(burnTickDamage) || burnTickDamage < 0) return false;
+            var hit = false;
+            foreach (var unit in units)
+            {
+                if (!unit.IsAlive || HorizontalDistanceSquared(unit.Position, location) > radius * radius) continue;
+                var warded = unit.BarrierRemaining > 0 && unit.BarrierHits > 0;
+                DamageUnit(sourceId, unit, damage);
+                hit = true;
+                if (warded || !unit.IsAlive) continue;
+                if (freezeSeconds > 0) unit.FrozenRemaining = Mathf.Max(unit.FrozenRemaining, freezeSeconds);
+                if (burnTicks <= 0 || burnTickDamage <= 0) continue;
+                unit.BurnTicksLeft = burnTicks;
+                unit.BurnTickTimer = BurnTickSeconds;
+                unit.BurnTickDamage = burnTickDamage;
+                unit.BurnSourceId = sourceId;
             }
             if (PendingSpawnCount == 0 && AliveCount == 0)
                 End(Objective == BattleObjective.ReachGoal ? BattleOutcome.Defeat : BattleOutcome.Victory);
@@ -669,6 +708,7 @@ namespace Team5.Rebuild.Simulation
         private void AttackTower(UnitState unit, float deltaTime)
         {
             if (!unit.IsAlive || !SquadCombatRules.CanAttackTowers(unit.Role)) return;
+            if (unit.FrozenRemaining > 0) return;
             unit.AttackCooldown = Math.Max(0, unit.AttackCooldown - deltaTime);
             if (unit.AttackCooldown > 0.000001f) return;
             TowerState target = null;
@@ -827,6 +867,7 @@ namespace Team5.Rebuild.Simulation
             foreach (var healer in units)
             {
                 if (!healer.IsAlive || healer.Role != UnitRole.Heal) continue;
+                if (healer.FrozenRemaining > 0) continue;
                 HealerPulsed?.Invoke(healer.Id);
                 foreach (var member in units)
                 {

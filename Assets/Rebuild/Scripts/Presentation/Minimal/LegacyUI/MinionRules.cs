@@ -17,6 +17,10 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         public const float ThreatMargin = 0.5f;
         public const float ThreatBody = 0.6f;
         public const int MaxBearersPerTower = 2;
+        public const float FreezeSeconds = 1.5f;
+        public const int BurnTicks = 3;
+        public const float FireImpactShare = 0.5f;
+        public const float BurnTickShare = 0.2f;
 
         private static readonly MinionKind[][] kindsByLevel =
         {
@@ -33,6 +37,17 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         private static readonly float[] bearerDamage = { 0f, 0f, 0.35f, 0.40f, 0.46f, 0.50f, 0.55f, 0.60f };
         private static readonly float[] lobberHp = { 0f, 0f, 5f, 5f, 6f, 6f, 7f, 8f };
         private static readonly float[] bombDamage = { 0f, 0f, 0.5f, 0.70f, 0.85f, 0.95f, 1.05f, 1.15f };
+        private static readonly MinionElement[][] lobberElementsByLevel =
+        {
+            new MinionElement[0],
+            new MinionElement[0],
+            new MinionElement[0],
+            new[] { MinionElement.Fire },
+            new[] { MinionElement.Ice },
+            new[] { MinionElement.Ice },
+            new[] { MinionElement.Fire },
+            new[] { MinionElement.Fire, MinionElement.Ice }
+        };
 
         public static bool HasMinions(int level) => kindsByLevel[Row(level)].Length > 0;
 
@@ -45,6 +60,20 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         public static float BearerDamage(int level) => bearerDamage[Row(level)];
 
         public static float BombDamage(int level) => bombDamage[Row(level)];
+
+        public static MinionElement Element(int level, int lobberOrdinal)
+        {
+            var row = lobberElementsByLevel[Row(level)];
+            return row.Length == 0 ? MinionElement.None : row[Mathf.Abs(lobberOrdinal) % row.Length];
+        }
+
+        public static float ImpactDamage(MinionElement element, float bomb) => element == MinionElement.Fire ? bomb * FireImpactShare : bomb;
+
+        public static float BurnTickDamage(MinionElement element, float bomb) => element == MinionElement.Fire ? bomb * BurnTickShare : 0f;
+
+        public static int BurnTickCount(MinionElement element) => element == MinionElement.Fire ? BurnTicks : 0;
+
+        public static float FreezeTime(MinionElement element) => element == MinionElement.Ice ? FreezeSeconds : 0f;
 
         private static int Row(int level) => Mathf.Clamp(level, 0, kindsByLevel.Length - 1);
     }

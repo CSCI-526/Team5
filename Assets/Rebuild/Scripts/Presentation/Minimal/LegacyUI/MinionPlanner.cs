@@ -19,10 +19,19 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                 var kind = kinds[next];
                 var cells = Cells(route, tower, kind, MinionRules.Count(kind, level), sites, taken);
                 if (cells.Count == 0) continue;
-                placements.Add(new MinionPlacement(kind, tower.Id, tower.Position, cells));
+                var element = kind == MinionKind.Lobber ? MinionRules.Element(level, LobberOrdinal(kinds, next)) : MinionElement.None;
+                placements.Add(new MinionPlacement(kind, tower.Id, tower.Position, cells, element));
                 next++;
             }
             return placements;
+        }
+
+        private static int LobberOrdinal(IReadOnlyList<MinionKind> kinds, int index)
+        {
+            var ordinal = 0;
+            for (var i = 0; i < index; i++)
+                if (kinds[i] == MinionKind.Lobber) ordinal++;
+            return ordinal;
         }
 
         private static List<TowerDefinition> Order(IReadOnlyList<Vector3> route, IReadOnlyList<TowerDefinition> towers)

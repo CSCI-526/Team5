@@ -30,14 +30,36 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         private Texture2D ring;
         private Texture2D disc;
         private Texture2D splat;
+        private Mesh cone;
+        private Mesh gem;
+        private Mesh hex;
+        private Mesh card;
+        private Texture2D frost;
+        private Texture2D scorch;
+        private Texture2D scorchEmbers;
+        private Texture2D flameMark;
+        private Texture2D snowMark;
+        private Texture2D flame;
+        private Texture2D facets;
 
         public Mesh Box => box != null ? box : (box = Own(MinionMeshes.Box()));
         public Mesh Ball => ball != null ? ball : (ball = Own(MinionMeshes.Ball()));
         public Mesh Tube => tube != null ? tube : (tube = Own(MinionMeshes.Tube()));
         public Mesh Flat => flat != null ? flat : (flat = Own(MinionMeshes.Flat()));
+        public Mesh Cone => cone != null ? cone : (cone = Own(MinionMeshes.Cone()));
+        public Mesh Gem => gem != null ? gem : (gem = Own(MinionMeshes.Gem()));
+        public Mesh Hex => hex != null ? hex : (hex = Own(MinionMeshes.HexPrism()));
+        public Mesh Card => card != null ? card : (card = Own(MinionMeshes.Card()));
         public Texture2D Ring => ring != null ? ring : (ring = Own(CreateTexture("Minion Ring", RingAlpha)));
         public Texture2D Disc => disc != null ? disc : (disc = Own(CreateTexture("Minion Disc", DiscAlpha)));
         public Texture2D Splat => splat != null ? splat : (splat = Own(CreateTexture("Minion Splat", SplatAlpha)));
+        public Texture2D Frost => frost != null ? frost : (frost = Own(MinionGlyphs.Paint("Minion Frost", TextureSize, MinionGlyphs.FrostMark)));
+        public Texture2D Scorch => scorch != null ? scorch : (scorch = Own(MinionGlyphs.Mask("Minion Scorch", TextureSize, MinionGlyphs.ScorchBlot)));
+        public Texture2D ScorchEmbers => scorchEmbers != null ? scorchEmbers : (scorchEmbers = Own(MinionGlyphs.Mask("Minion Scorch Embers", TextureSize, MinionGlyphs.ScorchEmbers)));
+        public Texture2D FlameMark => flameMark != null ? flameMark : (flameMark = Own(MinionGlyphs.Paint("Minion Flame Mark", TextureSize, MinionGlyphs.FlameMark)));
+        public Texture2D SnowMark => snowMark != null ? snowMark : (snowMark = Own(MinionGlyphs.Mask("Minion Snow Mark", TextureSize, MinionGlyphs.SnowGlyph)));
+        public Texture2D Flame => flame != null ? flame : (flame = Own(MinionGlyphs.Paint("Minion Flame", TextureSize, MinionGlyphs.FlameCard)));
+        public Texture2D Facets => facets != null ? facets : (facets = Own(CreateFacets()));
 
         public T Own<T>(T item) where T : Object
         {
@@ -121,6 +143,34 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             ring = null;
             disc = null;
             splat = null;
+            cone = null;
+            gem = null;
+            hex = null;
+            card = null;
+            frost = null;
+            scorch = null;
+            scorchEmbers = null;
+            flameMark = null;
+            snowMark = null;
+            flame = null;
+            facets = null;
+        }
+
+        private static Texture2D CreateFacets()
+        {
+            var texture = new Texture2D(4, 1, TextureFormat.RGBA32, false)
+            {
+                name = "Minion Ice Facets",
+                wrapMode = TextureWrapMode.Clamp,
+                filterMode = FilterMode.Point
+            };
+            texture.SetPixels32(new[]
+            {
+                (Color32)new Color(1f, 1f, 1f, 0.55f), (Color32)new Color(1f, 1f, 1f, 0.42f),
+                (Color32)new Color(0.82f, 0.84f, 0.88f, 0.36f), (Color32)new Color(0.66f, 0.7f, 0.78f, 0.3f)
+            });
+            texture.Apply(false, true);
+            return texture;
         }
 
         private Material FindToonSource()

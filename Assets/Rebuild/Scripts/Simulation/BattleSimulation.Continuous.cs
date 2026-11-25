@@ -417,6 +417,7 @@ namespace Team5.Rebuild.Simulation
                     advance = Vector3.MoveTowards(Reference, referencePath[1], sim.definition.Unit.Speed * dt * .35f) - Reference;
                     if (sim.units.Where(u => u.IsAlive).Any(u => !Segment(u.Position, u.Position + advance, Radius) ||
                         travels.TryGetValue(u.Id, out var t) && !Stand(t.Goal + advance, Radius))) advance = Vector3.zero;
+                    if (sim.units.Any(u => u.IsAlive && u.FrozenRemaining > 0)) advance = Vector3.zero;
                     if (advance.sqrMagnitude > 0)
                     {
                         Reference += advance;
@@ -441,6 +442,7 @@ namespace Team5.Rebuild.Simulation
                 foreach (var unit in living)
                 {
                     if (!travels.TryGetValue(unit.Id, out var travel)) continue;
+                    if (unit.FrozenRemaining > 0) continue;
                     if (travel.WaitForPaths != null && travel.WaitForPaths.Any(IsTravelling)) continue;
                     if (travel.WaitFor.HasValue && travels.TryGetValue(travel.WaitFor.Value, out var ahead))
                     {
