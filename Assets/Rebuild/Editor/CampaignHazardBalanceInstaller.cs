@@ -98,7 +98,7 @@ namespace Team5.Rebuild.Editor
         }
 
         private static InvalidOperationException Mismatch(Scene scene, string reason) => new InvalidOperationException(
-            $"{scene.name}: {reason}. Apply the latest V5 wide-road layout first using Rebuild Tactical Stages V5 - Wide Roads (1-7). No stats-only changes were saved during preflight.");
+            $"{scene.name}: {reason}. Apply the latest V6 battlefield layout first using Rebuild Tactical Stages V6 - Battlefield Polish (1-7). No stats-only changes were saved during preflight.");
         private static void Set(SerializedObject so, string key, float value)
         {
             var property = so.FindProperty(key);

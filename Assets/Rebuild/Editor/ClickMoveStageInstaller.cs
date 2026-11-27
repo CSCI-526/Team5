@@ -21,7 +21,7 @@ namespace Team5.Rebuild.Editor
     public static class ClickMoveStageInstaller
     {
         private const string CatalogPath = "Assets/Rebuild/Editor/StageV3StageCatalog.json";
-        private const string BackupFolder = "Logs/StageV5WideRoadBackups";
+        private const string BackupFolder = "Logs/StageV7RebuildBackups";
         private const string EncounterRoot = "Stage V3 Encounters";
         private const string LandmarkRoot = "Stage V3 Landmarks";
         private static readonly string[] Scenes =
@@ -56,7 +56,7 @@ namespace Team5.Rebuild.Editor
             public float radius, damage, interval;
         }
 
-        [MenuItem("Team5/Rebuild/Rebuild Tactical Stages V5 - Wide Roads (1-7)")]
+        [MenuItem("Team5/Rebuild/Rebuild Tactical Stages V7 - Meadow (1-7)")]
         public static void Apply()
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode) throw new InvalidOperationException("Leave Play Mode before rebuilding levels.");
@@ -83,13 +83,13 @@ namespace Team5.Rebuild.Editor
                 }
                 catch (Exception error)
                 {
-                    Debug.LogError("Stage V5 " + stage + " failed. Its scene was not saved: " + error);
+                    Debug.LogError("Stage V7 " + stage + " failed. Its scene was not saved: " + error);
                     if (File.Exists(Scenes[stage - 1])) EditorSceneManager.OpenScene(Scenes[stage - 1], OpenSceneMode.Single);
                 }
             }
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            Debug.Log($"Stage V5 completed {completed}/7 stages. Review all scene errors and Play Mode behavior before shipping.");
+            Debug.Log($"Stage V7 completed {completed}/7 stages. Review all scene errors and Play Mode behavior before shipping.");
             }
             finally
             {
@@ -149,9 +149,6 @@ namespace Team5.Rebuild.Editor
                 if (plan.stage <= 2) RemoveRailArtwork(scene);
                 CreateEncounters(scene, draft, plan);
                 // The runtime objective portal is the sole battle landmark; preview pins are separate.
-                ConfigureCamera(scene, session, draft, plan.stage);
-                // Rebuild border dressing against the NEW cell bounds, then replace its floor slabs.
-                PaintSquadLevelDressing.Dress(scene);
                 StageV33VisualPolish.Polish(scene, plan.stage);
                 ConfigureTutorial(session, plan.stage);
                 ValidateBuiltScene(scene, session, draft, plan);
@@ -161,7 +158,7 @@ namespace Team5.Rebuild.Editor
                     throw new InvalidOperationException("Generated stage validation failed: " + string.Join(" | ", errors.Take(15)));
                 EditorSceneManager.MarkSceneDirty(scene);
                 if (!EditorSceneManager.SaveScene(scene, path)) throw new IOException("Unable to save scene " + path);
-                Debug.Log($"Stage V5 {plan.stage} ({plan.name}): {draft.width}x{draft.length}, " +
+                Debug.Log($"Stage V7 {plan.stage} ({plan.name}): {draft.width}x{draft.length}, " +
                     $"{session.Towers.Count} towers, {plan.hazards.Length} hazards. Saved {path}");
             }
             finally { Object.DestroyImmediate(draft); }
@@ -198,6 +195,14 @@ namespace Team5.Rebuild.Editor
                 var route = draft.route.Select(p => draft.Position(p)).ToArray();
                 var road = Enumerable.Range(0, draft.length).SelectMany(z => Enumerable.Range(0, draft.width)
                     .Select(x => new Vector2Int(x, z))).Where(p => RoadSurface(draft.Tile(p))).ToArray();
+                // V6 uses negative space deliberately: a five-wide route should occupy
+                // no more than 38% of interior grid area. Keep the visible tower bodies
+                // away from the outer terrain border, not balanced on the last tile.
+                if (road.Length > (draft.width - 2) * (draft.length - 2) * .38f)
+                    errors.Add($"Level {stage}: road consumes too much of the battlefield.");
+                foreach (var t in plan.towers)
+                    if (t.x < 2 || t.z < 2 || t.x > draft.width - 3 || t.z > draft.length - 3)
+                        errors.Add($"Level {stage}: tower too close to the terrain border.");
                 foreach (var planTower in plan.towers)
                 {
                     var point = new Vector2Int(planTower.x, planTower.z);
@@ -212,11 +217,14 @@ namespace Team5.Rebuild.Editor
                     else if (planTower.sniperOutpost)
                         errors.Add($"Level {stage}: sniper outposts must use circular coverage.");
                 }
+                var roadSet = new HashSet<Vector2Int>(road);
                 foreach (var danger in plan.hazards)
                 {
                     var point = new Vector2Int(danger.x, danger.z);
-                    if (!Passable(draft.Tile(point)) || !road.Any(p => Vector2Int.Distance(p, point) <= danger.radius))
-                        errors.Add($"Level {stage}: hazard at {point} is in a wall or cannot reach the road.");
+                    if (!roadSet.Contains(point) || draft.route.Min(p => Vector2Int.Distance(p, point)) > 1.01f)
+                        errors.Add($"Level {stage}: hazard at {point} is not on the main road or its inner lane.");
+                    if (danger.kind != "Boulder" && CampaignTrapPlacementInstaller.Coverage(roadSet, point, danger.radius) < .90f)
+                        errors.Add($"Level {stage}: hazard at {point} must cover at least 90% walkable area.");
                 }
                 // Tactical traps must stay on playable roads and leave the objective/start clear.
                 var tactical = plan.hazards.Where(h => h.kind == "Freeze" || h.kind == "Meteor" || h.kind == "Boulder").ToArray();
@@ -531,7 +539,7 @@ namespace Team5.Rebuild.Editor
             var groundSprite = groundPrefab.GetComponentInChildren<SpriteRenderer>(true);
             foreach (var cell in scene.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<BattleCell>(true)))
             {
-                if (cell.Kind != CellKind.Road) continue;
+                if (!cell.IsRouteSurface) continue;
                 var meshes = cell.GetComponentsInChildren<MeshRenderer>(true);
                 for (var i = 0; i < meshes.Length; i++)
                 {
@@ -625,34 +633,6 @@ namespace Team5.Rebuild.Editor
             var data = new SerializedObject(quick);
             var binding = data.FindProperty("session");
             if (binding != null) binding.objectReferenceValue = session;
-            data.ApplyModifiedPropertiesWithoutUndo();
-        }
-        private static void ConfigureCamera(Scene scene, BattleSession session, MapDraft draft, int stage)
-        {
-            var camera = scene.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<Camera>(true))
-                .FirstOrDefault(c => c.CompareTag("MainCamera"));
-            if (camera == null) return;
-            var center = new Vector3((draft.width - 1) * .5f, .25f, (draft.length - 1) * .5f);
-            var half = new Vector3(draft.width * .5f, 1.5f, draft.length * .5f);
-            var inv = Quaternion.Inverse(camera.transform.rotation);
-            var tan = Mathf.Tan(camera.fieldOfView * Mathf.Deg2Rad * .5f);
-            float distance = 12, ortho = 1;
-            for (var x = -1; x <= 1; x += 2) for (var y = -1; y <= 1; y += 2) for (var z = -1; z <= 1; z += 2)
-            {
-                var p = inv * Vector3.Scale(half, new Vector3(x, y, z));
-                distance = Mathf.Max(distance, Mathf.Abs(p.x) / (tan * (16f / 9f)) - p.z, Mathf.Abs(p.y) / tan - p.z);
-                ortho = Mathf.Max(ortho, Mathf.Abs(p.y), Mathf.Abs(p.x) * 9f / 16f);
-            }
-            camera.transform.position = center - camera.transform.forward * (distance * 1.1f + 2);
-            if (camera.orthographic) camera.orthographicSize = ortho * 1.1f;
-            camera.farClipPlane = Mathf.Max(camera.farClipPlane, distance + half.magnitude + 15);
-            if (stage < 3) return;
-            var follow = camera.GetComponent<Level3SquadCamera>() ?? camera.gameObject.AddComponent<Level3SquadCamera>();
-            var data = new SerializedObject(follow);
-            var owner = data.FindProperty("owner");
-            if (owner != null) owner.objectReferenceValue = scene.GetRootGameObjects()
-                .SelectMany(r => r.GetComponentsInChildren<BattlePresentation>(true)).FirstOrDefault(p => p.Session == session);
-            var zoom = data.FindProperty("zoomFactor"); if (zoom != null) zoom.floatValue = 1.5f;
             data.ApplyModifiedPropertiesWithoutUndo();
         }
         private static void Float(SerializedObject so, string name, float value) { var p = so.FindProperty(name); if (p != null) p.floatValue = value; }

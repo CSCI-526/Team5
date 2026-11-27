@@ -29,7 +29,10 @@ namespace Team5.Rebuild.Presentation
                 {
                     if (known.Contains(renderer) || renderer.GetComponentInParent<Canvas>() != null ||
                         renderer.GetComponentInParent<SortingGroup>() != null ||
-                        renderer.GetComponent<TacticalRoadView>() != null) continue;
+                        renderer.GetComponent<TacticalRoadView>() != null ||
+                        renderer.GetComponentInParent<TowerRangeView>() != null ||
+                        (renderer.sharedMaterial != null && renderer.sharedMaterial.shader != null &&
+                         renderer.sharedMaterial.shader.name == "Team5/Rebuild/BattlefieldContactShadow")) continue;
                     renderer.GetSharedMaterials(materials);
                     var tower = renderer.GetComponentInParent<BattleTower>();
                     var transparent = renderer is LineRenderer || renderer is SpriteRenderer || tower != null;

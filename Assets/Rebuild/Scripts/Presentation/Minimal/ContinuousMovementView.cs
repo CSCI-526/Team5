@@ -15,7 +15,7 @@ namespace Team5.Rebuild.Presentation
         private float invalidUntil;
         private BattleSimulation displayedSimulation;
         private bool Tactical => owner != null && owner.Session != null && owner.Session.UsesTacticalRoad;
-        private string IdleHint => Tactical ? "Click to move  •  Off-road clicks snap to the road" : "Click ground to move  •  Inspect units for abilities";
+        private string IdleHint => Tactical ? "Click to move  •  Hold Tab for full map  •  Off-road clicks snap" : "Click ground to move  •  Inspect units for abilities";
         public void Bind(BattlePresentation presentation)
         {
             owner = presentation;

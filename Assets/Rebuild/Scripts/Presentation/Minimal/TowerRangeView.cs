@@ -6,7 +6,7 @@ using UnityEngine.Rendering;
 namespace Team5.Rebuild.Presentation
 {
     // Exactly mirrors the simulation's circle, 76-degree cone, and narrow laser strip hitboxes.
-    // All normal towers use Circle or Cone; straight beams are telegraphed precision towers.
+    // V7 readability fix: restore stronger fill/outline while keeping the cleaner V6 styling.
     public sealed class TowerRangeView : MonoBehaviour
     {
         private TowerState tower;
@@ -39,17 +39,22 @@ namespace Team5.Rebuild.Presentation
             mesh = new Mesh { name = "Tower Attack Shape XZ" };
             gameObject.AddComponent<MeshFilter>().sharedMesh = mesh;
             fill = gameObject.AddComponent<MeshRenderer>();
-            fillMaterial = CreateMaterial(new Color(.22f, .6f, 1f, .10f));
-            borderMaterial = CreateMaterial(new Color(.22f, .6f, 1f, .58f));
+            fillMaterial = CreateMaterial(new Color(.22f, .60f, 1f, .08f));
+            borderMaterial = CreateMaterial(new Color(.22f, .60f, 1f, .62f));
             fill.sharedMaterial = fillMaterial;
+            fill.sortingOrder = short.MinValue + 10;
             fill.shadowCastingMode = ShadowCastingMode.Off;
             fill.receiveShadows = false;
             border = new GameObject("Range Outline").AddComponent<LineRenderer>();
             border.transform.SetParent(transform, false);
+            border.gameObject.layer = gameObject.layer;
             border.sharedMaterial = borderMaterial;
+            border.sortingOrder = short.MinValue + 11;
             border.loop = true;
             border.useWorldSpace = false;
-            border.widthMultiplier = .035f;
+            border.widthMultiplier = .034f;
+            border.numCornerVertices = 4;
+            border.numCapVertices = 4;
             border.shadowCastingMode = ShadowCastingMode.Off;
             border.receiveShadows = false;
         }
@@ -62,11 +67,13 @@ namespace Team5.Rebuild.Presentation
             fill.enabled = border.enabled = active;
             if (!active) return;
 
-            var color = SquadCombatRules.IsLaser(definition.Area)
-                ? new Color(1f, .16f, .14f)
-                : definition.IsAoe ? new Color(1f, .46f, .16f) : new Color(.27f, .6f, 1f);
-            var fillColor = new Color(color.r, color.g, color.b, .10f);
-            var borderColor = new Color(color.r, color.g, color.b, .72f);
+            var isLaser = SquadCombatRules.IsLaser(definition.Area);
+            var baseColor = isLaser
+                ? new Color(.97f, .20f, .18f)
+                : definition.IsAoe ? new Color(1f, .54f, .18f) : new Color(.13f, .57f, 1f);
+            var fillColor = new Color(baseColor.r, baseColor.g, baseColor.b, isLaser ? .20f : .105f);
+            var borderColor = new Color(baseColor.r, baseColor.g, baseColor.b, isLaser ? .96f : .84f);
+            border.widthMultiplier = isLaser ? .085f : .065f;
             if (fillMaterial.HasProperty("_BaseColor")) fillMaterial.SetColor("_BaseColor", fillColor);
             if (fillMaterial.HasProperty("_Color")) fillMaterial.SetColor("_Color", fillColor);
             if (borderMaterial.HasProperty("_BaseColor")) borderMaterial.SetColor("_BaseColor", borderColor);
@@ -114,7 +121,7 @@ namespace Team5.Rebuild.Presentation
                 outline.Add(-side); outline.Add(forward * range - side);
                 outline.Add(forward * range + side); outline.Add(side);
             }
-            else // legacy Square geometry is retained only for older scenes/test levels.
+            else
             {
                 outline.Add(new Vector3(-range, 0, -range)); outline.Add(new Vector3(-range, 0, range));
                 outline.Add(new Vector3(range, 0, range)); outline.Add(new Vector3(range, 0, -range));
@@ -137,7 +144,7 @@ namespace Team5.Rebuild.Presentation
 
         private static Material CreateMaterial(Color color)
         {
-            var shader = Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Unlit/Color") ?? Shader.Find("Standard");
+            var shader = Resources.Load<Shader>("TacticalRangeOverlay") ?? Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Unlit/Color") ?? Shader.Find("Standard");
             var material = new Material(shader) { name = "Tower Range (Runtime)", renderQueue = 3000 };
             if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", color);
             if (material.HasProperty("_Color")) material.SetColor("_Color", color);
