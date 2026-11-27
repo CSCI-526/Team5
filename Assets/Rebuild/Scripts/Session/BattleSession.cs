@@ -41,6 +41,7 @@ namespace Team5.Rebuild.Session
         [SerializeField, Min(.05f)] private float continuousFormationSpacing = .48f;
         [SerializeField, Min(.02f)] private float continuousSoldierRadius = .2f;
         [SerializeField, Min(.02f)] private float continuousVisualFootprint = .38f;
+        [SerializeField, Min(.1f)] private float continuousMovementSpeedMultiplier = 1f;
         public bool ContinuousSquadMovement => continuousSquadMovement;
         // Applies to the seven campaign-style click-to-move stages, not legacy drag prototypes.
         [SerializeField] private bool restrictToTacticalRoad = true;
@@ -202,6 +203,8 @@ namespace Team5.Rebuild.Session
                 errors.Add(compactSquadMovement ? "Compact squad movement needs finite spacing >= 0.05 and obstacle radius >= 0.02."
                     : $"Continuous formation spacing must be at least two soldier radii plus 0.01 (spacing={continuousFormationSpacing:R}, radius={continuousSoldierRadius:R}).");
             if (!float.IsFinite(levelTimeMultiplier) || levelTimeMultiplier <= 0) errors.Add("Level time multiplier must be finite and positive.");
+            if (continuousSquadMovement && (!float.IsFinite(continuousMovementSpeedMultiplier) || continuousMovementSpeedMultiplier <= 0))
+                errors.Add("Continuous movement speed multiplier must be finite and positive.");
             if (grid == null || route == null) { errors.Add("BattleSession requires a BattleGrid and SceneRoute."); return errors; }
             if (grid.gameObject.scene != gameObject.scene || route.gameObject.scene != gameObject.scene)
                 errors.Add("Grid and route must belong to the session's Scene.");
@@ -295,7 +298,8 @@ namespace Team5.Rebuild.Session
             activeBattleRealSeconds = 0f;
             var next = new BattleSimulation(CaptureDefinition());
             if (continuousSquadMovement && displayedLevelNumber >= 2) next.EnableCampaignTankPressure();
-            if (continuousSquadMovement) next.EnableContinuousMovement(continuousFormationSpacing, continuousSoldierRadius, compactSquadMovement, UsesTacticalRoad);
+            if (continuousSquadMovement) next.EnableContinuousMovement(continuousFormationSpacing, continuousSoldierRadius, compactSquadMovement, UsesTacticalRoad,
+                continuousMovementSpeedMultiplier);
             else if (manualSquadMovement) next.EnableManualMovement();
             // Scene-local registration, before the first simulation tick. Preview scenes never start a battle.
             if (displayedLevelNumber >= 3 && displayedLevelNumber <= 7 && continuousSquadMovement)

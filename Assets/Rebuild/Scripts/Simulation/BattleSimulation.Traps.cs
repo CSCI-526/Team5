@@ -19,10 +19,10 @@ namespace Team5.Rebuild.Simulation
         public readonly TacticalTrapKind Kind;
         public readonly Vector3 Center, Direction;
         public readonly float Radius, Damage, Recovery;
-        public const float BoulderHalfLength = 2.2f;
-        public float WarningSeconds => Kind == TacticalTrapKind.Boulder ? 3.2f : Kind == TacticalTrapKind.Meteor ? 2.5f : 1.65f;
-        public float ActiveSeconds => Kind == TacticalTrapKind.Boulder ? 1.65f : Kind == TacticalTrapKind.Meteor ? 4.5f : .45f;
-        public float TriggerRadius => Kind == TacticalTrapKind.Boulder ? 2.15f : Radius + .55f;
+        public const float BoulderHalfLength = 3.35f;
+        public float WarningSeconds => Kind == TacticalTrapKind.Boulder ? 2.8f : Kind == TacticalTrapKind.Meteor ? 2.15f : 1.45f;
+        public float ActiveSeconds => Kind == TacticalTrapKind.Boulder ? 1.8f : Kind == TacticalTrapKind.Meteor ? 4.5f : .45f;
+        public float TriggerRadius => Kind == TacticalTrapKind.Boulder ? 3.3f : Radius + .75f;
         public Vector3 BoulderStart => Center - Direction * BoulderHalfLength;
         public Vector3 BoulderEnd => Center + Direction * BoulderHalfLength;
         public TacticalTrapDefinition(int id, TacticalTrapKind kind, Vector3 center, float radius, float damage, float recovery, Vector3 direction)

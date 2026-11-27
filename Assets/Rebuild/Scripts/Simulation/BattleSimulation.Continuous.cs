@@ -27,12 +27,14 @@ namespace Team5.Rebuild.Simulation
         public static bool ValidContinuousBodySettings(float formationSpacing, float soldierRadius, bool compactSquad = false) =>
             BattleNumbers.Finite(formationSpacing) && BattleNumbers.Finite(soldierRadius) && soldierRadius >= .02f &&
             (compactSquad ? formationSpacing >= .05f : formationSpacing + .00001f >= soldierRadius * 2 + .01f);
-        public void EnableContinuousMovement(float formationSpacing = .48f, float soldierRadius = .2f, bool compactSquad = false, bool followRoadInFormation = false)
+        public void EnableContinuousMovement(float formationSpacing = .48f, float soldierRadius = .2f, bool compactSquad = false, bool followRoadInFormation = false, float movementSpeedMultiplier = 1f)
         {
             if (!ValidContinuousBodySettings(formationSpacing, soldierRadius, compactSquad))
                 throw new ArgumentException("Invalid continuous formation spacing or obstacle collision radius.");
+            if (!BattleNumbers.Finite(movementSpeedMultiplier) || movementSpeedMultiplier <= 0)
+                throw new ArgumentOutOfRangeException(nameof(movementSpeedMultiplier));
             EnableManualMovement();
-            continuous = new ContinuousMovement(this, definition.Waypoints[0], formationSpacing, soldierRadius, compactSquad, followRoadInFormation);
+            continuous = new ContinuousMovement(this, definition.Waypoints[0], formationSpacing, soldierRadius, compactSquad, followRoadInFormation, movementSpeedMultiplier);
         }
         public bool RequestMovement(MovementRequest request)
         {
@@ -51,9 +53,11 @@ namespace Team5.Rebuild.Simulation
             private Vector3 lastHeading = Vector3.forward;
             private List<Vector3> referencePath = new List<Vector3>();
             private readonly Dictionary<int, Travel> travels = new Dictionary<int, Travel>();
-            private readonly float Spacing, Radius;
+            private readonly float Spacing, Radius, SpeedMultiplier;
             public float FormationSpacing => Spacing;
-            public float GoalZoneRadius => Mathf.Max(1.1f, Spacing * Mathf.Sqrt(2f) + Radius + .10f);
+            // Keep the existing generous campaign capture radius despite the smaller formation.
+            public float GoalZoneRadius => Mathf.Max(FollowRoadInFormation && Spacing >= .8f ? 1.66f : 1.1f,
+                Spacing * Mathf.Sqrt(2f) + Radius + .10f);
             private readonly bool Compact, FollowRoadInFormation;
             private bool reforming, pendingReform, continueAfterReform;
             private Dictionary<int, Vector3> previousOffsets = new Dictionary<int, Vector3>();
@@ -80,13 +84,13 @@ namespace Team5.Rebuild.Simulation
             public bool Reforming => reforming || pendingReform;
             private bool IsTravelling(int id) => sim.units.Any(u => u.Id == id && u.IsAlive) &&
                 travels.TryGetValue(id, out var travel) && travel.Next < travel.Path.Count;
-            public ContinuousMovement(BattleSimulation owner, Vector3 origin, float spacing, float radius, bool compact = false, bool followRoadInFormation = false)
-            { sim = owner; Reference = destination = origin; Spacing = spacing; Radius = radius; Compact = compact; FollowRoadInFormation = followRoadInFormation; }
+            public ContinuousMovement(BattleSimulation owner, Vector3 origin, float spacing, float radius, bool compact = false, bool followRoadInFormation = false, float speedMultiplier = 1f)
+            { SpeedMultiplier = speedMultiplier; sim = owner; Reference = destination = origin; Spacing = spacing; Radius = radius; Compact = compact; FollowRoadInFormation = followRoadInFormation; }
             public bool CanPlaceFormation(Vector3 anchor) => Mathf.Abs(anchor.y - Reference.y) < .01f && sim.units.Any(u => u.IsAlive) &&
                 sim.units.Where(u => u.IsAlive).All(u => Stand(anchor + u.FormationOffset, Radius));
             public ContinuousMovement Copy(BattleSimulation owner)
             {
-                var copy = new ContinuousMovement(owner, Reference, Spacing, Radius, Compact, FollowRoadInFormation) { destination = destination, lastHeading = lastHeading, referencePath = new List<Vector3>(referencePath) };
+                var copy = new ContinuousMovement(owner, Reference, Spacing, Radius, Compact, FollowRoadInFormation, SpeedMultiplier) { destination = destination, lastHeading = lastHeading, referencePath = new List<Vector3>(referencePath) };
                 foreach (var item in travels) copy.travels.Add(item.Key, item.Value.Copy());
                 copy.reforming = reforming; copy.pendingReform = pendingReform; copy.continueAfterReform = continueAfterReform;
                 copy.previousOffsets = new Dictionary<int, Vector3>(previousOffsets);
@@ -414,7 +418,7 @@ namespace Team5.Rebuild.Simulation
                 var advance = Vector3.zero;
                 if (activeReform && continueAfterReform && referencePath.Count > 1)
                 {
-                    advance = Vector3.MoveTowards(Reference, referencePath[1], sim.definition.Unit.Speed * dt * .35f) - Reference;
+                    advance = Vector3.MoveTowards(Reference, referencePath[1], sim.definition.Unit.Speed * SpeedMultiplier * dt * .35f) - Reference;
                     if (sim.units.Where(u => u.IsAlive).Any(u => !Segment(u.Position, u.Position + advance, Radius) ||
                         travels.TryGetValue(u.Id, out var t) && !Stand(t.Goal + advance, Radius))) advance = Vector3.zero;
                     if (sim.units.Any(u => u.IsAlive && u.FrozenRemaining > 0)) advance = Vector3.zero;
@@ -462,7 +466,7 @@ namespace Team5.Rebuild.Simulation
                             travel.Blocked = 0;
                         }
                     }
-                    var remaining = Mathf.Max(0, unit.Speed * dt - advance.magnitude);
+                    var remaining = Mathf.Max(0, unit.Speed * SpeedMultiplier * dt - advance.magnitude);
                     if (!Compact && !activeReform && travel.Next < travel.Path.Count && Vector3.Distance(unit.Position, centroid) > cohesionRadius &&
                         Vector3.Dot(travel.Path[travel.Next] - unit.Position, unit.Position - centroid) > 0) remaining *= .45f;
                     while (remaining > .000001f && travel.Next < travel.Path.Count)
@@ -510,7 +514,7 @@ namespace Team5.Rebuild.Simulation
                     Vector3.Distance(u.Position, Reference) <= compactLeash ||
                     Vector3.Dot(Reference - u.Position, referencePath[1] - Reference) <= 0)))
                 {
-                    var next = Vector3.MoveTowards(Reference, referencePath[1], sim.definition.Unit.Speed * dt);
+                    var next = Vector3.MoveTowards(Reference, referencePath[1], sim.definition.Unit.Speed * SpeedMultiplier * dt);
                     Reference = next;
                     if ((next - referencePath[1]).sqrMagnitude < .000001f) referencePath.RemoveAt(0);
                     if (referencePath.Count > 0) referencePath[0] = Reference;

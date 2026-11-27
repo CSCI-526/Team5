@@ -90,9 +90,9 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             if (canvasRoot == null || left > 0f || shown.Contains(key)) return false;
             shown.Add(key);
             title.text = kind == TacticalTrapKind.Freeze ? "FREEZE TRAP" : kind == TacticalTrapKind.Meteor ? "METEOR TRAP" : "ROLLING BOULDER";
-            line.text = kind == TacticalTrapKind.Freeze ? "Leave the blue ring before the countdown ends, or get frozen." :
-                kind == TacticalTrapKind.Meteor ? "Dodge the orange ring. Wait for the burning ground to clear." :
-                "Direct hits are lethal. Clear the yellow lane before the rock rolls!";
+            line.text = kind == TacticalTrapKind.Freeze ? "Move into the clear side lane before the blue ring fires." :
+                kind == TacticalTrapKind.Meteor ? "Move around the orange ring, or wait until the fire clears." :
+                "Stop short of the yellow lane; cross after the rock passes!";
             if (shieldIcon != null) shieldIcon.gameObject.SetActive(false);
             if (targetIcon != null) targetIcon.gameObject.SetActive(kind == TacticalTrapKind.Boulder);
             if (fireIcon != null) fireIcon.gameObject.SetActive(kind == TacticalTrapKind.Meteor);
@@ -112,10 +112,10 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         private static string LobberLine(MinionElement element)
         {
             if (element == MinionElement.Fire)
-                return "Its fire bomb lands in the red ring and burns units for " + Seconds(MinionRules.BurnTicks * BattleSimulation.BurnTickSeconds) + ". Move out!";
+                return "Its fire bomb lands in the red ring and burns units for " + Seconds(MinionRules.BurnTicks * BattleSimulation.BurnTickSeconds) + ". Change direction to dodge!";
             if (element == MinionElement.Ice)
-                return "Its ice bomb lands in the red ring and freezes units for " + Seconds(MinionRules.FreezeSeconds) + ". Move out!";
-            return "A red ring shows where its paint bomb will land. Move out!";
+                return "Its ice bomb lands in the red ring and freezes units for " + Seconds(MinionRules.FreezeSeconds) + ". Change direction to dodge!";
+            return "A red ring shows where its paint bomb will land. Change direction to dodge!";
         }
 
         private static string Seconds(float value) => value.ToString("0.#", CultureInfo.InvariantCulture) + " s";

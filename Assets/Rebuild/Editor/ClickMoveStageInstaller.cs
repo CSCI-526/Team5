@@ -21,7 +21,7 @@ namespace Team5.Rebuild.Editor
     public static class ClickMoveStageInstaller
     {
         private const string CatalogPath = "Assets/Rebuild/Editor/StageV3StageCatalog.json";
-        private const string BackupFolder = "Logs/StageV4Backups";
+        private const string BackupFolder = "Logs/StageV5WideRoadBackups";
         private const string EncounterRoot = "Stage V3 Encounters";
         private const string LandmarkRoot = "Stage V3 Landmarks";
         private static readonly string[] Scenes =
@@ -35,7 +35,7 @@ namespace Team5.Rebuild.Editor
         [Serializable] private sealed class StageCatalog { public StagePlan[] stages; }
         [Serializable] private sealed class StagePlan
         {
-            public int stage, width, height;
+            public int stage, width, height, roadWidth;
             public string name;
             public bool corridor;
             public int[] route, cover;
@@ -56,7 +56,7 @@ namespace Team5.Rebuild.Editor
             public float radius, damage, interval;
         }
 
-        [MenuItem("Team5/Rebuild/Rebuild Tactical Stages V4 (1-7)")]
+        [MenuItem("Team5/Rebuild/Rebuild Tactical Stages V5 - Wide Roads (1-7)")]
         public static void Apply()
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode) throw new InvalidOperationException("Leave Play Mode before rebuilding levels.");
@@ -83,13 +83,13 @@ namespace Team5.Rebuild.Editor
                 }
                 catch (Exception error)
                 {
-                    Debug.LogError("Stage V4 " + stage + " failed. Its scene was not saved: " + error);
+                    Debug.LogError("Stage V5 " + stage + " failed. Its scene was not saved: " + error);
                     if (File.Exists(Scenes[stage - 1])) EditorSceneManager.OpenScene(Scenes[stage - 1], OpenSceneMode.Single);
                 }
             }
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            Debug.Log($"Stage V4 completed {completed}/7 stages. Review all scene errors and Play Mode behavior before shipping.");
+            Debug.Log($"Stage V5 completed {completed}/7 stages. Review all scene errors and Play Mode behavior before shipping.");
             }
             finally
             {
@@ -161,7 +161,7 @@ namespace Team5.Rebuild.Editor
                     throw new InvalidOperationException("Generated stage validation failed: " + string.Join(" | ", errors.Take(15)));
                 EditorSceneManager.MarkSceneDirty(scene);
                 if (!EditorSceneManager.SaveScene(scene, path)) throw new IOException("Unable to save scene " + path);
-                Debug.Log($"Stage V4 {plan.stage} ({plan.name}): {draft.width}x{draft.length}, " +
+                Debug.Log($"Stage V5 {plan.stage} ({plan.name}): {draft.width}x{draft.length}, " +
                     $"{session.Towers.Count} towers, {plan.hazards.Length} hazards. Saved {path}");
             }
             finally { Object.DestroyImmediate(draft); }
@@ -190,6 +190,11 @@ namespace Team5.Rebuild.Editor
                     }
                 }
                 if (!seen.Contains(goal)) errors.Add($"Level {stage}: goal cannot be reached by a 3x3 squad.");
+                if (plan.roadWidth == 5)
+                    foreach (var center in draft.route)
+                        for (var z = -2; z <= 2; z++) for (var x = -2; x <= 2; x++)
+                            if (!RoadSurface(draft.Tile(center + new Vector2Int(x, z))))
+                                errors.Add($"Level {stage}: five-wide road is pinched at {center}.");
                 var route = draft.route.Select(p => draft.Position(p)).ToArray();
                 var road = Enumerable.Range(0, draft.length).SelectMany(z => Enumerable.Range(0, draft.width)
                     .Select(x => new Vector2Int(x, z))).Where(p => RoadSurface(draft.Tile(p))).ToArray();
@@ -222,8 +227,42 @@ namespace Team5.Rebuild.Editor
                         errors.Add($"Level {stage}: tactical trap at {point} is off the road or too close to an endpoint.");
                     if (h.kind == "Boulder" && Mathf.Abs(h.dx) + Mathf.Abs(h.dz) != 1)
                         errors.Add($"Level {stage}: boulder at {point} requires a cardinal roll direction.");
-                    if (tactical.Any(other => other != h && Vector2Int.Distance(point, new Vector2Int(other.x, other.z)) < 4f))
+                    if (tactical.Any(other => other != h && Vector2Int.Distance(point, new Vector2Int(other.x, other.z)) < (plan.roadWidth == 5 ? 5f : 4f)))
                         errors.Add($"Level {stage}: tactical traps are too close at {point}.");
+                }
+                if (plan.roadWidth == 5)
+                {
+                    foreach (var h in tactical)
+                    {
+                        var center = new Vector2Int(h.x, h.z);
+                        if (h.kind == "Boulder")
+                        {
+                            var across = new Vector2Int(h.dx, h.dz);
+                            if (across != Vector2Int.zero && (!RoadSurface(draft.Tile(center + 2 * across)) ||
+                                !RoadSurface(draft.Tile(center - 2 * across))))
+                                errors.Add($"Level {stage}: boulder at {center} must cross the road.");
+                            continue;
+                        }
+                        // A safe full formation must exist near the danger ring. Grid-centred
+                        // lateral lanes are checked first; quarter-cell anchors allow precise dodges.
+                        var found = false;
+                        for (var z = -12; z <= 12 && !found; z++) for (var x = -12; x <= 12 && !found; x++)
+                        {
+                            var anchor = new Vector2(center.x + x * .25f, center.y + z * .25f);
+                            if (Vector2.Distance(anchor, center) > 3.5f) continue;
+                            var safe = true;
+                            for (var j = -1; j <= 1 && safe; j++) for (var i = -1; i <= 1 && safe; i++)
+                            {
+                                var soldier = anchor + new Vector2(i, j) * .86f;
+                                if (Vector2.Distance(soldier, center) <= h.radius + .05f) { safe = false; break; }
+                                for (var dz = -1; dz <= 1 && safe; dz++) for (var dx = -1; dx <= 1; dx++)
+                                    if (!RoadSurface(draft.Tile(Vector2Int.RoundToInt(soldier + new Vector2(dx, dz) * .18f))))
+                                    { safe = false; break; }
+                            }
+                            if (safe) found = true;
+                        }
+                        if (!found) errors.Add($"Level {stage}: trap at {center} has no nearby safe full-formation anchor.");
+                    }
                 }
                 return errors;
             }
@@ -304,10 +343,11 @@ namespace Team5.Rebuild.Editor
                 for (var i = 0; i < plan.route.Length; i += 2) turns.Add(new Vector2Int(plan.route[i], plan.route[i + 1]));
                 foreach (var turn in turns)
                     if (!draft.Inside(turn)) throw new InvalidDataException($"Stage {plan.stage}: waypoint outside map.");
-                // L1/2 are five-cell-wide corridors, accommodating visible separated squad members.
+                // Early stages keep one non-walkable ground shoulder beyond the five-wide road
+                // for tower platforms and support minions. Ground is not a movement surface.
                 if (plan.corridor)
                     foreach (var p in FollowSegments(turns))
-                        for (var z = -2; z <= 2; z++) for (var x = -2; x <= 2; x++)
+                        for (var z = -3; z <= 3; z++) for (var x = -3; x <= 3; x++)
                         {
                             var c = p + new Vector2Int(x, z);
                             if (c.x > 0 && c.y > 0 && c.x < plan.width - 1 && c.y < plan.height - 1)
@@ -322,13 +362,16 @@ namespace Team5.Rebuild.Editor
                                 throw new InvalidDataException($"Stage {plan.stage}: cover exceeds playable arena.");
                             draft.tiles[z * plan.width + x] = (int)CellKind.Obstacle;
                         }
-                // Author a legal 3x3 SceneRoute for Unity's simulator, but do not draw a line in preview.
+                // The route remains a 3x3 formation contract; the playable road is wider.
+                var roadWidth = plan.roadWidth == 0 ? 3 : plan.roadWidth;
+                if (roadWidth != 3 && roadWidth != 5) throw new InvalidDataException("Road width must be 3 or 5.");
+                var roadHalf = roadWidth / 2;
                 foreach (var p in FollowSegments(turns))
-                    for (var z = -1; z <= 1; z++) for (var x = -1; x <= 1; x++)
+                    for (var z = -roadHalf; z <= roadHalf; z++) for (var x = -roadHalf; x <= roadHalf; x++)
                     {
                         var c = p + new Vector2Int(x, z);
                         if (!draft.Inside(c) || draft.Tile(c) == (int)CellKind.Obstacle)
-                            throw new InvalidDataException($"Stage {plan.stage}: 3x3 route hits obstacle at {c}.");
+                            throw new InvalidDataException($"Stage {plan.stage}: {roadWidth}-wide road hits obstacle at {c}.");
                         draft.tiles[c.y * plan.width + c.x] = (int)CellKind.Road;
                     }
                 var start = turns[0]; var goal = turns[turns.Count - 1];
@@ -384,8 +427,9 @@ namespace Team5.Rebuild.Editor
             var data = new SerializedObject(session);
             Bool(data, "squadCombat", true); Int(data, "formationSize", 3); Int(data, "unitCount", 6);
             Bool(data, "manualSquadMovement", false); Bool(data, "continuousSquadMovement", true);
-            Bool(data, "restrictToTacticalRoad", true); Bool(data, "compactSquadMovement", false); Float(data, "continuousFormationSpacing", .96f);
-            Float(data, "continuousSoldierRadius", .2f); Float(data, "continuousVisualFootprint", .43f);
+            Bool(data, "restrictToTacticalRoad", true); Bool(data, "compactSquadMovement", false); Float(data, "continuousFormationSpacing", .86f);
+            Float(data, "continuousSoldierRadius", .18f); Float(data, "continuousVisualFootprint", .38f);
+            Float(data, "continuousMovementSpeedMultiplier", stage >= 3 ? 1.28f : 1f);
             Float(data, "levelTimeMultiplier", 1.16f); Int(data, "displayedLevelNumber", stage);
             data.ApplyModifiedPropertiesWithoutUndo();
             foreach (var owner in session.gameObject.scene.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<BattlePresentation>(true)))

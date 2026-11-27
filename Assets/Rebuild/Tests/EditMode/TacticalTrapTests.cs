@@ -27,7 +27,7 @@ namespace Team5.Rebuild.Tests
             Assert.That(trap.Phase, Is.EqualTo(TacticalTrapPhase.Warning));
             Assert.That(unit.Hp, Is.EqualTo(unit.MaxHp));
             sim.SetPaused(true); sim.Step(10); Assert.That(trap.Elapsed, Is.Zero);
-            sim.SetPaused(false); Advance(sim, 1.7f);
+            sim.SetPaused(false); Advance(sim, trap.Definition.WarningSeconds + .04f);
             Assert.That(unit.FrozenRemaining, Is.GreaterThan(1f));
             var pos = unit.Position; Assert.That(sim.RequestMovement(new MovementRequest(At(4))), Is.True);
             Advance(sim, .4f); Assert.That(unit.Position, Is.EqualTo(pos));
@@ -37,7 +37,7 @@ namespace Team5.Rebuild.Tests
         public void MeteorBurnsOnlyWhileInsideFieldAndExpires()
         {
             var sim = Setup(TacticalTrapKind.Meteor); var unit = sim.Units[0];
-            Advance(sim, 2.6f); var afterImpact = unit.Hp; Assert.That(afterImpact, Is.LessThan(unit.MaxHp));
+            Advance(sim, sim.TacticalTraps[0].Definition.WarningSeconds + .04f); var afterImpact = unit.Hp; Assert.That(afterImpact, Is.LessThan(unit.MaxHp));
             Advance(sim, .8f); Assert.That(unit.Hp, Is.LessThan(afterImpact));
             Assert.That(sim.RequestMovement(new MovementRequest(At(4))), Is.True);
             Advance(sim, 2.2f); var hpOutside = unit.Hp; Assert.That(unit.Position.x, Is.GreaterThan(1.2f));
@@ -62,6 +62,15 @@ namespace Team5.Rebuild.Tests
             Assert.That(unit.IsAlive, Is.True);
             Assert.That(unit.BarrierHits, Is.EqualTo(charges - 1));
             Assert.That(unit.Hp, Is.EqualTo(unit.MaxHp));
+        }
+        [Test]
+        public void WideRoadBoulderRollCoversAllFiveTilesAndHasLongRecovery()
+        {
+            var d = new TacticalTrapDefinition(-10001, TacticalTrapKind.Boulder, At(0), .85f, 1f, 15f, Vector3.right);
+            Assert.That(d.BoulderStart.x, Is.LessThan(-2.5f));
+            Assert.That(d.BoulderEnd.x, Is.GreaterThan(2.5f));
+            Assert.That(d.Recovery, Is.EqualTo(15f));
+            Assert.That(d.WarningSeconds, Is.EqualTo(2.8f));
         }
         [Test]
         public void CheckpointRestoresTrapWarningIndependently()

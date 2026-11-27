@@ -10,7 +10,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         private const float BombSize = 0.36f;
         private const float ShadowSize = 0.34f;
         private const float SplatSeconds = 1.1f;
-        private const float SplatSize = 2.3f;
+        private const float SplatSize = MinionRules.BombRadius * 2.3f;
         private const float GroundLift = 0.03f;
         private const float MarkSize = 0.95f;
         private const float MarkScale = 0.82f;
@@ -34,6 +34,8 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         private readonly Material embersMaterial;
         private readonly Color splatColor;
         private readonly List<Vector3> targets = new List<Vector3>();
+        private readonly Dictionary<int, Vector3> previousPositions = new Dictionary<int, Vector3>();
+        private readonly Dictionary<int, Vector3> predictedPositions = new Dictionary<int, Vector3>();
         private Camera view;
         private double lastTime = -1d;
         private double landAt;
@@ -90,6 +92,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         public void Reset()
         {
             lastTime = -1d;
+            previousPositions.Clear(); predictedPositions.Clear();
             cooldown = 0f;
             splatLeft = 0f;
             engaged = false;
@@ -111,6 +114,19 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             var simulated = lastTime < 0d ? 0f : Mathf.Max(0f, (float)(now - lastTime));
             lastTime = now;
             if (simulation.IsPaused) return;
+            // Sample movement up to launch; aim remains locked throughout the flight.
+            var origin = post.Position;
+            predictedPositions.Clear();
+            foreach (var unit in simulation.Units)
+            {
+                if (!unit.IsAlive) continue;
+                if (simulated > .0001f && previousPositions.TryGetValue(unit.Id, out var previous))
+                {
+                    predictedPositions[unit.Id] = MinionBombRules.PredictTarget(unit.Position, previous, simulated,
+                        origin, MinionRules.BombReach);
+                }
+                previousPositions[unit.Id] = unit.Position;
+            }
             var wasMarking = marking;
             if (splatLeft > 0f)
             {
@@ -135,10 +151,9 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                 return;
             }
             targets.Clear();
-            var origin = post.Position;
             foreach (var unit in simulation.Units)
                 if (unit.IsAlive && MinionBombRules.FlatDistanceSquared(unit.Position, origin) <= MinionRules.BombReach * MinionRules.BombReach)
-                    targets.Add(unit.Position);
+                    targets.Add(predictedPositions.TryGetValue(unit.Id, out var predicted) ? predicted : unit.Position);
             if (targets.Count == 0)
             {
                 engaged = false;

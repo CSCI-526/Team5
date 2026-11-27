@@ -33,6 +33,29 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             return best;
         }
 
+        // Predict almost the full flight, but leave the last fraction untracked.
+        // Clip the lead along its original direction if it would exceed mortar reach.
+        // The caller snapshots the result at launch; flight never re-aims.
+        public static Vector3 PredictTarget(Vector3 position, Vector3 previous, float dt, Vector3 origin, float reach)
+        {
+            if (dt <= .0001f || reach <= 0f || FlatDistanceSquared(position, origin) > reach * reach)
+                return position;
+            var velocity = (position - previous) / dt;
+            velocity.y = 0f;
+            var lead = Vector3.ClampMagnitude(velocity * MinionRules.BombPredictionSeconds, MinionRules.BombMaxLead);
+            if (FlatDistanceSquared(position + lead, origin) <= reach * reach) return position + lead;
+            // Start is already in reach. Find the last in-range point on the segment.
+            var low = 0f;
+            var high = 1f;
+            for (var i = 0; i < 12; i++)
+            {
+                var mid = (low + high) * .5f;
+                if (FlatDistanceSquared(position + lead * mid, origin) <= reach * reach) low = mid;
+                else high = mid;
+            }
+            return position + lead * low;
+        }
+
         public static float FlatDistanceSquared(Vector3 a, Vector3 b)
         {
             var x = a.x - b.x;

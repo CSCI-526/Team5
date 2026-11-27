@@ -9,9 +9,11 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         public const float BearerInterval = 2f;
         public const float ShieldDamageScale = 0.3f;
         public const float LobberInterval = 1f;
-        public const float BombInterval = 4f;
-        public const float BombWarning = 1.8f;
-        public const float BombRadius = 1f;
+        public const float BombInterval = 5f;
+        public const float BombWarning = 2.4f;
+        public const float BombPredictionSeconds = 2.05f;
+        public const float BombMaxLead = 2.1f;
+        public const float BombRadius = 1.25f;
         public const float BombReach = 7f;
         public const float BombFirstDelay = 0.8f;
         public const float ThreatMargin = 0.5f;
