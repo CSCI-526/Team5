@@ -16,6 +16,10 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         [SerializeField] private Button startGameButton;
         private GameObject screen;
         private TMP_Text countLabel, warehouseHint, levelLabel, goldLabel;
+        private const float SquadFullWarningSeconds = 3f;
+        private CanvasGroup squadFullWarning;
+        private TMP_Text squadFullWarningTitle;
+        private float squadFullWarningUntil;
         private RectTransform levelHeart;
         private RectTransform screenRoot;
         private readonly List<GameObject> warehouseCells = new List<GameObject>();
@@ -134,6 +138,11 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                 20, LegacyUiKit.Ink, FontStyles.Bold, 3);
             countLabel = LegacyUiKit.CreateText(Grid.transform, "Squad Count", "", new Vector2(0, 189), new Vector2(310, 30),
                 30, LegacyUiKit.Ink, FontStyles.Bold);
+            countLabel.rectTransform.sizeDelta = new Vector2(266, 36);
+            countLabel.enableAutoSizing = true;
+            countLabel.fontSizeMin = 22;
+            countLabel.fontSizeMax = 34;
+            BuildSquadFullWarning(root);
 
             Preparation.Changed += Refresh;
             startGameButton.onClick.AddListener(StartWave);
@@ -148,6 +157,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         private void Update()
         {
             TryAttachPreparationGuides();
+            UpdateSquadFullWarning();
             RefreshLevelLabel();
             RefreshGoldLabel();
             RefreshClaimCards();
@@ -372,11 +382,70 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         public bool TryPlaceMember(int memberId, PointerEventData data)
         {
             if (IsOverlayOpen) return false;
-            if (Grid.TryPlaceWarehouseMember(memberId, data)) return true;
-            warehouseHint.text = Preparation.DeployedCount >= SquadPreparation.MaxDeployed
-                ? "Squad full (6/6). Replace or return a unit."
-                : "Drop the unit onto a squad slot.";
+            if (Grid.TryPlaceWarehouseMember(memberId, data, out var squadFull))
+            {
+                HideSquadFullWarning();
+                return true;
+            }
+            if (squadFull)
+            {
+                warehouseHint.text = "Squad full. Swap with a deployed unit or return one to storage.";
+                ShowSquadFullWarning();
+            }
+            else warehouseHint.text = "Drop the unit onto a squad slot.";
             return false;
+        }
+
+        private void BuildSquadFullWarning(RectTransform root)
+        {
+            // Bottom-center, above the background, away from the formation slots.
+            // The toast never intercepts a drag, click, or tutorial input.
+            var rim = LegacyUiKit.CreateImage(root, "Squad Full Warning", Vector2.zero,
+                new Vector2(620, 92), LegacyUiKit.RedDark, 16);
+            var rect = rim.rectTransform;
+            rect.anchorMin = rect.anchorMax = new Vector2(.5f, 0f);
+            rect.pivot = new Vector2(.5f, 0f);
+            rect.anchoredPosition = new Vector2(0f, 12f);
+            LegacyUiKit.CreateImage(rect, "Warning Face", new Vector2(0, 3),
+                new Vector2(610, 80), LegacyUiKit.Red, 13);
+            squadFullWarningTitle = LegacyUiKit.CreateText(rect, "Title", "", new Vector2(0, 17),
+                new Vector2(590, 39), 34, Color.white, FontStyles.Bold);
+            squadFullWarningTitle.enableAutoSizing = true;
+            squadFullWarningTitle.fontSizeMin = 24;
+            squadFullWarningTitle.fontSizeMax = 34;
+            var detail = LegacyUiKit.CreateText(rect, "Instructions", "Swap with a deployed unit or drag one back to storage.",
+                new Vector2(0, -20), new Vector2(590, 28), 20, Color.white);
+            detail.enableAutoSizing = true;
+            detail.fontSizeMin = 16;
+            detail.fontSizeMax = 20;
+            squadFullWarning = rim.gameObject.AddComponent<CanvasGroup>();
+            squadFullWarning.interactable = false;
+            squadFullWarning.blocksRaycasts = false;
+            HideSquadFullWarning();
+        }
+
+        private void ShowSquadFullWarning()
+        {
+            if (squadFullWarning == null) return;
+            squadFullWarningTitle.text = $"SQUAD FULL ({Preparation.DeployedCount}/{SquadPreparation.MaxDeployed})";
+            squadFullWarningUntil = Time.unscaledTime + SquadFullWarningSeconds;
+            squadFullWarning.transform.SetAsLastSibling();
+            squadFullWarning.alpha = 1f;
+            squadFullWarning.gameObject.SetActive(true);
+        }
+
+        private void UpdateSquadFullWarning()
+        {
+            if (squadFullWarning == null || !squadFullWarning.gameObject.activeSelf) return;
+            var remaining = squadFullWarningUntil - Time.unscaledTime;
+            if (remaining <= 0f || IsOverlayOpen || Preparation.DeployedCount < SquadPreparation.MaxDeployed)
+                HideSquadFullWarning();
+            else squadFullWarning.alpha = Mathf.Clamp01(remaining / .35f);
+        }
+
+        private void HideSquadFullWarning()
+        {
+            if (squadFullWarning != null) squadFullWarning.gameObject.SetActive(false);
         }
 
         public void TryDismissMember(int memberId)
@@ -623,7 +692,12 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         private void Refresh()
         {
             RefreshWarehouseCards();
-            countLabel.text = $"{Preparation.DeployedCount}/{SquadPreparation.MaxDeployed}";
+            var deployedCount = Preparation.DeployedCount;
+            var full = deployedCount >= SquadPreparation.MaxDeployed;
+            countLabel.text = $"{deployedCount}/{SquadPreparation.MaxDeployed}" + (full ? " FULL" : "");
+            countLabel.color = full ? LegacyUiKit.RedDark : deployedCount == 0 ? LegacyUiKit.Red : LegacyUiKit.Ink;
+            countLabel.fontSizeMax = full ? 34 : 30;
+            if (!full) HideSquadFullWarning();
             startGameButton.interactable = CanStartWave && levelPreview == null;
             warehouseHint.text = "Drag units to squad  |  Click a card for details  |  X to dismiss";
             foreach (var member in Preparation.Members)

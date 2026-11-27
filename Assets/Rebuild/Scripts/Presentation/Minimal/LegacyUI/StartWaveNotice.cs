@@ -6,7 +6,6 @@ namespace Team5.Rebuild.Presentation.LegacyUI
     public sealed class StartWaveNotice : MonoBehaviour
     {
         private const string Message = "Drag a unit into your squad to start";
-        private static readonly Color EmptyCountColor = LegacyUiKit.Red;
 
         [SerializeField, Tooltip("Gap in pixels between the bottom of Start Wave and the center of the notice.")] private float gap = 18f;
 
@@ -14,8 +13,6 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         private RectTransform root;
         private RectTransform button;
         private TMP_Text label;
-        private TMP_Text count;
-        private Color countColor;
         private bool shown;
 
         public static StartWaveNotice Attach(LegacyUpgradeScene owner, RectTransform root)
@@ -33,8 +30,6 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             notice.root = root;
             notice.label = label;
             notice.button = (RectTransform)owner.StartWaveButton.transform;
-            notice.count = owner.SquadCountLabel;
-            if (notice.count != null) notice.countColor = notice.count.color;
             return notice;
         }
 
@@ -45,7 +40,6 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             {
                 shown = empty;
                 label.enabled = empty;
-                if (count != null) count.color = empty ? EmptyCountColor : countColor;
             }
             if (shown) Place();
         }
@@ -57,9 +51,6 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             label.rectTransform.anchoredPosition = new Vector2(bottom.x, bottom.y - gap);
         }
 
-        private void OnDestroy()
-        {
-            if (count != null) count.color = countColor;
-        }
+        // The squad counter is styled by LegacyUpgradeScene for all capacity states.
     }
 }

@@ -34,7 +34,19 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             return grid;
         }
         public bool TryPlaceWarehouseMember(int memberId, PointerEventData data)
-            => preparation != null && preparation.TryAssign(memberId, FindCell(data));
+            => TryPlaceWarehouseMember(memberId, data, out _);
+
+        // Report a capacity rejection separately from an off-grid or invalid drop.
+        public bool TryPlaceWarehouseMember(int memberId, PointerEventData data, out bool squadFull)
+        {
+            squadFull = false;
+            if (preparation == null || data == null) return false;
+            var slot = FindCell(data);
+            if (slot < 0 || preparation.FindMember(memberId) == null) return false;
+            squadFull = preparation.DeployedCount >= SquadPreparation.MaxDeployed &&
+                !preparation.IsDeployed(memberId) && preparation.MemberAtSlot(slot) == 0;
+            return !squadFull && preparation.TryAssign(memberId, slot);
+        }
 
         public static LegacyFormationGrid Create(Transform parent, RectTransform dragLayer, Func<int, UnitRole> roleAtSource)
         {

@@ -7,11 +7,47 @@ using Team5.Rebuild.Simulation;
 using UnityEditor.SceneManagement;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace Team5.Rebuild.Tests
 {
     public sealed class UpgradePreparationTests
     {
+        [Test]
+        public void FullSquadOnlyWarnsWhenNewMemberIsDroppedInEmptySlot()
+        {
+            var preparation = new SquadPreparation(Enumerable.Range(1, 7)
+                .Select(id => new MemberSpawnDefinition(id, 4, SquadCombatRules.Create(UnitRole.Attack))).ToArray());
+            for (var i = 0; i < 6; i++) Assert.That(preparation.TryAssign(i + 1, i), Is.True);
+            var host = new GameObject("Capacity Test", typeof(RectTransform));
+            try
+            {
+                LegacyUiKit.CreateCanvas(host, 0, new Vector2(1280, 720), .5f);
+                var grid = LegacyFormationGrid.CreateForPreparation(host.transform, (RectTransform)host.transform, preparation);
+                var data = new PointerEventData(null);
+                data.pointerCurrentRaycast = new RaycastResult { gameObject = grid.transform.Find("Cell 6").gameObject };
+                Assert.That(grid.TryPlaceWarehouseMember(7, data, out var full), Is.False);
+                Assert.That(full, Is.True);
+                Assert.That(preparation.DeployedCount, Is.EqualTo(6));
+                Assert.That(preparation.MemberAtSlot(6), Is.Zero);
+                Assert.That(grid.TryPlaceWarehouseMember(999, data, out full), Is.False);
+                Assert.That(full, Is.False);
+                Assert.That(grid.TryPlaceWarehouseMember(7, null, out full), Is.False);
+                Assert.That(full, Is.False);
+                Assert.That(grid.TryPlaceWarehouseMember(1, data, out full), Is.True, "Moving a deployed unit is allowed.");
+                Assert.That(full, Is.False);
+                data.pointerCurrentRaycast = new RaycastResult { gameObject = grid.transform.Find("Cell 1").gameObject };
+                Assert.That(grid.TryPlaceWarehouseMember(7, data, out full), Is.True, "Replacing a deployed unit is allowed.");
+                Assert.That(full, Is.False);
+                Assert.That(preparation.DeployedCount, Is.EqualTo(6));
+                Assert.That(preparation.TryRemove(6), Is.True);
+                data.pointerCurrentRaycast = new RaycastResult { gameObject = grid.transform.Find("Cell 6").gameObject };
+                Assert.That(grid.TryPlaceWarehouseMember(2, data, out full), Is.True);
+                Assert.That(full, Is.False);
+            }
+            finally { UnityEngine.Object.DestroyImmediate(host); }
+        }
+
         [Test]
         public void SummonPurchasesChosenUnitAndPreservesOfferUntilPurchase()
         {
