@@ -51,7 +51,7 @@ namespace Team5.Rebuild.Editor
         }
         [Serializable] private sealed class ThreatPlan
         {
-            public int x, z;
+            public int x, z, dx, dz;
             public string kind;
             public float radius, damage, interval;
         }
@@ -212,6 +212,18 @@ namespace Team5.Rebuild.Editor
                     var point = new Vector2Int(danger.x, danger.z);
                     if (!Passable(draft.Tile(point)) || !road.Any(p => Vector2Int.Distance(p, point) <= danger.radius))
                         errors.Add($"Level {stage}: hazard at {point} is in a wall or cannot reach the road.");
+                }
+                // Tactical traps must stay on playable roads and leave the objective/start clear.
+                var tactical = plan.hazards.Where(h => h.kind == "Freeze" || h.kind == "Meteor" || h.kind == "Boulder").ToArray();
+                foreach (var h in tactical)
+                {
+                    var point = new Vector2Int(h.x, h.z);
+                    if (draft.Tile(point) != (int)CellKind.Road || Vector2Int.Distance(point, start) < 3.5f || Vector2Int.Distance(point, goal) < 3.5f)
+                        errors.Add($"Level {stage}: tactical trap at {point} is off the road or too close to an endpoint.");
+                    if (h.kind == "Boulder" && Mathf.Abs(h.dx) + Mathf.Abs(h.dz) != 1)
+                        errors.Add($"Level {stage}: boulder at {point} requires a cardinal roll direction.");
+                    if (tactical.Any(other => other != h && Vector2Int.Distance(point, new Vector2Int(other.x, other.z)) < 4f))
+                        errors.Add($"Level {stage}: tactical traps are too close at {point}.");
                 }
                 return errors;
             }
@@ -503,13 +515,14 @@ namespace Team5.Rebuild.Editor
             foreach (var h in plan.hazards)
             {
                 var sentry = h.kind == "Sentry";
-                if (!sentry && h.kind != "Trap") throw new InvalidDataException("Unknown hazard: " + h.kind);
-                var go = new GameObject(sentry ? "Sentry" : "Pulse Trap");
+                var kind = h.kind == "Trap" ? OpenStageThreat.ThreatKind.GroundTrap :
+                    (OpenStageThreat.ThreatKind)Enum.Parse(typeof(OpenStageThreat.ThreatKind), h.kind);
+                var go = new GameObject(sentry ? "Sentry" : h.kind == "Trap" ? "Pulse Trap" : h.kind + " Trap");
                 go.transform.SetParent(host.transform, false);
                 go.transform.position = draft.Position(new Vector2Int(h.x, h.z)) + Vector3.up * (sentry ? .50f : .035f);
                 var threat = go.AddComponent<OpenStageThreat>();
-                threat.Configure(sentry ? OpenStageThreat.ThreatKind.Sentry : OpenStageThreat.ThreatKind.GroundTrap,
-                    h.radius, h.damage, h.interval);
+                threat.Configure(kind, h.radius, h.damage, h.interval, new Vector3(h.dx, 0, h.dz));
+                if (threat.IsTactical) continue; // Procedural themed art is built by the runtime view.
                 var model = GameObject.CreatePrimitive(sentry ? PrimitiveType.Capsule : PrimitiveType.Cylinder);
                 model.transform.SetParent(go.transform, false);
                 model.transform.localScale = sentry ? new Vector3(.42f, .40f, .42f) : new Vector3(.52f, .09f, .52f);

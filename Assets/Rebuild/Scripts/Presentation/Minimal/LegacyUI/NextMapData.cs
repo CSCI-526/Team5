@@ -12,7 +12,9 @@ namespace Team5.Rebuild.Presentation.LegacyUI
     {
         public readonly Vector3 Position;
         public readonly bool IsSentry;
-        public NextMapThreat(Vector3 position, bool isSentry) { Position = position; IsSentry = isSentry; }
+        public readonly OpenStageThreat.ThreatKind Kind;
+        public NextMapThreat(Vector3 position, bool isSentry) : this(position, isSentry ? OpenStageThreat.ThreatKind.Sentry : OpenStageThreat.ThreatKind.GroundTrap) { }
+        public NextMapThreat(Vector3 position, OpenStageThreat.ThreatKind kind) { Position = position; Kind = kind; IsSentry = kind == OpenStageThreat.ThreatKind.Sentry; }
     }
 
     public sealed class NextMapData
@@ -54,7 +56,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                 sceneTowers.AddRange(root.GetComponentsInChildren<BattleTower>(true));
                 foreach (var threat in root.GetComponentsInChildren<Team5.Rebuild.Presentation.OpenStageThreat>(true))
                     threats.Add(new NextMapThreat(threat.transform.position,
-                        threat.Kind == Team5.Rebuild.Presentation.OpenStageThreat.ThreatKind.Sentry));
+                        threat.Kind));
             }
             if (session != null && session.Route != null) sceneRoute = session.Route;
 

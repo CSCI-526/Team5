@@ -236,6 +236,10 @@ namespace Team5.Rebuild.Presentation.LegacyUI
                 if (lobber.MarkedThisFrame && hint != null) hint.Show(MinionKind.Lobber, lobber.Element);
             }
             if (hint == null) return;
+            if (simulation.Outcome == BattleOutcome.Running)
+                foreach (var trap in simulation.TacticalTraps)
+                    if (trap.Phase == TacticalTrapPhase.Warning || trap.Phase == TacticalTrapPhase.Active)
+                        hint.ShowTrap(trap.Definition.Kind);
             if (NearBearer(simulation)) hint.Show(MinionKind.Bearer);
             hint.Tick(Time.unscaledDeltaTime);
         }

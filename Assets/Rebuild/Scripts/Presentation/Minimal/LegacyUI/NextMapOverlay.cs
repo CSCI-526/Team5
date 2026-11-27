@@ -64,7 +64,7 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             x = start.x;
             LegacyUiKit.CreateCircle(parent, "Legend Sentry", new Vector2(x + 5f, bottom), 11f, SentryColor).raycastTarget = false;
             LegacyUiKit.CreateCircle(parent, "Legend Trap", new Vector2(x + 17f, bottom), 11f, TrapColor).raycastTarget = false;
-            x = LegendLabel(parent, "SENTRY / TRAP", x, bottom);
+            x = LegendLabel(parent, "F ICE / M FIRE / B ROCK", x, bottom);
             Marker(parent, MinionKind.Bearer, new Vector2(x + 11f, bottom), 18f);
             x = LegendLabel(parent, "SHIELD BEARER", x, bottom);
             Marker(parent, MinionKind.Lobber, new Vector2(x + 11f, bottom), 18f, MinionElement.Fire);
@@ -122,9 +122,17 @@ namespace Team5.Rebuild.Presentation.LegacyUI
         private void ThreatMark(NextMapThreat threat, NextMapProjection projection)
         {
             var point = projection.ToPanel(threat.Position);
-            var mark = LegacyUiKit.CreateCircle(minions, threat.IsSentry ? "Sentry" : "Trap", point,
-                Mathf.Clamp(projection.PixelsPerUnit * .45f, 9f, 19f), threat.IsSentry ? SentryColor : TrapColor);
+            var color = threat.Kind == OpenStageThreat.ThreatKind.Freeze ? new Color(.12f,.82f,1f) :
+                threat.Kind == OpenStageThreat.ThreatKind.Boulder ? new Color(1f,.79f,.17f) : threat.IsSentry ? SentryColor : TrapColor;
+            var size = Mathf.Clamp(projection.PixelsPerUnit * .55f, 13f, 23f);
+            var mark = LegacyUiKit.CreateCircle(minions, threat.Kind.ToString(), point, size, color);
             mark.raycastTarget = false;
+            if (threat.Kind == OpenStageThreat.ThreatKind.Freeze || threat.Kind == OpenStageThreat.ThreatKind.Meteor || threat.Kind == OpenStageThreat.ThreatKind.Boulder)
+            {
+                var letter = threat.Kind == OpenStageThreat.ThreatKind.Freeze ? "F" : threat.Kind == OpenStageThreat.ThreatKind.Meteor ? "M" : "B";
+                var label = LegacyUiKit.CreateText(mark.transform, "Trap type", letter, Vector2.zero, Vector2.one * size, Mathf.Max(9, size * .6f), GoalInk, FontStyles.Bold, 4);
+                label.alignment = TextAlignmentOptions.Center; label.raycastTarget = false;
+            }
         }
 
         private static float LegendLabel(Transform parent, string text, float x, float y)

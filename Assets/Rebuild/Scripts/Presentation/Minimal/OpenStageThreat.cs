@@ -8,14 +8,27 @@ namespace Team5.Rebuild.Presentation
     // Simple enemy sentry / pressure-pad threat on open Tactile-Wars-like maps.
     // Does not need tower platforms and can be avoided through click-to-move navigation.
     [DisallowMultipleComponent]
-    public sealed class OpenStageThreat : MonoBehaviour
+    public sealed class OpenStageThreat : MonoBehaviour, ITacticalTrapSite
     {
-        public enum ThreatKind { Sentry, GroundTrap }
+        public enum ThreatKind { Sentry, GroundTrap, Freeze, Meteor, Boulder }
         [SerializeField] private ThreatKind kind;
         [SerializeField, Min(0.1f)] private float radius = 1.6f;
         [SerializeField, Min(.01f)] private float damage = .7f;
         [SerializeField, Min(.1f)] private float hitInterval = 2.0f;
+        [SerializeField] private Vector3 rollDirection = Vector3.forward;
         private BattleSession session;
+        private TacticalTrapVisual tacticalVisual;
+        public bool IsTactical => kind == ThreatKind.Freeze || kind == ThreatKind.Meteor || kind == ThreatKind.Boulder;
+        public Vector3 RollDirection => rollDirection;
+        public bool TryCaptureTrap(out TacticalTrapDefinition trap)
+        {
+            trap = null;
+            if (!IsTactical || !isActiveAndEnabled) return false;
+            var center = transform.position + Vector3.up * (.25f - .035f);
+            var id = -10001 - Mathf.RoundToInt(center.x) * 100 - Mathf.RoundToInt(center.z);
+            trap = new TacticalTrapDefinition(id, (TacticalTrapKind)((int)kind - 2), center, radius, damage, hitInterval, rollDirection);
+            return true;
+        }
         private BattleSimulation simulation;
         private double nextHitTime;
         private double lastHitTime = double.NegativeInfinity;
@@ -26,12 +39,13 @@ namespace Team5.Rebuild.Presentation
         public ThreatKind Kind => kind;
         public float Radius => radius;
 
-        public void Configure(ThreatKind threatKind, float hitRadius, float hitDamage, float interval)
+        public void Configure(ThreatKind threatKind, float hitRadius, float hitDamage, float interval, Vector3 direction = default)
         {
             kind = threatKind;
             radius = hitRadius;
             damage = hitDamage;
             hitInterval = interval;
+            rollDirection = direction.sqrMagnitude > .01f ? direction.normalized : Vector3.forward;
             if (warningRing != null) UpdateRingGeometry();
         }
 
@@ -43,12 +57,22 @@ namespace Team5.Rebuild.Presentation
                 if (current.gameObject.scene == gameObject.scene) { session = current; break; }
             if (session != null && session.Route != null && session.Route.Cells.Count > 0 && session.Route.Cells[0] != null)
                 groundY = session.Route.Cells[0].TopCenter.y;
+            if (IsTactical)
+            {
+                if (TryCaptureTrap(out var definition)) tacticalVisual = new TacticalTrapVisual(transform, definition);
+                return;
+            }
             CreateWarningRing();
         }
 
         private void Update()
         {
             var current = session != null ? session.Simulation : null;
+            if (IsTactical)
+            {
+                if (tacticalVisual != null) tacticalVisual.Refresh(current);
+                return;
+            }
             if (simulation != current)
             {
                 simulation = current;
@@ -131,11 +155,12 @@ namespace Team5.Rebuild.Presentation
             }
         }
 
-        private void OnDisable() { if (warningRing != null) warningRing.enabled = false; }
+        private void OnDisable() { if (warningRing != null) warningRing.enabled = false; if (tacticalVisual != null) tacticalVisual.SetVisible(false); }
 
         private void OnDestroy()
         {
             if (warningMaterial != null) Destroy(warningMaterial);
+            if (tacticalVisual != null) tacticalVisual.Dispose();
         }
 
         private void OnDrawGizmosSelected()

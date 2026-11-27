@@ -297,6 +297,11 @@ namespace Team5.Rebuild.Session
             if (continuousSquadMovement && displayedLevelNumber >= 2) next.EnableCampaignTankPressure();
             if (continuousSquadMovement) next.EnableContinuousMovement(continuousFormationSpacing, continuousSoldierRadius, compactSquadMovement, UsesTacticalRoad);
             else if (manualSquadMovement) next.EnableManualMovement();
+            // Scene-local registration, before the first simulation tick. Preview scenes never start a battle.
+            if (displayedLevelNumber >= 3 && displayedLevelNumber <= 7 && continuousSquadMovement)
+                foreach (var root in gameObject.scene.GetRootGameObjects())
+                    foreach (var site in root.GetComponentsInChildren<MonoBehaviour>(false).OfType<ITacticalTrapSite>())
+                        if (site.TryCaptureTrap(out var trap)) next.AddTacticalTrap(trap);
             tutorialCheckpoint = null;
             RecoveryRequired = false;
             BindSimulation(next);

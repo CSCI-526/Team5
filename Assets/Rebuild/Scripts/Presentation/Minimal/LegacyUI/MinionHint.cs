@@ -84,6 +84,22 @@ namespace Team5.Rebuild.Presentation.LegacyUI
             return true;
         }
 
+        public bool ShowTrap(TacticalTrapKind kind)
+        {
+            var key = 100 + (int)kind;
+            if (canvasRoot == null || left > 0f || shown.Contains(key)) return false;
+            shown.Add(key);
+            title.text = kind == TacticalTrapKind.Freeze ? "FREEZE TRAP" : kind == TacticalTrapKind.Meteor ? "METEOR TRAP" : "ROLLING BOULDER";
+            line.text = kind == TacticalTrapKind.Freeze ? "Leave the blue ring before the countdown ends, or get frozen." :
+                kind == TacticalTrapKind.Meteor ? "Dodge the orange ring. Wait for the burning ground to clear." :
+                "Direct hits are lethal. Clear the yellow lane before the rock rolls!";
+            if (shieldIcon != null) shieldIcon.gameObject.SetActive(false);
+            if (targetIcon != null) targetIcon.gameObject.SetActive(kind == TacticalTrapKind.Boulder);
+            if (fireIcon != null) fireIcon.gameObject.SetActive(kind == TacticalTrapKind.Meteor);
+            if (iceIcon != null) iceIcon.gameObject.SetActive(kind == TacticalTrapKind.Freeze);
+            left = seconds; group.alpha = 0f; canvasRoot.gameObject.SetActive(true); return true;
+        }
+
         public void Tick(float unscaledDeltaTime)
         {
             if (canvasRoot == null || left <= 0f) return;

@@ -79,9 +79,9 @@ namespace Team5.Rebuild.Editor
             {
                 var p = plan.hazards[i];
                 if (!float.IsFinite(p.damage) || p.damage <= 0 || !float.IsFinite(p.radius) || p.radius <= 0 ||
-                    !float.IsFinite(p.interval) || p.interval <= 0 || (p.kind != "Trap" && p.kind != "Sentry"))
+                    !float.IsFinite(p.interval) || p.interval <= 0 || (p.kind != "Trap" && !Enum.TryParse<OpenStageThreat.ThreatKind>(p.kind, out _)))
                     throw new InvalidDataException("Invalid hazard balance values at stage " + plan.stage);
-                var kind = p.kind == "Trap" ? OpenStageThreat.ThreatKind.GroundTrap : OpenStageThreat.ThreatKind.Sentry;
+                var kind = p.kind == "Trap" ? OpenStageThreat.ThreatKind.GroundTrap : (OpenStageThreat.ThreatKind)Enum.Parse(typeof(OpenStageThreat.ThreatKind), p.kind);
                 var candidates = hazards.Where(t => Mathf.Abs(t.transform.position.x - p.x) < .01f &&
                     Mathf.Abs(t.transform.position.z - p.z) < .01f && t.Kind == kind).ToArray();
                 if (candidates.Length != 1) throw Mismatch(scene, $"missing or duplicate hazard at ({p.x}, {p.z})");

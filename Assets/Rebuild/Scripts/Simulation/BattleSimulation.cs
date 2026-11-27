@@ -156,6 +156,7 @@ namespace Team5.Rebuild.Simulation
             copy.time = time; copy.healTimer = healTimer; copy.goalHoldElapsed = goalHoldElapsed; copy.projectileSequence = projectileSequence;
             copy.extraMemberSequence = extraMemberSequence;
             copy.campaignTankPressure = campaignTankPressure;
+            foreach (var trap in tacticalTraps) copy.tacticalTraps.Add(trap.Copy());
             copy.Outcome = Outcome; copy.IsPaused = IsPaused;
             copy.SpawnedCount = SpawnedCount; copy.KilledCount = KilledCount; copy.ReachedGoalCount = ReachedGoalCount;
             copy.TowersDestroyedCount = TowersDestroyedCount; copy.TowerBountyGoldEarned = TowerBountyGoldEarned;
@@ -167,6 +168,7 @@ namespace Team5.Rebuild.Simulation
             this.definition = definition ?? throw new ArgumentNullException(nameof(definition));
             foreach (var tower in definition.Towers) towers.Add(new TowerState(tower));
             Units = units.AsReadOnly(); Towers = towers.AsReadOnly(); Projectiles = projectiles.AsReadOnly();
+            TacticalTraps = tacticalTraps.AsReadOnly();
             extraMemberSequence = definition.Members != null ? 1000000 : definition.UnitCount + 1000000;
             if (definition.WalkableCells == null) return;
             walkable = new HashSet<Vector3Int>(definition.WalkableCells);
@@ -330,6 +332,7 @@ namespace Team5.Rebuild.Simulation
                     if (Outcome != BattleOutcome.Running) return;
                     if (Objective == BattleObjective.DefendGoal && ReachedGoalCount >= definition.GoalLives) break;
                 }
+                TickTacticalTraps(deltaTime);
                 if (ReachedGoalCount < definition.GoalLives)
                 {
                     foreach (var tower in towers) Attack(tower, deltaTime);
@@ -782,7 +785,7 @@ namespace Team5.Rebuild.Simulation
             }
         }
 
-        private void DamageUnit(int sourceId, UnitState unit, float rawDamage, bool towerShot = false)
+        private void DamageUnit(int sourceId, UnitState unit, float rawDamage, bool towerShot = false, bool ignoreDefense = false)
         {
             if (!unit.IsAlive) return;
             if (unit.BarrierRemaining > 0 && unit.BarrierHits > 0)
@@ -792,7 +795,7 @@ namespace Team5.Rebuild.Simulation
                 TowerHitBlocked?.Invoke(sourceId, unit.Id);
                 return;
             }
-            var damage = rawDamage * (1 - unit.Definition.Defense);
+            var damage = ignoreDefense ? rawDamage : rawDamage * (1 - unit.Definition.Defense);
             if (campaignTankPressure && towerShot && unit.Role == UnitRole.Tank &&
                 towers.Exists(t => t.Id == sourceId && !t.Definition.IsWall && !t.Definition.IsMinion))
                 damage = TacticalStageRules.TankHitDamage(rawDamage, unit.MaxHp, unit.Definition.Defense);
